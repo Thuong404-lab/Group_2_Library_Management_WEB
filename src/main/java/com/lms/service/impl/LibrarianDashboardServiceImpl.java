@@ -347,7 +347,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("bookItemsByBookId", bookItemsByBookId);
 
         data.put("totalBookCount", bookRepository.count());
-        data.put("unavailableTitleCount", bookRepository.countTitlesWithoutAvailableCopies());
+        data.put("activeTitleCount", bookRepository.countByStatusIgnoreCase("Active"));
+        data.put("inactiveTitleCount", bookRepository.countByStatusIgnoreCase("Inactive"));
         data.put("inventoryStatusCounts", inventoryStatusCounts());
         if ("books".equals(activeTab)) {
             data.put("categories", categoryRepository.findAll());
@@ -452,6 +453,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Total", bookItemRepository.count());
         counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
+        counts.put("Payment_Pending", bookItemRepository.countByStatusIgnoreCase("Payment_Pending"));
         counts.put("Waiting_Pickup", bookItemRepository.countByStatusIgnoreCase("Waiting_Pickup"));
         counts.put("Unavailable", bookItemRepository.countByStatusIgnoreCase("Unavailable"));
         return counts;

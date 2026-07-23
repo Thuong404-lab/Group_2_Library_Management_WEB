@@ -129,6 +129,8 @@ public class SystemServiceImpl implements SystemService {
             Integer renewalRejectionCooldownHours,
             Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
+            BigDecimal minorDamageBorrowFee,
+            BigDecimal severeDamageBorrowFee,
             BigDecimal finePerDay,
             BigDecimal damageCompensationAmount,
             Integer damageCompensationThreshold,
@@ -141,6 +143,13 @@ public class SystemServiceImpl implements SystemService {
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
         validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
+        validateZeroOrPositive(minorDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
+        validateZeroOrPositive(severeDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
+        BigDecimal minimumGap = BigDecimal.valueOf(1000);
+        if (minorDamageBorrowFee.compareTo(borrowFeePerBook.subtract(minimumGap)) > 0
+                || severeDamageBorrowFee.compareTo(minorDamageBorrowFee.subtract(minimumGap)) > 0) {
+            throw new ValidationException(messages.get("backend.settings.conditionFeeOrder"));
+        }
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
         validateDamageThreshold(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
@@ -170,6 +179,12 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
                 messages.get("backend.settings.description.borrowFee"));
+        saveOrUpdateSetting("Minor_Damage_Borrow_Fee",
+                minorDamageBorrowFee.toPlainString(),
+                messages.get("backend.settings.description.minorDamageBorrowFee"));
+        saveOrUpdateSetting("Severe_Damage_Borrow_Fee",
+                severeDamageBorrowFee.toPlainString(),
+                messages.get("backend.settings.description.severeDamageBorrowFee"));
 
         saveOrUpdateSetting("Fine_Per_Day",
                 finePerDay.toPlainString(),

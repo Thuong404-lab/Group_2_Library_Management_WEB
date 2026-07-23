@@ -35,6 +35,7 @@ import java.util.Set;
 public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED = "Borrowed";
+    private static final String STATUS_PAYMENT_PENDING = "Payment_Pending";
     private static final String STATUS_WAITING_PICKUP = "Waiting_Pickup";
     private static final String STATUS_UNAVAILABLE = "Unavailable";
     private static final String STATUS_ACTIVE = "Active";
@@ -118,6 +119,7 @@ public class InventoryServiceImpl implements InventoryService {
         Map<String, Long> counts = new HashMap<>();
         counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
+        counts.put(STATUS_PAYMENT_PENDING, bookItemRepository.countByStatusIgnoreCase(STATUS_PAYMENT_PENDING));
         counts.put(STATUS_WAITING_PICKUP, bookItemRepository.countByStatusIgnoreCase(STATUS_WAITING_PICKUP));
         counts.put(STATUS_UNAVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_UNAVAILABLE));
         return counts;
@@ -282,10 +284,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (shelfId == null) {
             throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
         }
-        String normalizedCondition = bookCondition == null ? "" : bookCondition.trim();
-        if (!ALLOWED_BOOK_CONDITIONS.contains(normalizedCondition)) {
-            throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
-        }
+        // Newly acquired physical copies always enter inventory in New condition.
+        // Ignore client-provided condition so this rule cannot be bypassed by a crafted request.
+        String normalizedCondition = "New";
 
         Book book = bookRepository.findByIdForUpdate(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));
@@ -318,6 +319,8 @@ public class InventoryServiceImpl implements InventoryService {
             autoAssignNewCopyIfReservationWaiting(item);
             existingBarcodes.add(barcode);
         }
+        book.setStatus(STATUS_ACTIVE);
+        bookRepository.save(book);
     }
 
     @Override
@@ -369,6 +372,15 @@ public class InventoryServiceImpl implements InventoryService {
         int rank = conditionRank(normalizedCondition);
         item.setStatus(rank >= 3 ? STATUS_UNAVAILABLE : STATUS_AVAILABLE);
         bookItemRepository.save(item);
+        synchronizeBookStatus(item.getBook());
+    }
+
+    private void synchronizeBookStatus(Book book) {
+        List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+        boolean hasLendableCopy = items.stream()
+                .anyMatch(item -> !STATUS_UNAVAILABLE.equalsIgnoreCase(item.getStatus()));
+        book.setStatus(hasLendableCopy ? STATUS_ACTIVE : "Inactive");
+        bookRepository.save(book);
     }
 
     private int conditionRank(String condition) {
