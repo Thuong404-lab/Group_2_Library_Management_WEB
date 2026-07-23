@@ -137,6 +137,11 @@
                                 <span th:text="${#messages.msg(row.statusLabel)}">Completed</span>
                             </span>
                         </div>
+                        <p class="member-wallet-transaction-description"
+                           th:text="${row.description}">Transaction content</p>
+                        <p class="member-wallet-transaction-detail"
+                           th:if="${row.detail != null and !#strings.isEmpty(row.detail)}"
+                           th:text="${row.detail}">Transaction reference</p>
                         <h3 class="member-wallet-amount"
                             th:classappend="${row.amount != null and row.amount.signum() >= 0 ? ' member-wallet-amount--credit' : ' member-wallet-amount--debit'}">
                             <span th:text="${row.amount != null and row.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>

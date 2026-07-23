@@ -166,9 +166,12 @@ public class AccountController extends LocalizedControllerSupport {
 
     @PostMapping("/{id}/send-password-reset")
     public String sendPasswordReset(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "members") String source,
             RedirectAttributes redirectAttributes) {
         try {
-            String email = accountService.getMemberEmail(id);
+            String email = "staff".equalsIgnoreCase(source)
+                    ? accountService.getStaffEmail(id)
+                    : accountService.getMemberEmail(id);
             authService.requestPasswordReset(email);
             redirectAttributes.addFlashAttribute("success", message("backend.account.resetSent", email));
         } catch (ApplicationException e) {
@@ -177,7 +180,7 @@ public class AccountController extends LocalizedControllerSupport {
                             ? message("backend.account.resetFailed")
                             : e.getMessage());
         }
-        return "redirect:/admin/member-list";
+        return redirectBySource(source);
     }
 
     private Map<String, Object> createFormValues(AdminMemberAccountCreateRequest request) {
