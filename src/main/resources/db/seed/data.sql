@@ -55,10 +55,6 @@ BEGIN TRY
       (1,'ROLE_ADMIN'),(2,'ROLE_LIBRARIAN'),(3,'ROLE_MEMBER');
     SET IDENTITY_INSERT dbo.Roles OFF;
 
-    INSERT dbo.LocalizationLanguages(language_code,english_name,native_name,is_default,is_active) VALUES
-      (N'en',N'English',N'English',1,1),
-      (N'vi',N'Vietnamese',N'Tiếng Việt',0,1);
-
     SET IDENTITY_INSERT dbo.MembershipTiers ON;
     INSERT dbo.MembershipTiers(tier_id,tier_name,discount_percent,borrow_limit,[condition],benefits) VALUES
       (1,N'Member',0,5,0,N'Borrow up to 5 books concurrently.'),
@@ -209,23 +205,6 @@ BEGIN TRY
       (30,8,N'Designing Data-Intensive Applications','9786040000030',N'Designing reliable, scalable and maintainable data systems.','Active',NULL);
     SET IDENTITY_INSERT dbo.Books OFF;
 
-    /* English is canonical; Vietnamese is an independent translation layer. */
-    INSERT dbo.CategoryTranslations(category_id,language_code,category_name)
-    SELECT category_id,N'en',category_name FROM dbo.Categories;
-    INSERT dbo.CategoryTranslations(category_id,language_code,category_name) VALUES
-      (1,N'vi',N'Văn học'),(2,N'vi',N'Khoa học'),(3,N'vi',N'Công nghệ'),(4,N'vi',N'Kinh tế'),
-      (5,N'vi',N'Lịch sử'),(6,N'vi',N'Tâm lý - Kỹ năng'),(7,N'vi',N'Thiếu nhi'),(8,N'vi',N'Ngoại ngữ');
-
-    INSERT dbo.GenreTranslations(genre_id,language_code,genre_name)
-    SELECT genre_id,N'en',genre_name FROM dbo.Genres;
-    INSERT dbo.GenreTranslations(genre_id,language_code,genre_name) VALUES
-      (1,N'vi',N'Văn học Việt Nam'),(2,N'vi',N'Văn học nước ngoài'),(3,N'vi',N'Trinh thám'),
-      (4,N'vi',N'Khoa học phổ thông'),(5,N'vi',N'Môi trường'),(6,N'vi',N'Lập trình'),
-      (7,N'vi',N'Trí tuệ nhân tạo'),(8,N'vi',N'Cơ sở dữ liệu'),(9,N'vi',N'Quản trị'),
-      (10,N'vi',N'Tài chính'),(11,N'vi',N'Lịch sử Việt Nam'),(12,N'vi',N'Lịch sử thế giới'),
-      (13,N'vi',N'Phát triển bản thân'),(14,N'vi',N'Tâm lý học'),(15,N'vi',N'Truyện thiếu nhi'),
-      (16,N'vi',N'Tiếng Anh');
-
     INSERT dbo.MembershipTierTranslations(tier_id,language_code,tier_name,benefits)
     SELECT tier_id,N'en',tier_name,benefits FROM dbo.MembershipTiers;
     INSERT dbo.MembershipTierTranslations(tier_id,language_code,tier_name,benefits) VALUES
@@ -233,49 +212,6 @@ BEGIN TRY
       (2,N'vi',N'Bạc',N'Giảm 5% phí mượn; được mượn đồng thời tối đa 7 cuốn.'),
       (3,N'vi',N'Vàng',N'Giảm 10% phí mượn; được mượn đồng thời tối đa 10 cuốn.'),
       (4,N'vi',N'Kim cương',N'Giảm 15% phí mượn; được mượn đồng thời tối đa 15 cuốn.');
-
-    INSERT dbo.ShelfTranslations(shelf_id,language_code,shelf_name,location)
-    SELECT shelf_id,N'en',shelf_name,location FROM dbo.Shelves;
-    INSERT dbo.ShelfTranslations(shelf_id,language_code,shelf_name,location) VALUES
-      (1,N'vi',N'Kệ A1',N'Tầng 1 - Văn học Việt Nam'),(2,N'vi',N'Kệ A2',N'Tầng 1 - Văn học nước ngoài'),
-      (3,N'vi',N'Kệ B1',N'Tầng 1 - Khoa học'),(4,N'vi',N'Kệ C1',N'Tầng 2 - Công nghệ'),
-      (5,N'vi',N'Kệ C2',N'Tầng 2 - Công nghệ'),(6,N'vi',N'Kệ D1',N'Tầng 2 - Kinh tế'),
-      (7,N'vi',N'Kệ E1',N'Tầng 3 - Lịch sử'),(8,N'vi',N'Kệ F1',N'Tầng 3 - Kỹ năng'),
-      (9,N'vi',N'Kệ G1',N'Tầng 3 - Thiếu nhi'),(10,N'vi',N'Kệ H1',N'Tầng 3 - Ngoại ngữ');
-
-    INSERT dbo.BookTranslations(book_id,language_code,title,description)
-    SELECT book_id,N'en',title,description FROM dbo.Books;
-    INSERT dbo.BookTranslations(book_id,language_code,title,description) VALUES
-      (1,N'vi',N'Chí Phèo',N'Kiệt tác hiện thực về số phận người nông dân Việt Nam.'),
-      (2,N'vi',N'Mắt Biếc',N'Câu chuyện tuổi trẻ và tình yêu trong trẻo.'),
-      (3,N'vi',N'Dế Mèn Phiêu Lưu Ký',N'Hành trình trưởng thành của Dế Mèn.'),
-      (4,N'vi',N'Tắt Đèn',N'Tác phẩm tiêu biểu của văn học hiện thực Việt Nam.'),
-      (5,N'vi',N'Những Cuộc Phiêu Lưu Của Sherlock Holmes',N'Tuyển tập truyện trinh thám kinh điển.'),
-      (6,N'vi',N'Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông',N'Vụ án nổi tiếng của thám tử Hercule Poirot.'),
-      (7,N'vi',N'1984',N'Tiểu thuyết phản địa đàng kinh điển.'),
-      (8,N'vi',N'Nhà Giả Kim',N'Hành trình theo đuổi ước mơ và vận mệnh.'),
-      (9,N'vi',N'Sapiens: Lược Sử Loài Người',N'Lược khảo lịch sử phát triển của loài người.'),
-      (10,N'vi',N'Lược Sử Thời Gian',N'Giới thiệu dễ tiếp cận về vũ trụ học.'),
-      (11,N'vi',N'Clean Code',N'Nguyên tắc viết mã nguồn dễ đọc và bảo trì.'),
-      (12,N'vi',N'Refactoring',N'Cải tiến thiết kế mã nguồn hiện hữu.'),
-      (13,N'vi',N'The Pragmatic Programmer',N'Tư duy và thực hành phát triển phần mềm hiệu quả.'),
-      (14,N'vi',N'Artificial Intelligence: A Modern Approach',N'Giáo trình nền tảng về trí tuệ nhân tạo.'),
-      (15,N'vi',N'Database System Concepts',N'Kiến thức nền tảng về hệ quản trị cơ sở dữ liệu.'),
-      (16,N'vi',N'Cha Giàu Cha Nghèo',N'Kiến thức nhập môn về tư duy tài chính cá nhân.'),
-      (17,N'vi',N'Đắc Nhân Tâm',N'Kỹ năng giao tiếp và xây dựng quan hệ.'),
-      (18,N'vi',N'Tư Duy Nhanh Và Chậm',N'Nghiên cứu về hai hệ thống tư duy của con người.'),
-      (19,N'vi',N'Atomic Habits',N'Phương pháp xây dựng thói quen nhỏ và bền vững.'),
-      (20,N'vi',N'Mindset',N'Sức mạnh của tư duy phát triển.'),
-      (21,N'vi',N'Sức Mạnh Của Thói Quen',N'Cơ chế hình thành và thay đổi thói quen.'),
-      (22,N'vi',N'Hoàng Tử Bé',N'Câu chuyện giàu tính nhân văn dành cho mọi lứa tuổi.'),
-      (23,N'vi',N'Harry Potter Và Hòn Đá Phù Thủy',N'Khởi đầu hành trình tại trường Hogwarts.'),
-      (24,N'vi',N'Lược Sử Vạn Vật',N'Khám phá khoa học tự nhiên qua lối kể gần gũi.'),
-      (25,N'vi',N'Những Tù Nhân Của Địa Lý',N'Địa lý ảnh hưởng tới chính trị thế giới.'),
-      (26,N'vi',N'Tương Lai Của Trái Đất',N'Các thách thức môi trường và phát triển bền vững.'),
-      (27,N'vi',N'Khởi Nghiệp Tinh Gọn',N'Tư duy thử nghiệm nhanh trong xây dựng sản phẩm.'),
-      (28,N'vi',N'Nhà Đầu Tư Thông Minh',N'Các nguyên tắc đầu tư giá trị dài hạn.'),
-      (29,N'vi',N'English Grammar in Use',N'Ngữ pháp tiếng Anh thực hành.'),
-      (30,N'vi',N'Designing Data-Intensive Applications',N'Thiết kế hệ thống dữ liệu tin cậy và có khả năng mở rộng.');
 
     INSERT dbo.BookAuthors(book_id,author_id) VALUES
       (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9),(10,10),
@@ -398,27 +334,6 @@ BEGIN TRY
       ('Overdue_Violation_Lock_Limit',N'3',N'Overdue violations before account restrictions apply.'),
       ('MIN_TOP_UP',N'10000',N'Minimum wallet top-up amount (VND).');
 
-    INSERT dbo.SystemSettingTranslations(setting_id,language_code,description)
-    SELECT setting_id,N'en',description FROM dbo.SystemSettings;
-    INSERT dbo.SystemSettingTranslations(setting_id,language_code,description)
-    SELECT setting_id,N'vi',
-      CASE setting_key
-        WHEN 'Fine_Per_Day' THEN N'Phí phạt quá hạn mỗi ngày cho một cuốn (VND).'
-        WHEN 'Max_Borrow_Days' THEN N'Số ngày mượn tiêu chuẩn.'
-        WHEN 'Max_Books_Per_Member' THEN N'Số cuốn tối đa trong một yêu cầu mượn.'
-        WHEN 'BORROW_FEE_PER_BOOK' THEN N'Phí mượn cho mỗi cuốn (VND).'
-        WHEN 'Deposit_Amount' THEN N'Tiền cọc đặt trước một cuốn (VND).'
-        WHEN 'MAX_RENEWALS' THEN N'Số lần gia hạn tối đa cho một cuốn.'
-        WHEN 'RENEW_DAYS' THEN N'Số ngày cộng thêm khi gia hạn được duyệt.'
-        WHEN 'Max_Renewal_Days' THEN N'Số ngày gia hạn tối đa trong một yêu cầu.'
-        WHEN 'RENEWAL_FEE_PER_DAY' THEN N'Phí gia hạn cho mỗi ngày (VND).'
-        WHEN 'Damage_Compensation_Amount' THEN N'Mức bồi thường mặc định khi sách mất hoặc hư hỏng nặng.'
-        WHEN 'Damage_Compensation_Threshold' THEN N'Mức tình trạng bắt đầu áp dụng bồi thường.'
-        WHEN 'Overdue_Violation_Lock_Limit' THEN N'Số vi phạm quá hạn khiến tài khoản bị hạn chế.'
-        WHEN 'MIN_TOP_UP' THEN N'Số tiền nạp ví tối thiểu (VND).'
-      END
-    FROM dbo.SystemSettings;
-
     SET IDENTITY_INSERT dbo.Transactions ON;
     INSERT dbo.Transactions(transaction_id,wallet_id,borrow_id,transaction_type,amount,transaction_date,status,borrow_detail_id,renewal_days,reference_code,performed_by_staff_id,channel,balance_before,balance_after) VALUES
       (1,1,NULL,'TOP_UP',100000,DATEADD(day,-15,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0001',2,'CASH',200000,300000),
@@ -477,22 +392,6 @@ BEGIN TRY
       (12,NULL,N'Reservation deposit refunded',N'The reservation deposit was returned to your wallet.',DATEADD(day,-1,@Now),'Active',N'RESERVATION',N'SYSTEM',N'RESERVATION_REFUNDED',NULL,NULL,NULL);
     SET IDENTITY_INSERT dbo.Notifications OFF;
 
-    INSERT dbo.NotificationTranslations(notification_id,language_code,title,content)
-    SELECT notification_id,N'en',title,content FROM dbo.Notifications;
-    INSERT dbo.NotificationTranslations(notification_id,language_code,title,content) VALUES
-      (1,N'vi',N'Chào mừng đến thư viện',N'Tài khoản demo của bạn đã sẵn sàng.'),
-      (2,N'vi',N'Phiếu mượn đã được duyệt',N'Vui lòng đến quầy nhận sách trong thời hạn quy định.'),
-      (3,N'vi',N'Nhắc trả sách',N'Một cuốn sách của bạn sắp đến hạn trả.'),
-      (4,N'vi',N'Phạt quá hạn',N'Hệ thống đã ghi nhận khoản phạt quá hạn demo.'),
-      (5,N'vi',N'Xác nhận yêu cầu trả sách',N'Yêu cầu trả sách đã được tiếp nhận tại quầy.'),
-      (6,N'vi',N'Đặt trước đã sẵn sàng',N'Sách đặt trước đã sẵn sàng để nhận.'),
-      (7,N'vi',N'Nạp ví thành công',N'Giao dịch nạp ví demo đã hoàn tất.'),
-      (8,N'vi',N'Phản hồi đánh giá',N'Thủ thư đã phản hồi đánh giá của bạn.'),
-      (9,N'vi',N'Đề xuất sách được duyệt',N'Đề xuất của bạn đã được đưa vào kế hoạch mua sách.'),
-      (10,N'vi',N'Bảo trì định kỳ',N'Hệ thống demo sẽ bảo trì vào cuối tuần.'),
-      (11,N'vi',N'Gia hạn được duyệt',N'Yêu cầu gia hạn sách của bạn đã được duyệt.'),
-      (12,N'vi',N'Tiền cọc đã hoàn',N'Khoản cọc đặt trước đã được hoàn vào ví.');
-
     INSERT dbo.MemberNotifications(member_id,notification_id,is_read,read_date) VALUES
       (1,1,1,DATEADD(day,-29,@Now)),(1,2,0,NULL),(1,3,0,NULL),(2,1,1,DATEADD(day,-28,@Now)),
       (2,4,0,NULL),(3,5,0,NULL),(4,6,1,DATEADD(hour,-5,@Now)),(5,7,1,DATEADD(day,-3,@Now)),
@@ -528,3 +427,4 @@ UNION ALL SELECT N'BorrowDetails',COUNT(*) FROM dbo.BorrowDetails
 UNION ALL SELECT N'Transactions',COUNT(*) FROM dbo.Transactions
 UNION ALL SELECT N'Notifications',COUNT(*) FROM dbo.Notifications;
 GO
+

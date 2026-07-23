@@ -2,7 +2,7 @@ package com.lms.service.impl;
 
 import com.lms.dto.request.MemberReviewSubmitRequest;
 import com.lms.dto.request.MemberReviewUpdateRequest;
-import com.lms.domain.ReviewPolicy;
+import com.lms.util.ReviewPolicy;
 import com.lms.entity.MemberAccount;
 import com.lms.entity.Book;
 import com.lms.entity.Feedback;
