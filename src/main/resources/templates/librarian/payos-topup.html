@@ -99,10 +99,10 @@
 
             <div class="payos-receipt-actions">
                 <form th:if="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}"
+                      id="cancelBorrowPaymentForm"
                       th:action="@{/librarian/payments/payos/{orderCode}/cancel(orderCode=${payment.orderCode})}"
-                      method="post"
-                      th:attr="onsubmit=|return confirm('${#messages.msg('librarian.payos.cancelConfirm')}');|">
-                    <button type="submit" class="payos-btn-secondary"
+                      method="post">
+                    <button type="button" class="payos-btn-secondary" data-cancel-payment-open
                             th:text="#{librarian.payos.cancel}">Cancel payment</button>
                 </form>
                 <a th:unless="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}"
@@ -112,6 +112,21 @@
             </div>
         </div>
     </section>
+
+    <div class="payment-confirm-modal" data-cancel-payment-modal hidden>
+        <div class="payment-confirm-dialog" role="dialog" aria-modal="true"
+             th:aria-label="#{librarian.payos.cancel}">
+            <div class="payment-confirm-icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <h3 th:text="#{librarian.payos.cancel}">Cancel payment</h3>
+            <p th:text="#{librarian.payos.cancelConfirm}">Cancel this payment?</p>
+            <div class="payment-confirm-actions">
+                <button type="button" class="payos-btn-secondary" data-cancel-payment-close
+                        th:text="#{common.cancel}">Keep payment</button>
+                <button type="button" class="payos-btn-primary" data-cancel-payment-confirm
+                        th:text="#{common.confirm}">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <script th:if="${payment.status == 'PENDING'}" th:src="@{/js/kqpay-countdown.js}"></script>
     <script th:if="${payment.status == 'PENDING'}" th:inline="javascript">
@@ -128,6 +143,25 @@
                     }
                 } catch (_) { /* retry while the counter page is open */ }
             }, 5000);
+        })();
+    </script>
+    <script th:if="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}">
+        (() => {
+            const modal = document.querySelector('[data-cancel-payment-modal]');
+            const form = document.getElementById('cancelBorrowPaymentForm');
+            const open = document.querySelector('[data-cancel-payment-open]');
+            const close = document.querySelector('[data-cancel-payment-close]');
+            const confirm = document.querySelector('[data-cancel-payment-confirm]');
+            if (!modal || !form || !open) return;
+            const hide = () => { modal.hidden = true; };
+            open.addEventListener('click', () => { modal.hidden = false; close?.focus(); });
+            close?.addEventListener('click', hide);
+            modal.addEventListener('click', event => { if (event.target === modal) hide(); });
+            document.addEventListener('keydown', event => { if (event.key === 'Escape') hide(); });
+            confirm?.addEventListener('click', () => {
+                confirm.disabled = true;
+                form.requestSubmit();
+            });
         })();
     </script>
 </div>

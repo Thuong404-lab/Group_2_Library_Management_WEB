@@ -411,8 +411,27 @@ public class PayOsPaymentService {
         if (staff == null || staff.getStaffId() == null) {
             throw new ValidationException(messages.get("backend.financial.staffRequired"));
         }
+        return cancelPendingBorrowFee(orderCode, null, "STAFF",
+                messages.get("backend.payment.audit.cancelledByStaff", staff.getStaffId()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelBorrowFeeForMember(Long orderCode, Integer memberId) {
+        if (memberId == null) {
+            throw new ValidationException(messages.get("backend.payment.loginRequired"));
+        }
+        return cancelPendingBorrowFee(orderCode, memberId, "MEMBER",
+                messages.get("backend.payment.audit.cancelledByMember", memberId));
+    }
+
+    private PayOsPayment cancelPendingBorrowFee(Long orderCode, Integer expectedMemberId,
+                                                String source, String auditMessage) {
         PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
+        if (expectedMemberId != null && (payment.getMember() == null
+                || !expectedMemberId.equals(payment.getMember().getMemberId()))) {
+            throw new ForbiddenException(messages.get("backend.payment.notFound"));
+        }
         if (!BORROW_FEE.equalsIgnoreCase(payment.getPurpose())) {
             throw new ValidationException(messages.get("backend.payment.onlyBorrowFeeCanCancel"));
         }
@@ -430,8 +449,7 @@ public class PayOsPaymentService {
         settlementService.cancelPendingBorrow(payment, "CANCELLED");
         payment.setStatus("CANCELLED");
         PayOsPayment saved = paymentRepository.save(payment);
-        auditService.record(saved, "PAYMENT_CANCELLED", "STAFF", oldStatus, saved.getStatus(), true,
-                messages.get("backend.payment.audit.cancelledByStaff", staff.getStaffId()));
+        auditService.record(saved, "PAYMENT_CANCELLED", source, oldStatus, saved.getStatus(), true, auditMessage);
         return saved;
     }
 

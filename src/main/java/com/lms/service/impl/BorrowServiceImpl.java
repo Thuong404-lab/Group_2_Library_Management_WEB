@@ -237,7 +237,7 @@ public class BorrowServiceImpl implements BorrowService {
             detail.setRenewCount(0);
             borrowDetailRepository.save(detail);
 
-            item.setStatus(awaitingBankPayment ? "Waiting_Pickup" : "Borrowed");
+            item.setStatus(awaitingBankPayment ? PAYMENT_PENDING : "Borrowed");
             bookItemRepository.save(item);
         }
 
@@ -288,7 +288,8 @@ public class BorrowServiceImpl implements BorrowService {
                 throw new ConflictException(localizedMessageService.get("backend.borrow.detailNotAwaitingPayment"));
             }
             BookItem item = detail.getBookItem();
-            if (item == null || !"Waiting_Pickup".equalsIgnoreCase(item.getStatus())) {
+            if (item == null || (!PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
+                    && !"Waiting_Pickup".equalsIgnoreCase(item.getStatus()))) {
                 throw new ConflictException(localizedMessageService.get("backend.borrow.copyNoLongerReserved"));
             }
 
@@ -320,7 +321,8 @@ public class BorrowServiceImpl implements BorrowService {
 
         for (BorrowDetail detail : borrowDetailRepository.findByBorrowId(borrowId)) {
             BookItem item = detail.getBookItem();
-            if (item != null && "Waiting_Pickup".equalsIgnoreCase(item.getStatus())
+            if (item != null && (PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
+                    || "Waiting_Pickup".equalsIgnoreCase(item.getStatus()))
                     && PAYMENT_PENDING.equalsIgnoreCase(detail.getStatus())) {
                 item.setStatus("Available");
 
@@ -1641,7 +1643,7 @@ public class BorrowServiceImpl implements BorrowService {
                 throw new ConflictException(
                         localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
             }
-            reservedItem.setStatus("Waiting_Pickup");
+            reservedItem.setStatus(PAYMENT_PENDING);
             bookItemRepository.save(reservedItem);
 
             BorrowDetail detail = new BorrowDetail();
