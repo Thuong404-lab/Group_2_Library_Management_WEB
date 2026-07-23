@@ -4,22 +4,13 @@
 
 <head>
     <title th:text="#{librarian.borrowDesk.title}">Borrow Desk</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/create-borrow.css}" />
-    <style>
-        .app-form-primary:disabled {
-            opacity: 0.6 !important;
-            background-color: var(--app-color-muted) !important;
-            border-color: var(--app-color-muted) !important;
-            cursor: not-allowed !important;
-        }
-    </style>
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='borrow-manage'">
-        <div class="canonical-management-page librarian-create-borrow-page">
+    <div layout:fragment="content" th:with="activeMenu='borrow-desk'">
+        <div class="member-palette-page canonical-management-page librarian-create-borrow-page">
 
             <header class="dashboard-page-header borrow-desk-hero">
                 <div class="page-title-group">
@@ -422,8 +413,7 @@
                                 </div>
                             </div>
 
-                            <div class="borrow-member-stats mt-3 mb-3 p-3 rounded"
-                                style="background-color: #f8f9fa; border-left: 3px solid #8b5a2b; font-size: 0.85rem;">
+                            <div class="borrow-member-stats borrow-member-stats-panel mt-3 mb-3 p-3 rounded">
                                 <i class="bi bi-info-circle text-muted me-1"></i>
                                 <span class="fw-bold text-muted me-2"
                                     th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
@@ -444,11 +434,9 @@
                                     class="bi bi-qr-code-scan me-2 text-classic"></i><span
                                     th:text="#{librarian.returnDesk.scanLabel}">Quét mã vạch sách</span></h3>
                             <form id="onlineRequestScannerForm" onsubmit="event.preventDefault();">
-                                <div class="mb-4 p-3 rounded"
-                                    style="background-color: #fff9f0; border: 1px dashed rgba(139, 90, 43, 0.3);">
+                                <div class="borrow-scanner-panel mb-4 p-3 rounded">
                                     <label for="requestScannerInput"
-                                        class="form-label borrow-form-label small fw-bold text-uppercase mb-2"
-                                        style="color: #8b5a2b; letter-spacing: 0.5px;">
+                                        class="form-label borrow-form-label borrow-scanner-label small fw-bold text-uppercase mb-2">
                                         <span th:text="#{librarian.borrowDesk.scanBarcode}">Scan Book Barcode</span>
                                         <span class="borrow-required" aria-hidden="true">*</span>
                                     </label>
@@ -578,8 +566,7 @@
                                 </div>
                             </div>
 
-                            <div class="borrow-member-stats mt-3 mb-3 p-3 rounded"
-                                style="background-color: #f8f9fa; border-left: 3px solid #8b5a2b; font-size: 0.85rem;">
+                            <div class="borrow-member-stats borrow-member-stats-panel mt-3 mb-3 p-3 rounded">
                                 <i class="bi bi-info-circle text-muted me-1"></i>
                                 <span class="fw-bold text-muted me-2"
                                     th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
@@ -653,8 +640,7 @@
                                 </div>
                             </div>
 
-                            <div class="borrow-member-stats mt-3 mb-3 p-3 rounded"
-                                style="background-color: #f8f9fa; border-left: 3px solid #8b5a2b; font-size: 0.85rem;">
+                            <div class="borrow-member-stats borrow-member-stats-panel mt-3 mb-3 p-3 rounded">
                                 <i class="bi bi-info-circle text-muted me-1"></i>
                                 <span class="fw-bold text-muted me-2"
                                     th:text="#{librarian.borrowDesk.memberStatus}">Status:</span>
@@ -758,8 +744,7 @@
                             <div>
                                 <h2 class="modal-title" id="rejectReasonModalLabel"
                                     th:text="#{librarian.borrowDesk.rejectTitle}">Reject Request</h2>
-                                <p id="rejectReasonBookTitle"
-                                    style="margin: 4px 0 0; color: var(--app-color-muted); font-size: 13px;"></p>
+                                <p id="rejectReasonBookTitle" class="borrow-reject-book-title"></p>
                             </div>
                             <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal"
                                 th:aria-label="#{common.close}">

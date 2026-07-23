@@ -10,6 +10,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/books.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
@@ -125,7 +126,7 @@
                     </div>
                 </a>
 
-                <a th:href="@{/librarian/dashboard(section='books',subsection='inventory',availability='Available')}"
+                <a th:href="@{/librarian/books(subsection='inventory',availability='Available')}"
                     class="overview-kpi-card overview-kpi-card--neutral">
                     <div class="overview-kpi-icon"><i class="bi bi-book" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
@@ -353,7 +354,7 @@
                         </h5>
                         <p class="text-muted mb-3" th:text="#{librarian.inventory.cardDescription}">Add, edit, remove,
                             and manage book copies in inventory.</p>
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
+                        <a th:href="@{/librarian/books(subsection='inventory')}"
                             class="btn btn-outline-classic btn-sm">
                             <span th:text="#{librarian.inventory.open}">Open</span> <i
                                 class="bi bi-arrow-right ms-1"></i>
@@ -369,7 +370,7 @@
                         </h5>
                         <p class="text-muted mb-3" th:text="#{librarian.storage.description}">Create and manage book
                             storage locations.</p>
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
+                        <a th:href="@{/librarian/books(subsection='storage')}"
                             class="btn btn-outline-classic btn-sm">
                             <span th:text="#{librarian.inventory.open}">Open</span> <i
                                 class="bi bi-arrow-right ms-1"></i>
@@ -386,8 +387,10 @@
                     <div id="bookInventoryPanel">
 
                         <div th:if="${param.tab == null || param.tab[0] == 'books'}" id="admin-books-pane">
-                            <header class="member-page-header">
-                                <div>
+                            <header class="member-page-header book-inventory-hero">
+                                <div class="book-inventory-hero-copy">
+                                    <div class="member-page-eyebrow"
+                                        th:text="#{librarian.inventory.booksManagement}">BOOK INVENTORY</div>
                                     <h1 class="member-page-title" th:text="#{librarian.inventory.heading}">Book Title
                                         Management</h1>
                                     <p class="member-page-description" th:text="#{librarian.inventory.description}">Add,
@@ -484,10 +487,10 @@
                                                 <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
                                                     th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}, bookAvailable=${availableCopies > 0}"
                                                     th:data-book-availability="${bookAvailable ? 'Available' : 'Unavailable'}">
-                                                    <td class="ps-3 fw-bold"
+                                                    <td class="ps-3 fw-bold" th:data-label="#{common.number}"
                                                         th:text="${iterStat.index + 1 + (books.number * books.size)}">1
                                                     </td>
-                                                    <td>
+                                                    <td th:data-label="#{librarian.inventory.cover}">
                                                         <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
                                                             th:src="${book.coverImageUrl}" th:alt="#{book.coverAlt}"
                                                             class="inventory-cover-frame">
@@ -496,38 +499,41 @@
                                                             <i class="bi bi-book"></i>
                                                         </div>
                                                     </td>
-                                                    <td>
+                                                    <td th:data-label="#{common.book}">
                                                         <div class="fw-bold text-classic" th:text="${book.title}">Book
                                                             title</div>
                                                         <div class="small text-muted"
                                                             th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
                                                             Genre</div>
                                                     </td>
-                                                    <td class="small text-muted" th:text="${book.isbn}">ISBN</td>
+                                                    <td class="small text-muted" data-label="ISBN" th:text="${book.isbn}">ISBN</td>
                                                     <td class="small text-muted text-truncate"
+                                                        th:data-label="#{librarian.inventory.bookDescription}"
                                                         th:text="${!#strings.isEmpty(book.description) ? book.description : #messages.msg('librarian.inventory.noDescription')}"
                                                         th:title="${book.description}">Description</td>
-                                                    <td>
+                                                    <td th:data-label="#{common.status}">
                                                         <span class="status-badge"
                                                             th:classappend="${bookAvailable} ? ' status-active' : ' status-zero'"
                                                             th:text="${bookAvailable} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
                                                     </td>
-                                                    <td class="text-end member-actions">
-                                                        <button type="button" class="member-icon-action"
-                                                            data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#editBookModal' + book.bookId}"
-                                                            th:title="#{common.update}"
-                                                            th:aria-label="#{common.update}">
-                                                            <i class="bi bi-pencil-square"></i>
-                                                        </button>
-                                                        <button type="button"
-                                                            class="member-icon-action member-icon-action-danger"
-                                                            data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#deleteBookModal' + book.bookId}"
-                                                            th:title="#{common.delete}"
-                                                            th:aria-label="#{common.delete}">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
+                                                    <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                                        <div class="book-row-actions">
+                                                            <button type="button" class="member-icon-action"
+                                                                data-bs-toggle="modal"
+                                                                th:data-bs-target="${'#editBookModal' + book.bookId}"
+                                                                th:title="#{common.update}"
+                                                                th:aria-label="#{common.update}">
+                                                                <i class="bi bi-pencil-square"></i>
+                                                            </button>
+                                                            <button type="button"
+                                                                class="member-icon-action member-icon-action-danger"
+                                                                data-bs-toggle="modal"
+                                                                th:data-bs-target="${'#deleteBookModal' + book.bookId}"
+                                                                th:title="#{common.delete}"
+                                                                th:aria-label="#{common.delete}">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                                 <tr th:if="${books == null || books.totalElements == 0}">
@@ -556,12 +562,12 @@
                                         <ul class="pagination app-pagination">
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                                     th:text="#{common.first}">First</a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
                                                         class="bi bi-chevron-left"></i></a>
                                             </li>
                                             <li class="page-item disabled" th:if="${startPage > 0}"><span
@@ -569,19 +575,19 @@
                                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                                                 th:classappend="${i == books.number ? 'active' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                                     th:text="${i + 1}">1</a>
                                             </li>
                                             <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}">
                                                 <span class="page-link page-link-classic">…</span></li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
                                                         class="bi bi-chevron-right"></i></a>
                                             </li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
                                                 <a class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
                                                     th:text="#{common.last}">Last</a>
                                             </li>
                                         </ul>
@@ -591,15 +597,14 @@
                         </div> <!-- close admin-books-pane -->
 
                         <div th:if="${param.tab != null && param.tab[0] == 'categories'}" id="admin-categories-pane">
-                            <header
-                                class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color"
-                                style="gap: 24px;">
-                                <div>
-                                    <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336"
-                                        style="font-size: 30px; font-weight: 500;"><span
+                            <header class="member-page-header category-management-hero">
+                                <div class="category-management-hero-copy">
+                                    <div class="member-page-eyebrow"
+                                        th:text="#{librarian.inventory.booksManagement}">BOOK INVENTORY</div>
+                                    <h1 class="member-page-title"><span
                                             th:text="#{librarian.inventory.tab.categories}">Category &amp; Genre
                                             Management</span></h1>
-                                    <p class="text-muted mb-0" th:text="#{librarian.inventory.categoryDescription}">
+                                    <p class="member-page-description" th:text="#{librarian.inventory.categoryDescription}">
                                         Manage categories and genres for books.</p>
                                 </div>
                                 <div class="book-category-actions">
@@ -615,7 +620,7 @@
                                     </button>
                                 </div>
                             </header>
-                            <div class="member-data-card">
+                            <div class="member-data-card category-management-card">
                                 <div class="member-data-card-body">
                                     <div class="member-summary-chips"
                                         th:aria-label="#{librarian.inventory.categorySummary}">
@@ -644,8 +649,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover align-middle border mb-0">
+                                    <div class="table-responsive category-table-wrap">
+                                        <table class="table table-hover align-middle mb-0 category-management-table">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th th:text="#{librarian.inventory.categoryGenre}">Category / Genre
@@ -661,25 +666,29 @@
                                                         th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}"
                                                         th:data-category-id="${category.categoryId}"
                                                         th:data-search-name="${#strings.toLowerCase(category.categoryName)}">
-                                                        <td class="fw-bold u-color-4a3b32-8f35ff96">
+                                                        <td class="fw-bold u-color-4a3b32-8f35ff96"
+                                                            th:data-label="#{librarian.inventory.categoryGenre}">
                                                             <span th:text="${category.categoryName}">Category</span>
-                                                            <i class="bi bi-chevron-down ms-2 small text-muted"></i>
+                                                            <i class="bi bi-chevron-down ms-2 category-toggle-icon"></i>
                                                         </td>
                                                         <td class="text-center member-actions"
+                                                            th:data-label="#{common.actions}"
                                                             onclick="event.stopPropagation()">
-                                                            <button type="button" class="member-icon-action"
-                                                                data-bs-toggle="modal"
-                                                                th:data-bs-target="'#adminEditCategoryModal' + ${category.categoryId}"
-                                                                th:title="#{common.update}"
-                                                                th:aria-label="#{common.update}"><i
-                                                                    class="bi bi-pencil-square"></i></button>
-                                                            <button type="button"
-                                                                class="member-icon-action member-icon-action-danger"
-                                                                data-bs-toggle="modal"
-                                                                th:data-bs-target="'#adminDeleteCategoryModal' + ${category.categoryId}"
-                                                                th:title="#{common.delete}"
-                                                                th:aria-label="#{common.delete}"><i
-                                                                    class="bi bi-trash"></i></button>
+                                                            <div class="category-row-actions">
+                                                                <button type="button" class="member-icon-action"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminEditCategoryModal' + ${category.categoryId}"
+                                                                    th:title="#{common.update}"
+                                                                    th:aria-label="#{common.update}"><i
+                                                                        class="bi bi-pencil-square"></i></button>
+                                                                <button type="button"
+                                                                    class="member-icon-action member-icon-action-danger"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminDeleteCategoryModal' + ${category.categoryId}"
+                                                                    th:title="#{common.delete}"
+                                                                    th:aria-label="#{common.delete}"><i
+                                                                        class="bi bi-trash"></i></button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                     <tr th:each="genre : ${genres}"
@@ -688,24 +697,26 @@
                                                         th:classappend="'admin-category-genres-' + ${category.categoryId}"
                                                         th:data-parent-category-id="${category.categoryId}"
                                                         th:data-search-name="${#strings.toLowerCase(genre.genreName)}">
-                                                        <td>
+                                                        <td th:data-label="#{librarian.inventory.categoryGenre}">
                                                             <span class="genre-name"
                                                                 th:text="${genre.genreName}">Genre</span>
                                                         </td>
-                                                        <td class="text-center member-actions">
-                                                            <button type="button" class="member-icon-action"
-                                                                data-bs-toggle="modal"
-                                                                th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"
-                                                                th:title="#{common.update}"
-                                                                th:aria-label="#{common.update}"><i
-                                                                    class="bi bi-pencil-square"></i></button>
-                                                            <button type="button"
-                                                                class="member-icon-action member-icon-action-danger"
-                                                                data-bs-toggle="modal"
-                                                                th:data-bs-target="'#adminDeleteGenreModal' + ${genre.genreId}"
-                                                                th:title="#{common.delete}"
-                                                                th:aria-label="#{common.delete}"><i
-                                                                    class="bi bi-trash"></i></button>
+                                                        <td class="text-center member-actions" th:data-label="#{common.actions}">
+                                                            <div class="category-row-actions">
+                                                                <button type="button" class="member-icon-action"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"
+                                                                    th:title="#{common.update}"
+                                                                    th:aria-label="#{common.update}"><i
+                                                                        class="bi bi-pencil-square"></i></button>
+                                                                <button type="button"
+                                                                    class="member-icon-action member-icon-action-danger"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminDeleteGenreModal' + ${genre.genreId}"
+                                                                    th:title="#{common.delete}"
+                                                                    th:aria-label="#{common.delete}"><i
+                                                                        class="bi bi-trash"></i></button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 </th:block>
@@ -897,20 +908,22 @@
                         </div> <!-- close admin-categories-pane -->
 
                         <div th:if="${param.tab != null && param.tab[0] == 'audit'}" id="admin-audit-pane">
-                            <header
-                                class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color"
-                                style="gap: 24px;">
-                                <div>
-                                    <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336"
-                                        style="font-size: 30px; font-weight: 500;"><span
+                            <header class="member-page-header copy-management-hero">
+                                <div class="copy-management-hero-copy">
+                                    <div class="member-page-eyebrow"
+                                        th:text="#{librarian.inventory.booksManagement}">BOOK INVENTORY</div>
+                                    <h1 class="member-page-title"><span
                                             th:text="#{librarian.inventory.tab.audit}">BookItem Management</span></h1>
-                                    <p class="text-muted mb-0" th:text="#{librarian.inventory.bookItemDescription}">Add
+                                    <p class="member-page-description" th:text="#{librarian.inventory.bookItemDescription}">Add
                                         and manage physical copies for each book title.</p>
                                 </div>
+                                <div class="copy-management-hero-decoration" aria-hidden="true">
+                                    <i class="bi bi-collection"></i>
+                                </div>
                             </header>
-                            <div class="member-data-card mb-4">
+                            <div class="member-data-card copy-management-card mb-4">
                                 <div class="member-data-card-body">
-                                    <div class="member-summary-chips"
+                                    <div class="member-summary-chips copy-summary-chips"
                                         th:aria-label="#{librarian.inventory.copyOverview}">
                                         <span><strong th:text="${inventoryStatusCounts['Total']} ?: 0">0</strong><span
                                                 th:text="#{librarian.inventory.totalCopies}">Total Copies</span></span>
@@ -947,8 +960,8 @@
                                             </div>
                                         </form>
                                     </div>
-                                    <div class="table-responsive member-table-wrap">
-                                        <table class="table table-hover align-middle stable-table-layout member-table">
+                                    <div class="table-responsive member-table-wrap copy-table-wrap">
+                                        <table class="table table-hover align-middle stable-table-layout member-table copy-management-table">
                                             <thead class="table-light text-uppercase small text-muted">
                                                 <tr>
                                                     <th th:text="#{common.number}">No.</th>
@@ -963,9 +976,10 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr th:each="book, stat : ${books.content}">
-                                                    <td th:text="${stat.index + 1 + (books.number * books.size)}">1</td>
-                                                    <td>
+                                                <tr class="copy-data-row" th:each="book, stat : ${books.content}">
+                                                    <td th:data-label="#{common.number}"
+                                                        th:text="${stat.index + 1 + (books.number * books.size)}">1</td>
+                                                    <td th:data-label="#{librarian.inventory.cover}">
                                                         <img th:if="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}"
                                                             th:src="${book.coverImageUrl}" class="inventory-cover-frame"
                                                             th:alt="#{book.coverAlt}">
@@ -973,39 +987,41 @@
                                                             class="inventory-cover-frame inventory-cover-frame--placeholder">
                                                             <i class="bi bi-book"></i></div>
                                                     </td>
-                                                    <td>
+                                                    <td th:data-label="#{common.book}">
                                                         <div class="fw-bold text-classic" th:text="${book.title}">Book
                                                             title</div>
                                                         <div class="small text-muted"
                                                             th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
                                                             Genre</div>
                                                     </td>
-                                                    <td class="text-center">
+                                                    <td class="text-center" th:data-label="#{librarian.inventory.totalCopies}">
                                                         <span class="status-badge"
                                                             th:classappend="${(bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0) == 0} ? ' status-zero' : ' status-active'"
                                                             th:text="${bookTotalQuantities[book.bookId] != null ? bookTotalQuantities[book.bookId] : 0}">0</span>
                                                     </td>
-                                                    <td class="text-center">
+                                                    <td class="text-center" th:data-label="#{librarian.inventory.lendableCopies}">
                                                         <span class="status-badge"
                                                             th:with="lendableCopies=${bookItemsByBookId[book.bookId] != null ? #lists.size(bookItemsByBookId[book.bookId].?[status == 'Available']) : 0}"
                                                             th:classappend="${lendableCopies == 0} ? ' status-zero' : ' status-active'"
                                                             th:text="${lendableCopies}">0</span>
                                                     </td>
-                                                    <td class="text-end member-actions">
-                                                        <button type="button" class="member-icon-action"
-                                                            data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#addCopiesModal' + book.bookId}"
-                                                            th:title="#{librarian.inventory.addCopies}"
-                                                            th:aria-label="#{librarian.inventory.addCopies}">
-                                                            <i class="bi bi-plus-lg"></i>
-                                                        </button>
-                                                        <button type="button" class="member-icon-action"
-                                                            data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
-                                                            th:title="#{librarian.inventory.viewCopies}"
-                                                            th:aria-label="#{librarian.inventory.viewCopies}">
-                                                            <i class="bi bi-eye"></i>
-                                                        </button>
+                                                    <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                                        <div class="copy-row-actions">
+                                                            <button type="button" class="member-icon-action copy-add-action"
+                                                                data-bs-toggle="modal"
+                                                                th:data-bs-target="${'#addCopiesModal' + book.bookId}"
+                                                                th:title="#{librarian.inventory.addCopies}"
+                                                                th:aria-label="#{librarian.inventory.addCopies}">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                            <button type="button" class="member-icon-action"
+                                                                data-bs-toggle="modal"
+                                                                th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
+                                                                th:title="#{librarian.inventory.viewCopies}"
+                                                                th:aria-label="#{librarian.inventory.viewCopies}">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                                 <tr th:if="${books == null or books.totalElements == 0}">
@@ -1022,24 +1038,24 @@
                                         <ul class="pagination justify-content-center mb-0">
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=0, keyword=${keyword}, bookCondition=${bookCondition})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=0, keyword=${keyword}, bookCondition=${bookCondition})}"
                                                     th:text="#{common.first}">First</a></li>
                                             <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${books.number - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
                                                         class="bi bi-chevron-left"></i></a></li>
                                             <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}"
                                                 th:classappend="${i == books.number ? 'active' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${i}, keyword=${keyword}, bookCondition=${bookCondition})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${i}, keyword=${keyword}, bookCondition=${bookCondition})}"
                                                     th:text="${i + 1}">1</a></li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.number + 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${books.number + 1}, keyword=${keyword}, bookCondition=${bookCondition})}"><i
                                                         class="bi bi-chevron-right"></i></a></li>
                                             <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                     class="page-link page-link-classic"
-                                                    th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit', bookPage=${books.totalPages - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"
+                                                    th:href="@{/librarian/books(subsection='inventory', tab='audit', bookPage=${books.totalPages - 1}, keyword=${keyword}, bookCondition=${bookCondition})}"
                                                     th:text="#{common.last}">Last</a></li>
                                         </ul>
                                     </nav>
@@ -1715,25 +1731,24 @@
             </div> <!-- Close inventory panel -->
 
             <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
-                <header class="d-flex align-items-end justify-content-between mb-4 pb-3 border-bottom border-color"
-                    style="gap: 24px;">
-                    <div>
-                        <h1 class="mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336"
-                            style="font-size: 30px; font-weight: 500;"><span
+                <header class="member-page-header storage-management-hero">
+                    <div class="storage-management-hero-copy">
+                        <div class="member-page-eyebrow"
+                            th:text="#{librarian.inventory.booksManagement}">BOOK INVENTORY</div>
+                        <h1 class="member-page-title"><span
                                 th:text="#{librarian.storage.management}">Bookshelf Management</span></h1>
-                        <p class="text-muted mb-0" th:text="#{librarian.storage.description}">Create and manage book
+                        <p class="member-page-description" th:text="#{librarian.storage.description}">Create and manage book
                             storage locations.</p>
                     </div>
-                    <button type="button" class="btn btn-classic text-nowrap" data-bs-toggle="modal"
-                        data-bs-target="#addStorageModal"
-                        style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                    <button type="button" class="btn member-primary-action storage-add-action text-nowrap"
+                        data-bs-toggle="modal" data-bs-target="#addStorageModal">
                         <i class="bi bi-plus-lg" aria-hidden="true"></i> <span th:text="#{librarian.storage.addNew}">Add
                             New Location</span>
                     </button>
                 </header>
-                <div class="member-data-card mb-4">
+                <div class="member-data-card storage-management-card mb-4">
                     <div class="member-data-card-body">
-                        <div class="member-summary-chips" th:aria-label="#{librarian.storage.summary}">
+                        <div class="member-summary-chips storage-summary-chips" th:aria-label="#{librarian.storage.summary}">
                             <span>
                                 <strong th:text="${shelfPage != null ? shelfPage.totalElements : 0}">0</strong>
                                 <span th:text="#{librarian.storage.totalShelves}">Total Shelves</span>
@@ -1753,8 +1768,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive member-table-wrap">
-                            <table class="table table-hover align-middle stable-table-layout member-table">
+                        <div class="table-responsive member-table-wrap storage-table-wrap">
+                            <table class="table table-hover align-middle stable-table-layout member-table storage-management-table">
                                 <colgroup>
                                     <col class="bookshelf-name-column">
                                     <col class="bookshelf-location-column">
@@ -1773,22 +1788,26 @@
                                 <tbody>
                                     <tr th:each="shelf : ${shelfPage.content}" class="bookshelf-data-row"
                                         th:data-search-text="${shelf.shelfName + ' ' + (shelf.location != null ? shelf.location : '')}">
-                                        <td th:text="${shelf.shelfName}">Location name</td>
-                                        <td th:text="${shelf.location}">Location</td>
-                                        <td class="text-center fw-semibold"
+                                        <td th:data-label="#{librarian.storage.shelfName}"
+                                            th:text="${shelf.shelfName}">Location name</td>
+                                        <td th:data-label="#{librarian.storage.location}"
+                                            th:text="${shelf.location}">Location</td>
+                                        <td class="text-center fw-semibold" th:data-label="#{librarian.storage.totalBooks}"
                                             th:text="${shelfBookCounts[shelf.shelfId] ?: 0}">0</td>
-                                        <td class="text-end member-actions">
-                                            <button type="button" class="member-icon-action" data-bs-toggle="modal"
-                                                th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
-                                                th:title="#{common.update}" th:aria-label="#{common.update}">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <button type="button" class="member-icon-action member-icon-action-danger"
-                                                data-bs-toggle="modal"
-                                                th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
-                                                th:title="#{common.delete}" th:aria-label="#{common.delete}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                        <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                            <div class="storage-row-actions">
+                                                <button type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                    th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
+                                                    th:title="#{common.update}" th:aria-label="#{common.update}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button type="button" class="member-icon-action member-icon-action-danger"
+                                                    data-bs-toggle="modal"
+                                                    th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
+                                                    th:title="#{common.delete}" th:aria-label="#{common.delete}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr th:if="${shelfPage == null || shelfPage.empty}">
@@ -1813,28 +1832,28 @@
                             <ul class="pagination app-pagination">
                                 <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=0)}"
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=0)}"
                                         th:text="#{common.first}">First</a>
                                 </li>
                                 <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.number - 1})}"><i
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${shelfPage.number - 1})}"><i
                                             class="bi bi-chevron-left"></i></a>
                                 </li>
                                 <li class="page-item" th:each="i : ${#numbers.sequence(0, shelfPage.totalPages - 1)}"
                                     th:classappend="${i == shelfPage.number ? 'active' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${i})}"
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${i})}"
                                         th:text="${i + 1}">1</a>
                                 </li>
                                 <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.number + 1})}"><i
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${shelfPage.number + 1})}"><i
                                             class="bi bi-chevron-right"></i></a>
                                 </li>
                                 <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}">
                                     <a class="page-link page-link-classic"
-                                        th:href="@{/librarian/dashboard(section='books', subsection='storage', shelfPage=${shelfPage.totalPages - 1})}"
+                                        th:href="@{/librarian/books(subsection='storage', shelfPage=${shelfPage.totalPages - 1})}"
                                         th:text="#{common.last}">Last</a>
                                 </li>
                             </ul>

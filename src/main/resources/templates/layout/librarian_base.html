@@ -132,7 +132,7 @@
                 </a>
                 <ul class="collapse sub-menu-list list-unstyled ps-4" id="bookManagementMenu">
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory')}"
+                        <a th:href="@{/librarian/books(subsection='inventory')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab == null} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -140,7 +140,7 @@
                         </a>
                     </li>
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='categories')}"
+                        <a th:href="@{/librarian/books(subsection='inventory', tab='categories')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'categories'} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -148,7 +148,7 @@
                         </a>
                     </li>
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='inventory', tab='audit')}"
+                        <a th:href="@{/librarian/books(subsection='inventory', tab='audit')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'inventory' && param.tab != null && param.tab[0] == 'audit'} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -156,7 +156,7 @@
                         </a>
                     </li>
                     <li class="menu-item my-1">
-                        <a th:href="@{/librarian/dashboard(section='books', subsection='storage')}"
+                        <a th:href="@{/librarian/books(subsection='storage')}"
                             class="menu-link py-2 librarian-base-a-background-border-left-min-height-04"
                             th:classappend="${param.subsection != null && param.subsection[0] == 'storage'} ? 'active-submenu' : ''">
                             <span class="menu-text u-font-size-0-95rem-b8088cad"
@@ -306,6 +306,33 @@
         </div>
     </div>
 
+    <!-- Canonical staff feedback toast, visually aligned with the member layout. -->
+    <div id="appFeedbackRegion" class="app-feedback-region" aria-live="polite" aria-atomic="true"
+        th:data-success-title="#{feedback.successTitle}" th:data-error-title="#{feedback.errorTitle}"
+        th:data-warning-title="#{feedback.warningTitle}" th:data-info-title="#{feedback.infoTitle}">
+        <div id="customToast" class="app-feedback-toast" role="status" hidden>
+            <span class="app-feedback-toast__icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+            <div class="app-feedback-toast__copy">
+                <strong id="toastTitle" class="app-feedback-toast__title"></strong>
+                <span id="toastMessage" class="app-feedback-toast__message"></span>
+            </div>
+            <button type="button" class="app-feedback-toast__close" th:aria-label="#{common.close}">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="staffFeedbackSources" hidden aria-hidden="true">
+        <span th:if="${error != null}" data-app-feedback="error" th:text="${error}"></span>
+        <span th:if="${errorMessage != null}" data-app-feedback="error" th:text="${errorMessage}"></span>
+        <span th:if="${passwordError != null}" data-app-feedback="error" th:text="${passwordError}"></span>
+        <span th:if="${success != null}" data-app-feedback="success" th:text="${success}"></span>
+        <span th:if="${successMessage != null}" data-app-feedback="success" th:text="${successMessage}"></span>
+        <span th:if="${passwordSuccess != null}" data-app-feedback="success" th:text="${passwordSuccess}"></span>
+        <span th:if="${warning != null}" data-app-feedback="warning" th:text="${warning}"></span>
+        <span th:if="${info != null}" data-app-feedback="info" th:text="${info}"></span>
+    </div>
+
     <!-- Scripts -->
     <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
     <script th:replace="~{fragments/language-switcher :: script}"></script>
@@ -371,6 +398,7 @@
     <script th:src="@{/js/dynamic-presentation.js}"></script>
     <script th:src="@{/js/confirmation-dialog.js}"></script>
     <script th:src="@{/js/form-loading.js}"></script>
+    <script th:src="@{/js/staff-feedback-toast.js}"></script>
 </body>
 
 </html>

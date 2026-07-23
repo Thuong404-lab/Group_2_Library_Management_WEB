@@ -165,11 +165,8 @@ public class AuthServiceImpl implements AuthService {
             String ipAddress,
             String userAgent,
             String description) {
-        User user = userRepository.findById(userId).orElse(null);
-
-        if (user != null) {
-            SystemLog log = new SystemLog(user, actionType, ipAddress, userAgent, description);
-            systemLogRepository.save(log);
+        if (userId != null && userRepository.existsById(userId)) {
+            systemLogRepository.insertAudit(userId, actionType, ipAddress, userAgent, description);
         }
     }
 

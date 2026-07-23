@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content"
+        th:with="activeMenu='books', currentSection='books', currentSubSection=${param.subsection != null ? param.subsection[0] : 'inventory'}"
+        class="member-palette-page member-management-page book-inventory-page">
+        <header class="member-page-header inventory-page-header inventory-hero"
+            th:if="${currentSubSection == 'inventory' and (param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit'))}">
+            <div class="inventory-hero-copy">
+                <div class="member-page-eyebrow" th:text="#{librarian.inventory.booksManagement}">BOOK MANAGEMENT</div>
+                <h1 class="member-page-title" th:text="#{librarian.inventory.heading}">Book Title Management</h1>
+                <p class="member-page-description" th:text="#{librarian.inventory.description}">Add, update, and manage
+                    titles and copies in the library inventory.</p>
+            </div>
+            <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
+                data-bs-target="#addBookModal">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                <span th:text="#{librarian.inventory.addBook}">Add Book</span>
+            </button>
+        </header>
+
+        <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
+
+            <div class="row g-3 mb-4 d-none">
+                <div class="col-md-3">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d">
+                        <div class="text-muted small text-uppercase fw-bold mb-1"
+                            th:text="#{librarian.inventory.totalTitles}">Total Titles</div>
+                        <h4 class="fw-bold mb-0 text-classic app-stat-number"
+                            th:text="${@displayNumber.count(totalBookCount)}">0</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6">
+                        <div class="text-muted small text-uppercase fw-bold mb-1"
+                            th:text="#{librarian.inventory.categories}">Categories</div>
+                        <h4 class="fw-bold mb-0 text-success app-stat-number"
+                            th:text="${@displayNumber.count(totalCategories)}">0</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-0d6efd-important-64ac16c1">
+                        <div class="text-muted small text-uppercase fw-bold mb-1"
+                            th:text="#{librarian.inventory.genres}">Genres</div>
+                        <h4 class="fw-bold mb-0 u-color-0d6efd-7fee07de app-stat-number"
+                            th:text="${@displayNumber.count(totalGenres)}">0</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-fd7e14-important-0fa630a5">
+                        <div class="text-muted small text-uppercase fw-bold mb-1" th:text="#{book.status.available}">
+                            Available</div>
+                        <h4 class="fw-bold mb-0 text-warning app-stat-number"
+                            th:text="${@displayNumber.count(inventoryStatusCounts['Available'])}">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-section selector cards: chỉ hiện khi chưa chọn subsection -->
+            <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}"
+                id="bookSubSectionCards">
+                <div class="col-lg-6">
+                    <div class="card-classic h-100 shadow-sm p-4 admin-books-div-transition-border-left-background-08">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                            <i class="bi bi-book me-2 text-classic"></i><span
+                                th:text="#{librarian.inventory.booksManagement}">Book Management</span>
+                        </h5>
+                        <p class="text-muted mb-3" th:text="#{librarian.inventory.cardDescription}">Add, edit, remove,
+                            and manage book copies in inventory.</p>
+                        <a th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory')} : @{/librarian/books(subsection='inventory')}" class="btn btn-outline-classic btn-sm">
+                            <span th:text="#{librarian.inventory.open}">Open</span> <i
+                                class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card-classic h-100 shadow-sm p-4 admin-books-div-transition-border-left-background-09">
+                        <h5 class="fw-bold mb-2 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                            <i class="bi bi-bookshelf me-2 text-classic"></i><span
+                                th:text="#{librarian.storage.management}">Bookshelf Management</span>
+                        </h5>
+                        <p class="text-muted mb-3" th:text="#{librarian.storage.description}">Create and manage book
+                            storage locations.</p>
+                        <a th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='storage')} : @{/librarian/books(subsection='storage')}" class="btn btn-outline-classic btn-sm">
+                            <span th:text="#{librarian.inventory.open}">Open</span> <i
+                                class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
+            <div class="member-data-card inventory-management-card" th:if="${currentSubSection == 'inventory'}"
+                th:classappend="${param.tab != null and param.tab[0] == 'categories'} ? ' inventory-container-cardless'">
+                <div class="member-data-card-body"
+                    th:classappend="${param.tab != null and param.tab[0] == 'categories'} ? ' inventory-container-body-cardless'">
+
+                    <!-- Librarian layout maps these flash attributes globally. Admin consumes
+                         the same attributes here through the shared AppFeedback component. -->
+                    <div class="d-none" th:if="${staffPrefix == '/admin'}" aria-hidden="true">
+                        <span th:if="${error != null}" data-app-feedback="error" th:text="${error}"></span>
+                        <span th:if="${success != null}" data-app-feedback="success" th:text="${success}"></span>
+                        <span th:if="${warning != null}" data-app-feedback="warning" th:text="${warning}"></span>
+                        <span th:if="${info != null}" data-app-feedback="info" th:text="${info}"></span>
+                    </div>
+
+                    <!-- Inventory content is selected from the Admin sidebar. -->
+                    <div id="bookInventoryPanel">
+                        <div class="tab-content">
+                            <div class="tab-pane fade" id="admin-books-pane" role="tabpanel"
+                                th:classappend="${param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit')} ? ' show active'">
+
+                                <!-- Summary Chips -->
+                                <div class="member-summary-chips inventory-summary" th:aria-label="#{librarian.inventory.summary}">
+                                    <span>
+                                        <strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(totalBookCount)}">0</strong> <span
+                                            th:text="#{librarian.inventory.totalTitles}">Total Titles</span>
+                                    </span>
+                                    <span>
+                                        <strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0)}">0</strong>
+                                        <span th:text="#{librarian.inventory.totalCopies}">Total Copies</span>
+                                    </span>
+                                    <span>
+                                        <strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0)}">0</strong>
+                                        <span th:text="#{book.status.available}">Available</span>
+                                    </span>
+                                    <span>
+                                        <strong class="app-stat-number"
+                                            th:text="${@displayNumber.count((inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0) - (inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0))}">0</strong>
+                                        <span th:text="#{book.status.unavailable}">Unavailable</span>
+                                    </span>
+                                </div>
+
+                                <!-- Toolbar (Search & Add Button) -->
+                                <div class="member-toolbar">
+                                    <form class="member-search-form" method="get" th:action="${staffPrefix == '/admin'} ? @{/admin/books} : @{/librarian/books}">
+                                        <div class="input-group member-search-group">
+                                            <span class="input-group-text"><i class="bi bi-search"
+                                                    aria-hidden="true"></i></span>
+                                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                                                th:value="${keyword}"
+                                                th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                            <select class="form-select member-filter-select" id="bookAvailabilityFilter"
+                                                name="availability"
+                                                th:aria-label="#{librarian.inventory.filterAvailability}">
+                                                <option value=""
+                                                    th:selected="${param.availability == null || #strings.isEmpty(param.availability[0])}"
+                                                    th:text="#{librarian.inventory.allAvailability}">All availability
+                                                </option>
+                                                <option value="Available"
+                                                    th:selected="${param.availability != null && param.availability[0] == 'Available'}"
+                                                    th:text="#{book.status.available}">Available</option>
+                                                <option value="Unavailable"
+                                                    th:selected="${param.availability != null && param.availability[0] == 'Unavailable'}"
+                                                    th:text="#{book.status.unavailable}">Unavailable</option>
+                                            </select>
+                                            <button type="submit" class="btn member-search-button text-nowrap"
+                                                th:text="#{common.search}">Search</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="table-responsive member-table-wrap">
+                                    <table class="table table-hover align-middle stable-table-layout member-table">
+                                        <colgroup>
+                                            <col class="u-width-5-dccc3412">
+                                            <col class="u-width-7-2d9383cf">
+                                            <col class="u-width-25-84a0e8c4">
+                                            <col class="u-width-12-392c6809">
+                                            <col class="u-width-25-84a0e8c4">
+                                            <col class="u-width-11-ed323c3f">
+                                            <col class="u-width-15-f7f760e2">
+                                        </colgroup>
+                                        <thead class="table-light text-uppercase small text-muted">
+                                            <tr>
+                                                <th th:text="#{common.number}">No.</th>
+                                                <th th:text="#{librarian.inventory.cover}">Cover</th>
+                                                <th th:text="#{common.book}">Book</th>
+                                                <th>ISBN</th>
+                                                <th th:text="#{librarian.inventory.bookDescription}">Description</th>
+                                                <th th:text="#{common.status}">Status</th>
+                                                <th class="text-end" th:text="#{common.actions}">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
+                                                th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}, bookAvailable=${availableCopies > 0}"
+                                                th:data-book-availability="${bookAvailable ? 'Available' : 'Unavailable'}">
+                                                <td class="ps-3 fw-bold app-number" th:data-label="#{common.number}"
+                                                    th:text="${@displayNumber.count(iterStat.index + 1 + (books.number * books.size))}">
+                                                    1</td>
+                                                <td th:data-label="#{librarian.inventory.cover}">
+                                                    <img th:if="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
+                                                        th:src="${book.coverImageUrl}" th:alt="#{book.coverAlt}"
+                                                        class="inventory-cover-frame">
+                                                    <div th:unless="${book.coverImageUrl != null && !book.coverImageUrl.isEmpty()}"
+                                                        class="inventory-cover-frame inventory-cover-frame--placeholder">
+                                                        <i class="bi bi-book"></i>
+                                                    </div>
+                                                </td>
+                                                <td th:data-label="#{common.book}">
+                                                    <div class="fw-bold text-classic" th:text="${book.title}">Book title
+                                                    </div>
+                                                    <div class="small text-muted"
+                                                        th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
+                                                        Genre</div>
+                                                </td>
+                                                <td class="small text-muted app-code-number" data-label="ISBN"
+                                                    th:text="${book.isbn != null and !book.isbn.isBlank() ? book.isbn : '—'}">
+                                                    ISBN</td>
+                                                <td class="small text-muted text-truncate" th:data-label="#{librarian.inventory.bookDescription}"
+                                                    th:text="${!#strings.isEmpty(book.description) ? book.description : #messages.msg('librarian.inventory.noDescription')}"
+                                                    th:title="${book.description}">Description</td>
+                                                <td th:data-label="#{common.status}">
+                                                    <span class="status-badge"
+                                                        th:classappend="${bookAvailable} ? ' status-active' : ' status-zero'"
+                                                        th:text="${bookAvailable} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
+                                                </td>
+                                                <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                                    <button type="button" class="member-icon-action"
+                                                        data-bs-toggle="modal"
+                                                        th:data-bs-target="${'#editBookModal' + book.bookId}"
+                                                        th:title="#{common.update}" th:aria-label="#{common.update}">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <button type="button"
+                                                        class="member-icon-action member-icon-action-danger"
+                                                        data-bs-toggle="modal"
+                                                        th:data-bs-target="${'#deleteBookModal' + book.bookId}"
+                                                        th:title="#{common.delete}" th:aria-label="#{common.delete}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${books == null || books.totalElements == 0}">
+                                                <td colspan="7" class="text-center text-muted py-5">
+                                                    <i class="bi bi-book fs-2 d-block mb-2"></i>
+                                                    <span th:text="#{librarian.inventory.empty}">No books in
+                                                        inventory.</span>
+                                                </td>
+                                            </tr>
+                                            <tr id="bookFilterEmptyState" hidden>
+                                                <td colspan="7" class="text-center text-muted py-5">
+                                                    <i class="bi bi-funnel fs-2 d-block mb-2" aria-hidden="true"></i>
+                                                    <span th:text="#{librarian.inventory.emptyFiltered}">No books match
+                                                        this availability filter.</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <nav class="member-pagination app-pagination-region"
+                                    th:if="${books != null && books.totalPages > 1}"
+                                    th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
+                                    <ul class="pagination app-pagination">
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
+                                            <a class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})} : @{/librarian/books(subsection='inventory', bookPage=0, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                th:text="#{common.first}">First</a>
+                                        </li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}">
+                                            <a class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})} : @{/librarian/books(subsection='inventory', bookPage=${books.number - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
+                                                    class="bi bi-chevron-left"></i></a>
+                                        </li>
+                                        <li class="page-item disabled" th:if="${startPage > 0}"><span
+                                                class="page-link page-link-classic">…</span></li>
+                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                            th:classappend="${i == books.number ? 'active' : ''}">
+                                            <a class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})} : @{/librarian/books(subsection='inventory', bookPage=${i}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                th:text="${i + 1}">1</a>
+                                        </li>
+                                        <li class="page-item disabled" th:if="${endPage < books.totalPages - 1}"><span
+                                                class="page-link page-link-classic">…</span></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
+                                            <a class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})} : @{/librarian/books(subsection='inventory', bookPage=${books.number + 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"><i
+                                                    class="bi bi-chevron-right"></i></a>
+                                        </li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}">
+                                            <a class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})} : @{/librarian/books(subsection='inventory', bookPage=${books.totalPages - 1}, keyword=${keyword}, availability=${param.availability != null ? param.availability[0] : ''})}"
+                                                th:text="#{common.last}">Last</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+
+                            <div class="tab-pane fade" id="admin-categories-pane" role="tabpanel"
+                                th:classappend="${param.tab != null and param.tab[0] == 'categories'} ? ' show active'">
+                                <header class="member-page-header inventory-page-header inventory-hero inventory-category-header">
+                                    <div class="inventory-hero-copy">
+                                        <div class="member-page-eyebrow" th:text="#{librarian.inventory.booksManagement}">BOOK MANAGEMENT</div>
+                                        <h1 class="member-page-title"><span
+                                                th:text="#{librarian.inventory.tab.categories}">Category &amp; Genre
+                                                Management</span></h1>
+                                        <p class="member-page-description" th:text="#{librarian.inventory.categoryDescription}">
+                                            Manage categories and genres for books.</p>
+                                    </div>
+                                    <div class="book-category-actions">
+                                        <button type="button" class="btn member-primary-action book-category-action"
+                                            data-bs-toggle="modal" data-bs-target="#addCategoryModal"><i
+                                                class="bi bi-plus-lg" aria-hidden="true"></i> <span
+                                                th:text="#{librarian.inventory.addCategory}">Add
+                                                Category</span></button>
+                                        <button type="button" class="btn member-primary-action book-category-action"
+                                            data-bs-toggle="modal" data-bs-target="#addGenreModal"><i
+                                                class="bi bi-plus-lg" aria-hidden="true"></i> <span
+                                                th:text="#{librarian.inventory.addGenre}">Add Genre</span></button>
+                                    </div>
+                                </header>
+                                <div class="member-data-card">
+                                    <div class="member-data-card-body">
+                                        <div class="member-summary-chips"
+                                            th:aria-label="#{librarian.inventory.categorySummary}">
+                                            <span><strong class="app-stat-number"
+                                                    th:text="${@displayNumber.count(totalCategories)}">0</strong> <span
+                                                    th:text="#{librarian.inventory.categories}">Categories</span></span>
+                                            <span><strong class="app-stat-number"
+                                                    th:text="${@displayNumber.count(totalGenres)}">0</strong> <span
+                                                    th:text="#{librarian.inventory.genres}">Genres</span></span>
+                                        </div>
+                                        <div class="member-toolbar">
+                                            <div class="member-search-form">
+                                                <div class="input-group member-search-group">
+                                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                                    <input type="search" class="form-control border-start-0 ps-0"
+                                                        id="categoryGenreSearch"
+                                                        th:placeholder="#{librarian.inventory.categorySearchPlaceholder}">
+                                                    <button type="button" class="btn member-search-button"
+                                                        id="categoryGenreSearchButton"
+                                                        th:text="#{common.search}">Search</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive member-table-wrap category-table-wrap">
+                                            <table class="table table-hover align-middle mb-0 member-table category-management-table">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th th:text="#{librarian.inventory.categoryGenre}">Category /
+                                                            Genre</th>
+                                                        <th class="text-center admin-books-th-width-19"
+                                                            th:text="#{common.actions}">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <th:block th:each="category : ${categories}">
+                                                        <tr class="bg-white admin-books-tr-cursor-20 category-data-row"
+                                                            data-bs-toggle="collapse"
+                                                            th:data-bs-target="'.admin-category-genres-' + ${category.categoryId}"
+                                                            th:data-category-id="${category.categoryId}"
+                                                            th:data-search-name="${#strings.toLowerCase(category.categoryName)}">
+                                                            <td class="fw-bold u-color-4a3b32-8f35ff96"
+                                                                th:data-label="#{librarian.inventory.categoryGenre}">
+                                                                <span th:text="${category.categoryName}">Category</span>
+                                                                <i class="bi bi-chevron-down ms-2 small text-muted"></i>
+                                                            </td>
+                                                            <td class="text-center member-actions"
+                                                                th:data-label="#{common.actions}"
+                                                                onclick="event.stopPropagation()">
+                                                                <button type="button" class="member-icon-action"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminEditCategoryModal' + ${category.categoryId}"
+                                                                    th:title="#{common.update}"
+                                                                    th:aria-label="#{common.update}"><i
+                                                                        class="bi bi-pencil-square"></i></button>
+                                                                <button type="button"
+                                                                    class="member-icon-action member-icon-action-danger"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminDeleteCategoryModal' + ${category.categoryId}"
+                                                                    th:title="#{common.delete}"
+                                                                    th:aria-label="#{common.delete}"><i
+                                                                        class="bi bi-trash"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr th:each="genre : ${genres}"
+                                                            th:if="${genre.category != null and genre.category.categoryId == category.categoryId}"
+                                                            class="collapse genre-data-row"
+                                                            th:classappend="'admin-category-genres-' + ${category.categoryId}"
+                                                            th:data-parent-category-id="${category.categoryId}"
+                                                            th:data-search-name="${#strings.toLowerCase(genre.genreName)}">
+                                                            <td th:data-label="#{librarian.inventory.categoryGenre}"><span class="genre-name"
+                                                                    th:text="${genre.genreName}">Genre</span></td>
+                                                            <td class="text-center member-actions" th:data-label="#{common.actions}">
+                                                                <button type="button" class="member-icon-action"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#viewGenreTitleCountModal' + ${genre.genreId}"
+                                                                    th:title="#{librarian.inventory.viewGenreTitleCount}"
+                                                                    th:aria-label="#{librarian.inventory.viewGenreTitleCount}"><i
+                                                                        class="bi bi-eye"></i></button>
+                                                                <button type="button" class="member-icon-action"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminEditGenreModal' + ${genre.genreId}"
+                                                                    th:title="#{common.update}"
+                                                                    th:aria-label="#{common.update}"><i
+                                                                        class="bi bi-pencil-square"></i></button>
+                                                                <button type="button"
+                                                                    class="member-icon-action member-icon-action-danger"
+                                                                    data-bs-toggle="modal"
+                                                                    th:data-bs-target="'#adminDeleteGenreModal' + ${genre.genreId}"
+                                                                    th:title="#{common.delete}"
+                                                                    th:aria-label="#{common.delete}"><i
+                                                                        class="bi bi-trash"></i></button>
+                                                            </td>
+                                                        </tr>
+                                                    </th:block>
+                                                    <tr th:if="${#lists.isEmpty(categories)}">
+                                                        <td colspan="2" class="text-center text-muted py-4"
+                                                            th:text="#{librarian.inventory.noCategories}">No categories
+                                                            have been created.</td>
+                                                    </tr>
+                                                    <tr id="categoryGenreFilterEmptyState" hidden>
+                                                        <td colspan="2" class="text-center text-muted py-5"
+                                                            th:text="#{librarian.inventory.categoryEmptyFiltered}">No
+                                                            categories or genres match this search.</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Modals for Edit/Delete Categories -->
+                                <th:block th:each="category : ${categories}">
+                                    <div class="modal fade" th:id="${'adminEditCategoryModal' + category.categoryId}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold text-classic"
+                                                        th:text="#{librarian.inventory.editCategory}">Edit Category</h5>
+                                                </div>
+                                                <form
+                                                    th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/categories/edit/{id}(id=${category.categoryId})} : @{/librarian/inventory/categories/edit/{id}(id=${category.categoryId})}"
+                                                    method="post" onsubmit="validateCategoryGenreForm(event, this)"
+                                                    novalidate>
+                                                    <div class="modal-body px-4 pt-4 pb-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small"><span
+                                                                    th:text="#{librarian.inventory.categoryName}">Category
+                                                                    Name</span> <span
+                                                                    class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control"
+                                                                style="background-color: white; border-radius: 8px;"
+                                                                name="name" th:value="${category.categoryName}" required
+                                                                maxlength="20"
+                                                                oninput="validateCategoryGenreName(this)">
+                                                            <div class="invalid-feedback"
+                                                                th:text="#{librarian.inventory.validation.name}">Names
+                                                                may contain letters and spaces only.</div>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="modal-footer border-top-0 pt-3 pb-4 px-4 justify-content-end">
+                                                        <button type="button" class="btn btn-light border shadow-sm"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn btn-classic px-4"
+                                                            th:text="#{common.saveChanges}">Save Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal fade" th:id="${'adminDeleteCategoryModal' + category.categoryId}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header border-bottom-0 pb-0">
+                                                </div>
+                                                <div class="modal-body text-center pb-4">
+                                                    <i class="bi bi-exclamation-circle text-danger mb-3"
+                                                        style="font-size: 3rem;"></i>
+                                                    <h5 class="fw-bold mb-3"
+                                                        th:text="#{librarian.inventory.deleteCategoryTitle}">Confirm
+                                                        Deletion</h5>
+                                                    <p class="text-muted mb-4"
+                                                        th:text="#{librarian.inventory.deleteCategoryConfirm}">Are you
+                                                        sure you want to delete this category?</p>
+                                                    <form class="d-inline"
+                                                        th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/categories/delete/{id}(id=${category.categoryId})} : @{/librarian/inventory/categories/delete/{id}(id=${category.categoryId})}"
+                                                        method="post">
+                                                        <button type="button"
+                                                            class="btn btn-light border shadow-sm px-4 me-2"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger px-4"
+                                                            th:text="#{common.delete}">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+
+                                <!-- Modals for Edit/Delete Genres -->
+                                <th:block th:each="genre : ${genres}">
+                                    <div class="modal fade" th:id="${'viewGenreTitleCountModal' + genre.genreId}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold text-classic"
+                                                        th:text="#{librarian.inventory.genreTitleCountTitle}">Titles in genre</h5>
+                                                </div>
+                                                <div class="modal-body px-4 py-4">
+                                                    <div class="genre-books-modal-name mb-3" th:text="${genre.genreName}">Genre</div>
+                                                    <div class="table-responsive genre-books-table-wrap">
+                                                        <table class="table align-middle mb-0 genre-books-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th scope="col" class="text-center" th:text="#{librarian.inventory.genreBooks.no}">No</th>
+                                                                    <th scope="col" class="text-center" th:text="#{librarian.inventory.genreBooks.image}">Image</th>
+                                                                    <th scope="col" class="text-center" th:text="#{librarian.inventory.genreBooks.totalQuantity}">Total quantity</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr th:each="genreBook, iteration : ${genreBooks != null ? genreBooks[genre.genreId] : null}">
+                                                                    <td class="text-center" th:text="${iteration.count}">1</td>
+                                                                    <td class="text-center">
+                                                                        <img class="genre-books-cover"
+                                                                            th:src="${genreBook.coverImageUrl != null and !#strings.isEmpty(genreBook.coverImageUrl) ? genreBook.coverImageUrl : '/images/book-cover-placeholder.svg'}"
+                                                                            th:alt="${genreBook.title}" th:title="${genreBook.title}"
+                                                                            onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
+                                                                    </td>
+                                                                    <td class="text-center fw-semibold"
+                                                                        th:text="${allBookTotalQuantities != null ? (allBookTotalQuantities[genreBook.bookId] ?: 0) : 0}">0</td>
+                                                                </tr>
+                                                                <tr th:if="${genreBooks == null or genreBooks[genre.genreId] == null or #lists.isEmpty(genreBooks[genre.genreId])}">
+                                                                    <td colspan="3" class="text-center text-muted py-4"
+                                                                        th:text="#{librarian.inventory.genreBooks.empty}">No books in this genre.</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer justify-content-center">
+                                                    <button type="button" class="btn btn-light border shadow-sm px-4"
+                                                        data-bs-dismiss="modal" th:text="#{common.close}">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal fade" th:id="${'adminEditGenreModal' + genre.genreId}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold text-classic"
+                                                        th:text="#{librarian.inventory.editGenre}">Edit Genre</h5>
+                                                </div>
+                                                <form
+                                                    th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/genres/edit/{id}(id=${genre.genreId})} : @{/librarian/inventory/genres/edit/{id}(id=${genre.genreId})}"
+                                                    method="post" onsubmit="validateCategoryGenreForm(event, this)"
+                                                    novalidate>
+                                                    <div class="modal-body px-4 pt-4 pb-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small"><span
+                                                                    th:text="#{librarian.inventory.parentCategory}">Category</span>
+                                                                <span class="text-danger">*</span></label>
+                                                            <select class="form-select form-control"
+                                                                style="background-color: white; border-radius: 8px;"
+                                                                name="categoryId" required
+                                                                onchange="validateCategoryGenreSelect(this)">
+                                                                <option th:each="option : ${categories}"
+                                                                    th:value="${option.categoryId}"
+                                                                    th:text="${option.categoryName}"
+                                                                    th:selected="${genre.category != null and genre.category.categoryId == option.categoryId}">
+                                                                </option>
+                                                            </select>
+                                                            <div class="invalid-feedback"
+                                                                th:text="#{backend.inventory.categoryRequired}">Please
+                                                                select a category.</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold small"><span
+                                                                    th:text="#{librarian.inventory.genreName}">Genre
+                                                                    Name</span> <span
+                                                                    class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control"
+                                                                style="background-color: white; border-radius: 8px;"
+                                                                name="name" th:value="${genre.genreName}" required
+                                                                maxlength="20"
+                                                                oninput="validateCategoryGenreName(this)">
+                                                            <div class="invalid-feedback"
+                                                                th:text="#{librarian.inventory.validation.name}">Names
+                                                                may contain letters and spaces only.</div>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="modal-footer border-top-0 pt-3 pb-4 px-4 justify-content-end">
+                                                        <button type="button" class="btn btn-light border shadow-sm"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn btn-classic px-4"
+                                                            th:text="#{common.saveChanges}">Save Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal fade" th:id="${'adminDeleteGenreModal' + genre.genreId}"
+                                        tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header border-bottom-0 pb-0">
+                                                </div>
+                                                <div class="modal-body text-center pb-4">
+                                                    <i class="bi bi-exclamation-circle text-danger mb-3"
+                                                        style="font-size: 3rem;"></i>
+                                                    <h5 class="fw-bold mb-3"
+                                                        th:text="#{librarian.inventory.deleteGenreTitle}">Confirm
+                                                        Deletion</h5>
+                                                    <p class="text-muted mb-4"
+                                                        th:text="#{librarian.inventory.deleteGenreConfirm}">Are you sure
+                                                        you want to delete this genre?</p>
+                                                    <form class="d-inline"
+                                                        th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/genres/delete/{id}(id=${genre.genreId})} : @{/librarian/inventory/genres/delete/{id}(id=${genre.genreId})}"
+                                                        method="post">
+                                                        <button type="button"
+                                                            class="btn btn-light border shadow-sm px-4 me-2"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger px-4"
+                                                            th:text="#{common.delete}">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </div>
+
+                            <div class="tab-pane fade" id="admin-audit-pane" role="tabpanel"
+                                th:classappend="${param.tab != null and param.tab[0] == 'audit'} ? ' show active'">
+                                <header class="member-page-header inventory-page-header inventory-hero inventory-copy-header">
+                                    <div class="inventory-hero-copy">
+                                        <div class="member-page-eyebrow" th:text="#{librarian.inventory.booksManagement}">BOOK MANAGEMENT</div>
+                                    <h1 class="member-page-title" th:text="#{librarian.inventory.tab.audit}">
+                                        BookItem Management</h1>
+                                    <p class="member-page-description" th:text="#{librarian.inventory.bookItemDescription}">Add
+                                        and manage physical copies for each book title.</p>
+                                    </div>
+                                </header>
+                                <div class="member-summary-chips inventory-summary" th:aria-label="#{librarian.inventory.copyOverview}">
+                                    <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Total'])}">0</strong>
+                                        <span th:text="#{librarian.inventory.totalCopies}">Total Copies</span></span>
+                                    <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Available'])}">0</strong>
+                                        <span th:text="#{book.status.available}">Available</span></span>
+                                    <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Borrowed'])}">0</strong>
+                                        <span th:text="#{librarian.inventory.borrowedCopies}">Borrowed</span></span>
+                                </div>
+                                <div class="member-toolbar">
+                                    <form class="member-search-form" method="get" th:action="${staffPrefix == '/admin'} ? @{/admin/books} : @{/librarian/books}">
+                                        <input type="hidden" name="subsection" value="inventory">
+                                        <input type="hidden" name="tab" value="audit">
+                                        <div class="input-group member-search-group">
+                                            <span class="input-group-text"><i class="bi bi-search"
+                                                    aria-hidden="true"></i></span>
+                                            <input class="form-control border-start-0 ps-0" type="search" name="keyword"
+                                                th:value="${keyword}"
+                                                th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                            <select class="form-select member-filter-select" name="bookCondition"
+                                                th:aria-label="#{librarian.inventory.condition}">
+                                                <option value="" th:text="#{librarian.inventory.allConditions}">All
+                                                    conditions</option>
+                                                <option value="New" th:selected="${bookCondition == 'New'}"
+                                                    th:text="#{book.condition.good}">New</option>
+                                                <option value="Minor damage"
+                                                    th:selected="${bookCondition == 'Minor damage'}"
+                                                    th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                                <option value="Severely damaged"
+                                                    th:selected="${bookCondition == 'Severely damaged'}"
+                                                    th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                                <option value="Lost book"
+                                                    th:selected="${bookCondition == 'Lost book'}"
+                                                    th:text="#{book.condition.lost}">Lost book</option>
+                                            </select>
+                                            <button type="submit" class="btn member-search-button text-nowrap"
+                                                th:text="#{common.search}">Search</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="table-responsive member-table-wrap">
+                                    <table class="table table-hover align-middle stable-table-layout member-table copy-title-table">
+                                        <thead class="table-light text-uppercase small text-muted">
+                                            <tr>
+                                                <th th:text="#{common.number}">No.</th>
+                                                <th th:text="#{librarian.inventory.cover}">Cover</th>
+                                                <th th:text="#{common.book}">Book</th>
+                                                <th class="text-center" th:text="#{librarian.inventory.totalCopies}">
+                                                    Total Copies</th>
+                                                <th class="text-center" th:text="#{librarian.inventory.lendableCopies}">
+                                                    Lendable Copies</th>
+                                                <th class="text-end" th:text="#{common.actions}">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="copy-title-row" th:each="book, stat : ${books.content}">
+                                                <td th:data-label="#{common.number}" th:text="${stat.index + 1 + (books.number * books.size)}">1</td>
+                                                <td th:data-label="#{librarian.inventory.cover}">
+                                                    <img th:if="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}"
+                                                        th:src="${book.coverImageUrl}" class="inventory-cover-frame"
+                                                        th:alt="#{book.coverAlt}">
+                                                    <div th:unless="${book.coverImageUrl != null and !book.coverImageUrl.isEmpty()}"
+                                                        class="inventory-cover-frame inventory-cover-frame--placeholder">
+                                                        <i class="bi bi-book"></i></div>
+                                                </td>
+                                                <td th:data-label="#{common.book}">
+                                                    <div class="fw-bold text-classic" th:text="${book.title}">Book title
+                                                    </div>
+                                                    <div class="small text-muted"
+                                                        th:text="${book.genre != null ? book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
+                                                        Genre</div>
+                                                </td>
+                                                <td class="text-center" th:data-label="#{librarian.inventory.totalCopies}"><span class="status-badge app-number"
+                                                        th:classappend="${(bookTotalQuantities[book.bookId] ?: 0) == 0} ? ' status-zero' : ' status-active'"
+                                                        th:text="${@displayNumber.count(bookTotalQuantities[book.bookId])}">0</span>
+                                                </td>
+                                                <td class="text-center" th:data-label="#{librarian.inventory.lendableCopies}"><span class="status-badge app-number"
+                                                        th:with="lendable=${bookItemsByBookId[book.bookId] != null ? #lists.size(bookItemsByBookId[book.bookId].?[status == 'Available']) : 0}"
+                                                        th:classappend="${lendable == 0} ? ' status-zero' : ' status-active'"
+                                                        th:text="${@displayNumber.count(lendable)}">0</span></td>
+                                                <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                                    <button type="button" class="member-icon-action"
+                                                        data-bs-toggle="modal"
+                                                        th:data-bs-target="${'#addCopiesModal' + book.bookId}"
+                                                        th:title="#{librarian.inventory.addCopies}"><i
+                                                            class="bi bi-plus-lg"></i></button>
+                                                    <button type="button" class="member-icon-action"
+                                                        data-bs-toggle="modal"
+                                                        th:data-bs-target="${'#viewCopiesModal' + book.bookId}"
+                                                        th:title="#{librarian.inventory.viewCopies}"
+                                                        th:aria-label="#{librarian.inventory.viewCopies}"><i
+                                                            class="bi bi-eye"></i></button>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${books == null or books.totalElements == 0}">
+                                                <td colspan="6" class="text-center text-muted py-5"
+                                                    th:text="#{librarian.inventory.empty}">No books in inventory.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <nav class="member-pagination app-pagination-region"
+                                    th:if="${books != null and books.totalPages > 1}"
+                                    th:with="startPage=${books.totalPages <= 10 ? 0 : (books.number < 9 ? 0 : (books.number - 8 > books.totalPages - 10 ? books.totalPages - 10 : books.number - 8))}, endPage=${startPage + 9 < books.totalPages ? startPage + 9 : books.totalPages - 1}">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
+                                                class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:text="#{common.first}">First</a></li>
+                                        <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
+                                                class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})}"><i
+                                                    class="bi bi-chevron-left"></i></a></li>
+                                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}"
+                                            th:classappend="${i == books.number ? 'active' : ''}"><a
+                                                class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:text="${i + 1}">1</a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
+                                                class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})}"><i
+                                                    class="bi bi-chevron-right"></i></a></li>
+                                        <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
+                                                class="page-link page-link-classic"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:text="#{common.last}">Last</a></li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg book-form-modal">
+                        <div class="modal-content border-0 shadow"
+                            style="background-color: var(--app-color-canvas, #faf9f5); border-radius: 12px; overflow: hidden;">
+                            <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                                <h5 class="modal-title fw-bold"
+                                    style="color: var(--app-color-coral-active, #cc785c) !important;"
+                                    id="addBookModalLabel">
+                                    <i class="bi bi-book me-2"></i><span th:text="#{librarian.inventory.addBook}">Add
+                                        Book</span>
+                                </h5>
+                            </div>
+                            <form class="add-book-form" th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/add} : @{/librarian/inventory/add}" method="post"
+                                enctype="multipart/form-data" novalidate onsubmit="validateBookForm(event, this)">
+                                <div class="modal-body px-4 pt-4 pb-0">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small"><span th:text="#{book.title}">Book
+                                                    Title</span> <span class="text-danger">*</span></label>
+                                            <input type="text" name="title" class="form-control"
+                                                style="background-color: white; border-radius: 8px;"
+                                                placeholder="Nhập tên sách" required
+                                                oninput="validateTextLength(this, 50)">
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.titleRequired}">Please enter
+                                                book title.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small"><span
+                                                    th:text="#{book.author}">Author</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" name="author" class="form-control"
+                                                style="background-color: white; border-radius: 8px;"
+                                                th:placeholder="#{librarian.inventory.authorPlaceholder}"
+                                                placeholder="Nhập tên tác giả" required
+                                                oninput="validateTextLength(this, 50)">
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.authorRequired}">Please enter
+                                                author name.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small"><span
+                                                    th:text="#{book.genre}">Genre</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="genreId" class="form-select form-control"
+                                                style="background-color: white; border-radius: 8px;" required>
+                                                <option value="" disabled selected
+                                                    th:text="#{librarian.inventory.selectGenre}">Select Genre</option>
+                                                <optgroup th:each="cat : ${categories}" th:label="${cat.categoryName}">
+                                                    <option th:each="genre : ${genres}"
+                                                        th:if="${genre.category != null and genre.category.categoryId == cat.categoryId}"
+                                                        th:value="${genre.genreId}" th:text="${genre.genreName}">Genre
+                                                    </option>
+                                                </optgroup>
+                                            </select>
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.genreRequired}">Please select
+                                                a genre.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small"><span
+                                                    th:text="#{librarian.inventory.copyQuantity}">Quantity</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="number" name="quantity" class="form-control"
+                                                style="background-color: white; border-radius: 8px;" min="0" max="100"
+                                                placeholder="0-100" required oninput="validateQuantity(this)">
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.quantityRequired}">Please
+                                                enter quantity.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small"><span
+                                                    th:text="#{librarian.inventory.shelf}">Shelf</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="shelfId" class="form-select form-control"
+                                                style="background-color: white; border-radius: 8px;" required>
+                                                <option value="" selected th:text="#{librarian.inventory.selectShelf}">
+                                                    Select Shelf</option>
+                                                <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
+                                                    th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
+                                                    Shelf</option>
+                                            </select>
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.shelfRequired}">Please select
+                                                a shelf.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small">ISBN <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" name="isbn" class="form-control"
+                                                style="background-color: white; border-radius: 8px;"
+                                                th:placeholder="#{librarian.inventory.isbnPlaceholder}" required
+                                                oninput="validateIsbn(this)">
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.isbnRequired}">Please enter
+                                                ISBN.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small"><span
+                                                    th:text="#{librarian.inventory.condition}">Book Condition</span>
+                                            </label>
+                                            <input type="text" class="form-control text-muted"
+                                                style="background-color: #f8f9fa; border-radius: 8px;"
+                                                th:value="#{book.condition.default}" readonly>
+                                            <input type="hidden" name="bookCondition" value="New">
+                                            <div class="invalid-feedback" th:text="#{common.validation.required}">Please
+                                                fill out this field.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold small d-block"><span
+                                                    th:text="#{librarian.inventory.coverImage}">Cover Image</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="file" name="coverImage"
+                                                class="visually-hidden book-cover-file-input"
+                                                style="background-color: white; border-radius: 8px;" accept="image/*"
+                                                id="addBookCoverInput"
+                                                onchange="previewAddBookCover(event); updateBookCoverFileName(this)"
+                                                required>
+                                            <div class="book-cover-file-control">
+                                                <label for="addBookCoverInput" class="book-cover-file-button"
+                                                    th:text="#{librarian.inventory.chooseImage}">Choose Image</label>
+                                                <span id="addBookCoverInputFileName" class="book-cover-file-name"
+                                                    th:data-empty="#{librarian.inventory.noImageSelected}"
+                                                    th:text="#{librarian.inventory.noImageSelected}">No image
+                                                    selected</span>
+                                            </div>
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.imageRequired}">Please select
+                                                an image.</div>
+                                            <div class="mt-2 add-book-cover-preview u-display-none-d0466aa3"
+                                                id="addBookCoverPreview">
+                                                <img id="addBookCoverImg" src="#"
+                                                    th:alt="#{librarian.inventory.coverPreview}"
+                                                    class="add-book-cover-preview-image">
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-bold small"><span
+                                                    th:text="#{librarian.inventory.bookDescription}">Description</span></label>
+                                            <textarea name="description" class="form-control"
+                                                style="background-color: white; border-radius: 8px;" rows="3"
+                                                th:placeholder="#{librarian.inventory.descriptionPlaceholder}"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 pt-3 pb-4 px-4 justify-content-end">
+                                    <button type="button" class="btn btn-light border shadow-sm" data-bs-dismiss="modal"
+                                        th:text="#{common.cancel}">Cancel</button>
+                                    <button type="submit" class="btn btn-classic px-4"
+                                        th:text="#{common.saveChanges}">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Category Modal -->
+                <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold text-classic"
+                                    th:text="#{librarian.inventory.addCategory}">Add Category</h5>
+                            </div>
+                            <form th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/categories/add} : @{/librarian/inventory/categories/add}" method="post"
+                                onsubmit="validateCategoryGenreForm(event, this)" novalidate>
+                                <div class="modal-body px-4 pt-4 pb-0">
+                                    <input type="hidden" name="type" value="category" />
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small"><span
+                                                th:text="#{librarian.inventory.categoryName}">Category Name</span> <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" name="name" class="form-control"
+                                            style="background-color: white; border-radius: 8px;"
+                                            th:placeholder="#{librarian.inventory.categoryPlaceholder}" required
+                                            maxlength="20" oninput="validateCategoryGenreName(this)">
+                                        <div class="invalid-feedback" th:text="#{librarian.inventory.validation.name}">
+                                            Names may contain letters and spaces only.</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 pt-3 pb-4 px-4 justify-content-end">
+                                    <button type="button" class="btn btn-light border shadow-sm" data-bs-dismiss="modal"
+                                        th:text="#{common.cancel}">Cancel</button>
+                                    <button type="submit" class="btn btn-classic px-4"
+                                        th:text="#{librarian.inventory.saveCategory}">Save Category</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Genre Modal -->
+                <div class="modal fade" id="addGenreModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold text-classic" th:text="#{librarian.inventory.addGenre}">
+                                    Add Genre</h5>
+                            </div>
+                            <form th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/categories/add} : @{/librarian/inventory/categories/add}" method="post"
+                                onsubmit="validateCategoryGenreForm(event, this)" novalidate>
+                                <div class="modal-body px-4 pt-4 pb-0">
+                                    <input type="hidden" name="type" value="genre" />
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small"><span
+                                                th:text="#{librarian.inventory.parentCategory}">Category</span> <span
+                                                class="text-danger">*</span></label>
+                                        <select name="categoryId" class="form-select form-control"
+                                            style="background-color: white; border-radius: 8px;" required
+                                            onchange="validateCategoryGenreSelect(this)">
+                                            <option value="" disabled selected
+                                                th:text="#{librarian.inventory.selectCategory}">Select Category</option>
+                                            <option th:each="category : ${categories}" th:value="${category.categoryId}"
+                                                th:text="${category.categoryName}">Category</option>
+                                        </select>
+                                        <div class="invalid-feedback" th:text="#{backend.inventory.categoryRequired}">
+                                            Please select a category.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold small"><span
+                                                th:text="#{librarian.inventory.genreName}">Genre Name</span> <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" name="name" class="form-control"
+                                            style="background-color: white; border-radius: 8px;"
+                                            th:placeholder="#{librarian.inventory.genrePlaceholder}" required
+                                            maxlength="20" oninput="validateCategoryGenreName(this)">
+                                        <div class="invalid-feedback" th:text="#{librarian.inventory.validation.name}">
+                                            Names may contain letters and spaces only.</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top-0 pt-3 pb-4 px-4 justify-content-end">
+                                    <button type="button" class="btn btn-light border shadow-sm" data-bs-dismiss="modal"
+                                        th:text="#{common.cancel}">Cancel</button>
+                                    <button type="submit" class="btn btn-classic px-4"
+                                        th:text="#{librarian.inventory.saveGenre}">Save Genre</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Modal -->
+                <div class="modal fade" id="auditModal" tabindex="-1" aria-labelledby="auditModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="auditModalLabel"
+                                    th:text="#{librarian.inventory.auditHeading}">Inventory Audit</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <form th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/audit} : @{/librarian/inventory/audit}" method="post">
+                                <div class="modal-body">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold"
+                                                    th:text="#{book.status.available}">Available</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['Available'])}">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold"
+                                                    th:text="#{loan.status.borrowed}">Borrowed</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['Borrowed'])}">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold" th:text="#{loan.status.lost}">Lost</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['Lost'])}">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold"
+                                                    th:text="#{librarian.inventory.status.damaged}">Damaged</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['Damaged'])}">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-semibold"
+                                                    th:text="#{librarian.inventory.status.minorDamaged}">Minor
+                                                    damaged</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['MinorDamaged'])}">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                        th:text="#{common.close}">Close</button>
+                                    <button type="submit" class="btn btn-classic"
+                                        th:text="#{librarian.inventory.auditHeading}">Inventory Audit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:each="book : ${books}">
+                    <div class="modal fade" th:id="${'addCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header border-bottom border-color">
+                                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-square me-2"></i><span
+                                            th:text="#{librarian.inventory.addCopies}">Add Copies</span> – <span
+                                            th:text="${book.title}">Book title</span></h5>
+                                </div>
+                                <form class="add-copies-form"
+                                    th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/add/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/add/{id}(id=${book.bookId})}" method="post"
+                                    novalidate onsubmit="validateAddCopiesForm(event, this)">
+                                    <div class="modal-body p-4">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold"><span
+                                                    th:text="#{librarian.inventory.copyQuantity}">Quantity</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="number" name="quantity" class="form-control add-copy-control"
+                                                min="1" th:max="${100 - (bookTotalQuantities[book.bookId] ?: 0)}" step="1" inputmode="numeric" value="1" required
+                                                th:disabled="${(bookTotalQuantities[book.bookId] ?: 0) >= 100}"
+                                                oninput="validateQuantity(this)">
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.quantity}">Quantity must be
+                                                between 1 and 100.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold"><span
+                                                    th:text="#{librarian.inventory.shelf}">Shelf</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="shelfId" class="form-select add-copy-control" required
+                                                onchange="this.setCustomValidity(''); this.classList.remove('is-invalid')">
+                                                <option value="" selected disabled
+                                                    th:text="#{librarian.inventory.selectShelf}">Select Shelf</option>
+                                                <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
+                                                    th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
+                                                    Shelf</option>
+                                            </select>
+                                            <div class="invalid-feedback"
+                                                th:text="#{librarian.inventory.validation.shelfRequired}">Please select
+                                                a shelf.</div>
+                                        </div>
+                                        <div>
+                                            <label class="form-label fw-semibold"><span
+                                                    th:text="#{librarian.inventory.condition}">Condition</span> <span
+                                                    class="text-danger">*</span></label>
+                                            <select name="bookCondition" class="form-select add-copy-control" required>
+                                                <option value="New" th:text="#{book.condition.good}">New</option>
+                                                <option value="Minor damage"
+                                                    th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                                <option value="Severely damaged"
+                                                    th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                                <option value="Lost book"
+                                                    th:text="#{book.condition.lost}">Lost book</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-top-0"><button type="button"
+                                            class="btn btn-light border" data-bs-dismiss="modal"
+                                            th:text="#{common.cancel}">Cancel</button><button type="submit"
+                                            class="btn btn-classic"
+                                            th:disabled="${(bookTotalQuantities[book.bookId] ?: 0) >= 100}"
+                                            th:text="#{librarian.inventory.addCopies}">Add
+                                            Copies</button></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- View Copies Modal -->
+                    <div class="modal fade" th:id="${'viewCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 shadow">
+                                <div
+                                    class="modal-header border-bottom border-color d-flex align-items-center justify-content-between gap-3">
+                                    <h5 class="modal-title fw-bold admin-books-h5-color-font-family-31">
+                                        <span th:text="#{librarian.inventory.copyList}">Book Copies</span> – <span
+                                            th:text="${book.title}">Book title</span>
+                                    </h5>
+                                    <form class="ms-auto flex-shrink-0" th:id="${'bulkDeleteCopiesForm' + book.bookId}"
+                                        th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
+                                        method="post" data-copy-delete-form
+                                        th:data-confirm-message="#{librarian.inventory.deleteCopiesConfirm}">
+                                        <button type="submit" class="btn btn-outline-danger"><i
+                                                class="bi bi-trash me-2"></i><span
+                                                th:text="#{librarian.inventory.deleteSelectedCopies}">Delete
+                                                Selected</span></button>
+                                    </form>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0 copy-detail-table" data-copy-table th:data-book-id="${book.bookId}">
+                                            <thead class="table-light text-uppercase small text-muted">
+                                                <tr>
+                                                    <th th:text="#{common.number}">No.</th>
+                                                    <th class="text-center book-copy-select-cell"><input
+                                                            class="form-check-input" type="checkbox"
+                                                            data-copy-select-all th:data-book-id="${book.bookId}"
+                                                            th:aria-label="#{librarian.inventory.selectAllCopies}"></th>
+                                                    <th th:text="#{librarian.inventory.copyCode}">Copy Code</th>
+                                                    <th th:text="#{librarian.inventory.condition}">Condition</th>
+                                                    <th th:text="#{librarian.inventory.addedDate}">Added Date</th>
+                                                    <th th:text="#{common.status}">Status</th>
+                                                    <th class="text-end" th:text="#{common.actions}">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="copy-detail-row" th:each="item, stat : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId] : {}}"
+                                                    data-copy-row th:data-book-id="${book.bookId}">
+                                                    <td class="app-number" th:data-label="#{common.number}"
+                                                        th:text="${@displayNumber.count(stat.index + 1)}">1</td>
+                                                    <td class="text-center book-copy-select-cell" th:data-label="#{librarian.inventory.selectAllCopies}"><input
+                                                            class="form-check-input" type="checkbox" name="itemIds"
+                                                            th:value="${item.bookItemId}"
+                                                            th:form="${'bulkDeleteCopiesForm' + book.bookId}"
+                                                            data-copy-select-item th:data-book-id="${book.bookId}"></td>
+                                                    <td class="fw-bold app-code-number" th:data-label="#{librarian.inventory.copyCode}"
+                                                        th:text="${item.barcode != null ? item.barcode : '—'}">BC001-001
+                                                    </td>
+                                                    <td th:data-label="#{librarian.inventory.condition}" th:text="${item.bookCondition}">Condition</td>
+                                                    <td class="app-date-time" th:data-label="#{librarian.inventory.addedDate}"
+                                                        th:text="${item.addedDate != null ? #temporals.format(item.addedDate, 'dd/MM/yyyy') : '—'}">
+                                                        Date</td>
+                                                    <td th:data-label="#{common.status}">
+                                                        <span class="status-badge"
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Lost'} ? ' status-lost' : (${item.status == 'Damaged'} ? ' status-damaged' : (${item.status == 'MinorDamaged'} ? ' status-minor-damaged' : ' status-inactive'))))"
+                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Lost' ? #messages.msg('loan.status.lost') : (item.status == 'Damaged' ? #messages.msg('librarian.inventory.status.damaged') : (item.status == 'MinorDamaged' ? #messages.msg('librarian.inventory.status.minorDamaged') : item.status))))}">Available</span>
+                                                    </td>
+                                                    <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                                        <button
+                                                            th:if="${item.status != 'Borrowed'}"
+                                                            type="button" class="member-icon-action"
+                                                            data-bs-toggle="modal"
+                                                            th:data-bs-target="${'#editCopyModalAdmin' + item.bookItemId}"
+                                                            th:title="#{librarian.inventory.editCopy}"
+                                                            th:aria-label="#{librarian.inventory.editCopy}"><i
+                                                                class="bi bi-pencil-square"></i></button>
+                                                        <form
+                                                            th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
+                                                            method="post" data-copy-delete-form
+                                                            th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}">
+                                                            <input type="hidden" name="itemIds"
+                                                                th:value="${item.bookItemId}"><button type="submit"
+                                                                    class="member-icon-action member-icon-action-danger"
+                                                                    th:aria-label="#{common.delete}"><i
+                                                                        class="bi bi-trash"></i></button></form>
+                                                    </td>
+                                                </tr>
+                                                <tr
+                                                    th:if="${bookItemsByBookId == null or bookItemsByBookId[book.bookId] == null or #lists.isEmpty(bookItemsByBookId[book.bookId])}">
+                                                    <td colspan="7" class="text-center text-muted py-4"
+                                                        th:text="#{librarian.inventory.noCopies}">No copies in
+                                                        inventory.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <nav class="copy-modal-pagination mt-3" th:if="${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null and #lists.size(bookItemsByBookId[book.bookId]) > 8}"
+                                        th:data-book-id="${book.bookId}" aria-label="Copy list pagination">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-page-prev
+                                            th:text="#{common.previous}">Previous</button>
+                                        <span class="copy-page-summary" data-copy-page-summary>1 / 1</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-copy-page-next
+                                            th:text="#{common.next}">Next</button>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed'] : {}}" th:id="${'editCopyModalAdmin' + item.bookItemId}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header border-bottom border-color"><h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i><span th:text="#{librarian.inventory.editCopy}">Edit Copy</span> – <span th:text="${item.barcode}">Code</span></h5></div>
+                                <form th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})} : @{/librarian/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})}" method="post">
+                                    <div class="modal-body p-4">
+                                        <label class="form-label fw-semibold" th:text="#{librarian.inventory.condition}">Condition</label>
+                                        <select name="bookCondition" class="form-select" required>
+                                            <option value="New" th:selected="${item.bookCondition == 'New'}" th:disabled="${item.status == 'MinorDamaged' or item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.good}">New</option>
+                                            <option value="Minor damage" th:selected="${item.status == 'MinorDamaged'}" th:disabled="${item.status == 'Damaged' or item.status == 'Lost'}" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                            <option value="Severely damaged" th:selected="${item.status == 'Damaged'}" th:disabled="${item.status == 'Lost'}" th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                            <option value="Lost book" th:selected="${item.status == 'Lost'}" th:text="#{book.condition.lost}">Lost book</option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer border-top-0"><button type="button" class="btn btn-light border" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button><button type="submit" class="btn btn-classic" th:text="#{librarian.inventory.updateCopy}">Update</button></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Book Modal -->
+                    <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1"
+                        th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg book-form-modal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" th:id="${'editBookModalLabel' + book.bookId}"
+                                        th:text="#{librarian.inventory.editBook}">Edit Book</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/edit/{id}(id=${book.bookId})} : @{/librarian/inventory/edit/{id}(id=${book.bookId})}" method="post"
+                                    enctype="multipart/form-data" novalidate onsubmit="validateBookForm(event, this)">
+                                    <div class="modal-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label" th:text="#{book.title}">Book Title</label>
+                                                <input type="text" name="title" class="form-control"
+                                                    th:value="${book.title}" required
+                                                    oninput="validateTextLength(this, 50)">
+                                                <div class="invalid-feedback"
+                                                    th:text="#{librarian.inventory.validation.titleRequired}">Please
+                                                    enter book title.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">ISBN</label>
+                                                <input type="text" name="isbn" class="form-control"
+                                                    th:value="${book.isbn}" required oninput="validateIsbn(this)">
+                                                <div class="invalid-feedback"
+                                                    th:text="#{librarian.inventory.validation.isbn}">ISBN may contain
+                                                    digits only (0-9).</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label" th:text="#{book.author}">Author</label>
+                                                <input type="text" name="author" class="form-control"
+                                                    th:value="${book.authors != null and !book.authors.isEmpty() ? book.authors.iterator().next().authorName : ''}"
+                                                    required oninput="validateTextLength(this, 50)">
+                                                <div class="invalid-feedback"
+                                                    th:text="#{librarian.inventory.validation.authorRequired}">Please
+                                                    enter author name.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label" th:text="#{book.genre}">Genre</label>
+                                                <select name="genreId" class="form-select" required>
+                                                    <option value="" disabled
+                                                        th:text="#{librarian.inventory.selectGenre}">Select Genre
+                                                    </option>
+                                                    <optgroup th:each="cat : ${categories}"
+                                                        th:label="${cat.categoryName}">
+                                                        <option th:each="genre : ${genres}"
+                                                            th:if="${genre.category != null and genre.category.categoryId == cat.categoryId}"
+                                                            th:value="${genre.genreId}"
+                                                            th:selected="${book.genre != null && genre.genreId == book.genre.genreId}"
+                                                            th:text="${genre.genreName}">Genre</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label"
+                                                    th:text="#{librarian.inventory.shelf}">Shelf</label>
+                                                <select name="shelfId" class="form-select" required>
+                                                    <option value="" disabled
+                                                        th:text="#{librarian.inventory.selectShelf}">Select Shelf
+                                                    </option>
+                                                    <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
+                                                        th:selected="${book.bookItems != null and not #lists.isEmpty(book.bookItems) and book.bookItems[0].shelf != null and book.bookItems[0].shelf.shelfId == shelf.shelfId}"
+                                                        th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
+                                                        Shelf</option>
+                                                </select>
+                                                <div class="invalid-feedback"
+                                                    th:text="#{librarian.inventory.validation.shelfRequired}">Please
+                                                    select a shelf.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label"
+                                                    th:text="#{librarian.inventory.coverImage}">Cover Image</label>
+                                                <div
+                                                    class="d-flex align-items-start gap-3 flex-wrap edit-book-cover-control">
+                                                    <div th:if="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl)}"
+                                                        class="flex-shrink-0">
+                                                        <div class="text-muted small mb-1"
+                                                            th:text="#{librarian.inventory.currentImage}">Current Image:
+                                                        </div>
+                                                        <img th:src="${book.coverImageUrl}"
+                                                            th:id="'editCoverCurrent' + ${book.bookId}"
+                                                            th:alt="#{librarian.inventory.currentImage}"
+                                                            class="u-height-100px-width-75px-object-fit-cover-border-radius-6px-border-1px-so-eeb48d2c">
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <input type="file" name="coverImage"
+                                                            class="visually-hidden book-cover-file-input"
+                                                            accept="image/*"
+                                                            th:id="'editBookCoverInput' + ${book.bookId}"
+                                                            th:onchange="'previewEditBookCover(event, \'' + ${book.bookId} + '\'); updateBookCoverFileName(this)'">
+                                                        <div class="book-cover-file-control">
+                                                            <label th:for="'editBookCoverInput' + ${book.bookId}"
+                                                                class="book-cover-file-button"
+                                                                th:text="#{librarian.inventory.chooseImage}">Choose
+                                                                Image</label>
+                                                            <span
+                                                                th:id="'editBookCoverInput' + ${book.bookId} + 'FileName'"
+                                                                class="book-cover-file-name"
+                                                                th:data-empty="#{librarian.inventory.noImageSelected}"
+                                                                th:text="#{librarian.inventory.noImageSelected}">No
+                                                                image selected</span>
+                                                        </div>
+                                                        <div class="mt-2 u-display-none-d0466aa3"
+                                                            th:id="'editBookCoverPreview' + ${book.bookId}">
+                                                            <div class="text-muted small mb-1"
+                                                                th:text="#{librarian.inventory.preview}">Preview:</div>
+                                                            <img th:id="'editBookCoverImg' + ${book.bookId}" src="#"
+                                                                th:alt="#{librarian.inventory.coverPreview}"
+                                                                class="u-max-height-100px-max-width-100-border-radius-6px-border-1px-solid-ddd-ob-00913d30">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label"
+                                                    th:text="#{librarian.inventory.bookDescription}">Description</label>
+                                                <textarea name="description" class="form-control" rows="3"
+                                                    th:text="${book.description}"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                            th:text="#{common.cancel}">Cancel</button>
+                                        <button type="submit" class="btn btn-classic"
+                                            th:text="#{common.saveChanges}">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delete Book Modal -->
+                    <div class="modal fade" th:id="${'deleteBookModal' + book.bookId}" tabindex="-1"
+                        th:aria-labelledby="${'deleteBookModalLabel' + book.bookId}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title" th:id="${'deleteBookModalLabel' + book.bookId}">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i><span
+                                            th:text="#{librarian.inventory.deleteBookTitle}">Confirm Book
+                                            Deletion</span>
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/delete/{id}(id=${book.bookId})}" method="post">
+                                    <div class="modal-body">
+                                        <div class="alert alert-danger py-2 mb-3">
+                                            <i class="bi bi-trash3-fill me-1"></i>
+                                            <strong th:text="#{librarian.inventory.irreversible}">This action cannot be
+                                                undone!</strong>
+                                            <span th:text="#{librarian.inventory.deleteBookWarning}">The book will be
+                                                permanently removed from the system.</span>
+                                        </div>
+                                        <p><span th:text="#{librarian.inventory.deleteBookQuestion}">Are you sure you
+                                                want to permanently delete</span>
+                                            <strong th:text="${book.title}">Book title</strong>?
+                                        </p>
+                                        <p class="text-muted small mb-0"
+                                            th:text="#{librarian.inventory.deleteCopiesWarning}">All related copies will
+                                            also be deleted.</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                            th:text="#{common.cancel}">Cancel</button>
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="bi bi-trash3 me-1"></i><span
+                                                th:text="#{librarian.inventory.deletePermanently}">Delete
+                                                Permanently</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- Close inventory panel -->
+
+            <div th:if="${currentSubSection == 'storage'}" id="bookShelfPanel">
+                <header class="member-page-header inventory-page-header inventory-hero storage-management-header">
+                    <div class="inventory-hero-copy">
+                        <div class="member-page-eyebrow" th:text="#{librarian.inventory.booksManagement}">BOOK MANAGEMENT</div>
+                        <h1 class="member-page-title"><span
+                                th:text="#{librarian.storage.management}">Bookshelf Management</span></h1>
+                        <p class="member-page-description" th:text="#{librarian.storage.description}">Create and manage book
+                            storage locations.</p>
+                    </div>
+                    <button type="button" class="btn member-primary-action storage-add-action" data-bs-toggle="modal"
+                        data-bs-target="#addStorageModal"><i
+                            class="bi bi-plus-lg" aria-hidden="true"></i> <span
+                            th:text="#{librarian.storage.addNew}">Add New Location</span></button>
+                </header>
+                <div class="member-data-card inventory-management-card mb-4">
+                    <div class="member-data-card-body">
+                        <div class="member-summary-chips inventory-summary" th:aria-label="#{librarian.storage.summary}"><span><strong
+                                    class="app-stat-number"
+                                    th:text="${@displayNumber.count(shelfPage != null ? shelfPage.totalElements : 0)}">0</strong>
+                                <span th:text="#{librarian.storage.totalShelves}">Total Shelves</span></span></div>
+                        <div class="member-toolbar">
+                            <div class="member-search-form">
+                                <div class="input-group member-search-group">
+                                    <span class="input-group-text" aria-hidden="true"><i
+                                            class="bi bi-search"></i></span>
+                                    <input type="search" id="bookshelfSearch" class="form-control"
+                                        th:placeholder="#{librarian.storage.searchPlaceholder}"
+                                        th:aria-label="#{librarian.storage.searchPlaceholder}">
+                                    <button type="button" id="bookshelfSearchButton"
+                                        class="btn member-search-button text-nowrap"
+                                        th:text="#{common.search}">Search</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive member-table-wrap">
+                            <table class="table table-hover align-middle stable-table-layout member-table storage-management-table">
+                                <thead class="table-light text-uppercase small text-muted">
+                                    <tr>
+                                        <th th:text="#{librarian.storage.shelfName}">Shelf Name</th>
+                                        <th th:text="#{librarian.storage.location}">Location</th>
+                                        <th class="text-center" th:text="#{librarian.storage.totalBooks}">Total books
+                                        </th>
+                                        <th class="text-end" th:text="#{common.actions}">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="shelf : ${shelfPage.content}" class="bookshelf-data-row"
+                                        th:data-search-text="${shelf.shelfName + ' ' + (shelf.location != null ? shelf.location : '')}">
+                                        <td th:data-label="#{librarian.storage.shelfName}" th:text="${shelf.shelfName}">Location name</td>
+                                        <td th:data-label="#{librarian.storage.location}" th:text="${shelf.location}">Location</td>
+                                        <td class="text-center fw-semibold app-number" th:data-label="#{librarian.storage.totalBooks}"
+                                            th:text="${@displayNumber.count(shelfBookCounts[shelf.shelfId])}">0</td>
+                                        <td class="text-end member-actions" th:data-label="#{common.actions}">
+                                            <button type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                th:data-bs-target="${'#editStorageModal' + shelf.shelfId}"
+                                                th:title="#{common.update}"><i class="bi bi-pencil-square"></i></button>
+                                            <button type="button" class="member-icon-action member-icon-action-danger"
+                                                data-bs-toggle="modal"
+                                                th:data-bs-target="${'#deleteStorageModal' + shelf.shelfId}"
+                                                th:title="#{common.delete}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${shelfPage == null || shelfPage.empty}">
+                                        <td colspan="4" class="text-center text-muted py-5">
+                                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                            <span th:text="#{librarian.storage.empty}">No storage locations have been
+                                                created.</span>
+                                        </td>
+                                    </tr>
+                                    <tr id="bookshelfFilterEmptyState" hidden>
+                                        <td colspan="4" class="text-center text-muted py-5"><i
+                                                class="bi bi-search fs-2 d-block mb-2"></i><span
+                                                th:text="#{librarian.storage.emptyFiltered}">No bookshelves match this
+                                                search.</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav class="member-pagination app-pagination-region"
+                            th:if="${shelfPage != null && shelfPage.totalPages > 1}">
+                            <ul class="pagination app-pagination">
+                                <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}"><a
+                                        class="page-link page-link-classic"
+                                        th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='storage',shelfPage=0)} : @{/librarian/books(subsection='storage',shelfPage=0)}"
+                                        th:text="#{common.first}">First</a></li>
+                                <li class="page-item" th:classappend="${shelfPage.first ? 'disabled' : ''}"><a
+                                        class="page-link page-link-classic"
+                                        th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='storage',shelfPage=${shelfPage.number - 1})} : @{/librarian/books(subsection='storage',shelfPage=${shelfPage.number - 1})}"><i
+                                            class="bi bi-chevron-left"></i></a></li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0,shelfPage.totalPages - 1)}"
+                                    th:classappend="${i == shelfPage.number ? 'active' : ''}"><a
+                                        class="page-link page-link-classic"
+                                        th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='storage',shelfPage=${i})} : @{/librarian/books(subsection='storage',shelfPage=${i})}"
+                                        th:text="${i + 1}">1</a></li>
+                                <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}"><a
+                                        class="page-link page-link-classic"
+                                        th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='storage',shelfPage=${shelfPage.number + 1})} : @{/librarian/books(subsection='storage',shelfPage=${shelfPage.number + 1})}"><i
+                                            class="bi bi-chevron-right"></i></a></li>
+                                <li class="page-item" th:classappend="${shelfPage.last ? 'disabled' : ''}"><a
+                                        class="page-link page-link-classic"
+                                        th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='storage',shelfPage=${shelfPage.totalPages - 1})} : @{/librarian/books(subsection='storage',shelfPage=${shelfPage.totalPages - 1})}"
+                                        th:text="#{common.last}">Last</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div th:if="${shelves != null}" th:each="shelf : ${shelves}">
+                        <div class="modal fade" th:id="${'editStorageModal' + shelf.shelfId}" tabindex="-1"
+                            th:aria-labelledby="${'editStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" th:id="${'editStorageModalLabel' + shelf.shelfId}">
+                                            <span th:text="#{librarian.storage.editTitle}">Edit Storage Location</span>
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <form th:action="${staffPrefix == '/admin'} ? @{/admin/storage/update/{id}(id=${shelf.shelfId})} : @{/librarian/storage/update/{id}(id=${shelf.shelfId})}" method="post">
+                                        <div class="modal-body">
+                                            <input type="hidden" th:if="${_csrf != null}"
+                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                            <div class="mb-3">
+                                                <label class="form-label" th:text="#{librarian.storage.name}">Location
+                                                    Name</label>
+                                                <input type="text" class="form-control" name="shelfName"
+                                                    th:value="${shelf.shelfName}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label"
+                                                    th:text="#{librarian.storage.location}">Location</label>
+                                                <input type="text" class="form-control" name="location"
+                                                    th:value="${shelf.location}">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                                th:text="#{common.cancel}">Cancel</button>
+                                            <button type="submit" class="btn btn-classic"
+                                                th:text="#{common.saveChanges}">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" th:id="${'deleteStorageModal' + shelf.shelfId}" tabindex="-1"
+                            th:aria-labelledby="${'deleteStorageModalLabel' + shelf.shelfId}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" th:id="${'deleteStorageModalLabel' + shelf.shelfId}"
+                                            th:text="#{librarian.storage.deleteTitle}">Confirm Storage Location Deletion
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <form th:action="${staffPrefix == '/admin'} ? @{/admin/storage/delete/{id}(id=${shelf.shelfId})} : @{/librarian/storage/delete/{id}(id=${shelf.shelfId})}" method="post">
+                                        <div class="modal-body">
+                                            <input type="hidden" th:if="${_csrf != null}"
+                                                th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                            <p><span th:text="#{librarian.storage.deleteQuestion}">Are you sure you want
+                                                    to delete storage location</span>
+                                                <strong th:text="${shelf.shelfName}">Location name</strong>?
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                                th:text="#{common.cancel}">Cancel</button>
+                                            <button type="submit" class="btn btn-danger"
+                                                th:text="#{common.delete}">Delete</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storage Modals -->
+                <div class="modal fade" id="addStorageModal" tabindex="-1" aria-labelledby="addStorageModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addStorageModalLabel"
+                                    th:text="#{librarian.storage.addTitle}">Add Storage Location</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <form th:action="${staffPrefix == '/admin'} ? @{/admin/storage/add} : @{/librarian/storage/add}" method="post">
+                                <div class="modal-body">
+                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                                        th:value="${_csrf.token}" />
+                                    <div class="mb-3">
+                                        <label class="form-label" th:text="#{librarian.storage.name}">Location
+                                            Name</label>
+                                        <input type="text" class="form-control" name="shelfName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label"
+                                            th:text="#{librarian.storage.location}">Location</label>
+                                        <input type="text" class="form-control" name="location">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                        th:text="#{common.cancel}">Cancel</button>
+                                    <button type="submit" class="btn btn-classic" th:text="#{common.saveChanges}">Save
+                                        Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <script th:inline="javascript">
+            const adminBookMessages = {
+                required: /*[[#{common.validation.required}]]*/ 'Please fill out this field.',
+                shelfRequired: /*[[#{librarian.inventory.validation.shelfRequired}]]*/ 'Please select a shelf.',
+                invalidIsbn: /*[[#{librarian.inventory.validation.isbn}]]*/ 'ISBN may contain digits only (0-9).',
+                isbnRequired: /*[[#{librarian.inventory.validation.isbnRequired}]]*/ 'Please enter ISBN.',
+                invalidName: /*[[#{librarian.inventory.validation.name}]]*/ 'Names may contain letters and spaces only.',
+                categoryNameRequired: /*[[#{backend.inventory.categoryNameRequired}]]*/ 'Category name is required.',
+                genreNameRequired: /*[[#{backend.inventory.genreNameRequired}]]*/ 'Genre name is required.',
+                categoryRequired: /*[[#{backend.inventory.categoryRequired}]]*/ 'Please select a category.',
+                invalidQuantity: /*[[#{librarian.inventory.validation.quantity}]]*/ 'Quantity must be between 0 and 100.',
+                quantityRequired: /*[[#{librarian.inventory.validation.quantityRequired}]]*/ 'Please enter quantity.',
+                titleRequired: /*[[#{librarian.inventory.validation.titleRequired}]]*/ 'Please enter book title.',
+                authorRequired: /*[[#{librarian.inventory.validation.authorRequired}]]*/ 'Please enter author name.',
+                maxLength50: /*[[#{librarian.inventory.validation.maxLength50}]]*/ 'Maximum 50 characters allowed.',
+                invalidIsbnLength: /*[[#{librarian.inventory.validation.isbnLength}]]*/ 'ISBN must contain at least 13 digits.'
+            };
+            function previewAddBookCover(event) {
+                previewBookCover(event, 'addBookCoverPreview', 'addBookCoverImg');
+            }
+            function previewEditBookCover(event, bookId) {
+                previewBookCover(event, 'editBookCoverPreview' + bookId, 'editBookCoverImg' + bookId);
+            }
+            function previewBookCover(event, previewId, imageId) {
+                const preview = document.getElementById(previewId);
+                const image = document.getElementById(imageId);
+                const file = event.target.files && event.target.files[0];
+                if (!preview || !image) return;
+                if (!file) {
+                    preview.style.display = 'none';
+                    image.src = '#';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = e => {
+                    image.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function updateBookCoverFileName(input) {
+                const fileName = document.getElementById(input.id + 'FileName');
+                if (fileName) fileName.textContent = input.files && input.files[0] ? input.files[0].name : fileName.dataset.empty;
+            }
+            function validateTextLength(input, maxLen) {
+                if (!input.value) {
+                    setFieldValidity(input, false, input.name === 'title' ? adminBookMessages.titleRequired : adminBookMessages.authorRequired);
+                    return false;
+                }
+                const valid = input.value.length <= maxLen;
+                setFieldValidity(input, valid, adminBookMessages.maxLength50);
+                return valid;
+            }
+
+            function validateIsbn(input) {
+                if (!input.value) {
+                    setFieldValidity(input, false, adminBookMessages.isbnRequired);
+                    return false;
+                }
+                const valid = /^[0-9]{13,}$/.test(input.value);
+                setFieldValidity(input, valid, adminBookMessages.invalidIsbnLength);
+                return valid;
+            }
+            function validateQuantity(input) {
+                if (input.validity.badInput) {
+                    setFieldValidity(input, false, adminBookMessages.invalidQuantity);
+                    return false;
+                }
+                if (!input.value) {
+                    setFieldValidity(input, false, adminBookMessages.quantityRequired);
+                    return false;
+                }
+                const val = Number(input.value);
+                const min = Number(input.min || 0);
+                const max = Number(input.max || 100);
+                const valid = Number.isInteger(val) && val >= min && val <= max;
+                setFieldValidity(input, valid, adminBookMessages.invalidQuantity);
+                return valid;
+            }
+            function getFormType(form) {
+                const typeInput = form.querySelector("input[name='type']");
+                if (typeInput) return typeInput.value;
+                const action = form.getAttribute('action') || '';
+                if (action.includes('/genres/')) return 'genre';
+                if (action.includes('/categories/')) return 'category';
+                return 'category';
+            }
+
+            function validateCategoryGenreName(input) {
+                const form = input.closest('form');
+                const type = form ? getFormType(form) : 'category';
+                if (!input.value.trim()) {
+                    setFieldValidity(input, false, type === 'category' ? adminBookMessages.categoryNameRequired : adminBookMessages.genreNameRequired);
+                    return false;
+                }
+                const valid = /^[\p{L}\s]*$/u.test(input.value);
+                setFieldValidity(input, valid, adminBookMessages.invalidName);
+                return valid;
+            }
+
+            function validateCategoryGenreSelect(select) {
+                const valid = !!select.value;
+                setFieldValidity(select, valid, adminBookMessages.categoryRequired);
+                return valid;
+            }
+            function validateBookForm(event, form) {
+                let isValid = true;
+                if (!form.checkValidity()) {
+                    isValid = false;
+                }
+                form.classList.add('was-validated');
+
+
+                const titleInput = form.querySelector("input[name='title']");
+                if (titleInput && !validateTextLength(titleInput, 50)) isValid = false;
+
+                const authorInput = form.querySelector("input[name='author']");
+                if (authorInput && !validateTextLength(authorInput, 50)) isValid = false;
+
+                const input = form.querySelector("input[name='isbn']");
+                if (input && !validateIsbn(input)) {
+                    isValid = false;
+                }
+
+                const qtyInput = form.querySelector("input[name='quantity']");
+                if (qtyInput && !validateQuantity(qtyInput)) {
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+            function validateAddCopiesForm(event, form) {
+                let isValid = form.checkValidity();
+                form.classList.add('was-validated');
+                const quantity = form.querySelector("input[name='quantity']");
+                if (!validateQuantity(quantity)) isValid = false;
+                const shelf = form.querySelector("select[name='shelfId']");
+                if (!shelf.value) {
+                    setFieldValidity(shelf, false, adminBookMessages.shelfRequired);
+                    isValid = false;
+                }
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+            function validateCategoryGenreForm(event, form) {
+                let isValid = true;
+                if (!form.checkValidity()) {
+                    isValid = false;
+                }
+                form.classList.add('was-validated');
+
+                const categorySelect = form.querySelector("select[name='categoryId']");
+                if (categorySelect && !validateCategoryGenreSelect(categorySelect)) {
+                    isValid = false;
+                }
+
+                const input = form.querySelector("input[name='name']");
+                if (input && !validateCategoryGenreName(input)) {
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+            function setFieldValidity(input, valid, message) {
+                if (valid) {
+                    input.setCustomValidity('');
+                } else {
+                    input.setCustomValidity(message);
+                }
+                input.classList.toggle('is-invalid', !valid);
+                const feedback = input.parentElement.querySelector('.invalid-feedback');
+                if (feedback && !valid) feedback.textContent = message;
+            }
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const bookshelfSearch = document.getElementById('bookshelfSearch');
+                const bookshelfSearchButton = document.getElementById('bookshelfSearchButton');
+                const bookshelfRows = Array.from(document.querySelectorAll('.bookshelf-data-row'));
+                const bookshelfEmpty = document.getElementById('bookshelfFilterEmptyState');
+                const filterBookshelves = function () {
+                    if (!bookshelfSearch) return;
+                    const term = bookshelfSearch.value.trim().toLocaleLowerCase();
+                    let visible = 0;
+                    bookshelfRows.forEach(function (row) {
+                        const matches = !term || (row.dataset.searchText || '').toLocaleLowerCase().includes(term);
+                        row.hidden = !matches;
+                        if (matches) visible += 1;
+                    });
+                    if (bookshelfEmpty) bookshelfEmpty.hidden = visible > 0;
+                };
+                if (bookshelfSearch) bookshelfSearch.addEventListener('input', filterBookshelves);
+                if (bookshelfSearchButton) bookshelfSearchButton.addEventListener('click', filterBookshelves);
+
+                const categorySearch = document.getElementById('categoryGenreSearch');
+                const categorySearchButton = document.getElementById('categoryGenreSearchButton');
+                const categoryRows = Array.from(document.querySelectorAll('.category-data-row'));
+                const genreRows = Array.from(document.querySelectorAll('.genre-data-row'));
+                const categoryEmpty = document.getElementById('categoryGenreFilterEmptyState');
+                const filterCategories = function () {
+                    if (!categorySearch) return;
+                    const term = categorySearch.value.trim().toLocaleLowerCase();
+                    let visible = 0;
+                    categoryRows.forEach(function (category) {
+                        const childGenres = genreRows.filter(function (genre) { return genre.dataset.parentCategoryId === category.dataset.categoryId; });
+                        const categoryMatches = (category.dataset.searchName || '').includes(term);
+                        const childMatches = childGenres.some(function (genre) { return (genre.dataset.searchName || '').includes(term); });
+                        const categoryVisible = !term || categoryMatches || childMatches;
+                        category.hidden = !categoryVisible;
+                        if (categoryVisible) visible += 1;
+                        childGenres.forEach(function (genre) {
+                            const genreVisible = !!term && (categoryMatches || (genre.dataset.searchName || '').includes(term));
+                            genre.hidden = !genreVisible;
+                            genre.classList.toggle('show', genreVisible);
+                        });
+                    });
+                    if (categoryEmpty) categoryEmpty.hidden = visible > 0;
+                };
+                if (categorySearch) categorySearch.addEventListener('input', filterCategories);
+                if (categorySearchButton) categorySearchButton.addEventListener('click', filterCategories);
+
+                const copyPageSize = 8;
+                document.querySelectorAll('[data-copy-table]').forEach(function (table) {
+                    const bookId = table.dataset.bookId;
+                    const rows = Array.from(table.querySelectorAll('tbody [data-copy-row]'));
+                    const pagination = document.querySelector('.copy-modal-pagination[data-book-id="' + bookId + '"]');
+                    if (!pagination || rows.length <= copyPageSize) return;
+                    const previous = pagination.querySelector('[data-copy-page-prev]');
+                    const next = pagination.querySelector('[data-copy-page-next]');
+                    const summary = pagination.querySelector('[data-copy-page-summary]');
+                    const pageCount = Math.ceil(rows.length / copyPageSize);
+                    let currentPage = 1;
+
+                    const renderCopyPage = function () {
+                        const start = (currentPage - 1) * copyPageSize;
+                        rows.forEach(function (row, index) {
+                            row.hidden = index < start || index >= start + copyPageSize;
+                        });
+                        previous.disabled = currentPage === 1;
+                        next.disabled = currentPage === pageCount;
+                        summary.textContent = currentPage + ' / ' + pageCount;
+                        const selectAll = document.querySelector('[data-copy-select-all][data-book-id="' + bookId + '"]');
+                        if (selectAll) {
+                            selectAll.checked = false;
+                            selectAll.indeterminate = false;
+                        }
+                    };
+                    previous.addEventListener('click', function () {
+                        if (currentPage > 1) currentPage -= 1;
+                        renderCopyPage();
+                    });
+                    next.addEventListener('click', function () {
+                        if (currentPage < pageCount) currentPage += 1;
+                        renderCopyPage();
+                    });
+                    renderCopyPage();
+                });
+
+                document.querySelectorAll('[data-copy-select-all]').forEach(function (selectAll) {
+                    const bookId = selectAll.dataset.bookId;
+                    const items = Array.from(document.querySelectorAll('[data-copy-select-item][data-book-id="' + bookId + '"]'));
+                    selectAll.addEventListener('change', function () {
+                        items.forEach(function (item) {
+                            const row = item.closest('[data-copy-row]');
+                            if (!row || !row.hidden) item.checked = selectAll.checked;
+                        });
+                    });
+                    items.forEach(function (item) {
+                        item.addEventListener('change', function () {
+                            const visibleItems = items.filter(function (candidate) {
+                                const row = candidate.closest('[data-copy-row]');
+                                return !row || !row.hidden;
+                            });
+                            const checked = visibleItems.filter(function (candidate) { return candidate.checked; }).length;
+                            selectAll.checked = visibleItems.length > 0 && checked === visibleItems.length;
+                            selectAll.indeterminate = checked > 0 && checked < visibleItems.length;
+                        });
+                    });
+                });
+            });
+        </script>
+        <div class="modal fade" id="copyDeleteConfirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header">
+                        <h5 class="modal-title" th:text="#{common.confirm}">Confirm</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            th:aria-label="#{common.close}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0" data-copy-delete-confirm-text></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light border" data-bs-dismiss="modal"
+                            th:text="#{common.cancel}">Cancel</button>
+                        <button type="button" class="btn btn-danger" data-copy-delete-confirm-button><i
+                                class="bi bi-trash me-2"></i><span th:text="#{common.delete}">Delete</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modalElement = document.getElementById('copyDeleteConfirmModal');
+                if (!modalElement || typeof bootstrap === 'undefined') return;
+                const confirmModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                const messageElement = modalElement.querySelector('[data-copy-delete-confirm-text]');
+                const confirmButton = modalElement.querySelector('[data-copy-delete-confirm-button]');
+                let pendingForm = null;
+
+                document.querySelectorAll('[data-copy-delete-form]').forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        pendingForm = form;
+                        messageElement.textContent = form.dataset.confirmMessage || '';
+                        confirmModal.show();
+                    });
+                });
+                confirmButton.addEventListener('click', function () {
+                    if (!pendingForm) return;
+                    const form = pendingForm;
+                    pendingForm = null;
+                    confirmButton.disabled = true;
+                    form.submit();
+                });
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    pendingForm = null;
+                    confirmButton.disabled = false;
+                });
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const availabilityFilter = document.getElementById('bookAvailabilityFilter');
+                const bookRows = Array.from(document.querySelectorAll('#admin-books-pane .book-data-row'));
+                const filteredEmptyState = document.getElementById('bookFilterEmptyState');
+
+                if (!availabilityFilter || !filteredEmptyState) return;
+
+                const applyAvailabilityFilter = function () {
+                    const selectedAvailability = availabilityFilter.value;
+                    let visibleRows = 0;
+
+                    bookRows.forEach(function (row) {
+                        const matches = !selectedAvailability || row.dataset.bookAvailability === selectedAvailability;
+                        row.hidden = !matches;
+                        if (matches) visibleRows += 1;
+                    });
+
+                    filteredEmptyState.hidden = bookRows.length === 0 || visibleRows > 0;
+                };
+
+                availabilityFilter.addEventListener('change', applyAvailabilityFilter);
+                applyAvailabilityFilter();
+            });
+        </script>
+    </div>
+</body>
+</html>

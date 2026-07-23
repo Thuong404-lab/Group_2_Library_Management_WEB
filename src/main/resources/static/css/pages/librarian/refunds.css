@@ -95,3 +95,446 @@
     .refund-page .refund-confirm-summary > div { grid-template-columns: 1fr; gap: 4px; }
     .refund-page .refund-confirm-summary dd { text-align: left; }
 }
+
+/* Member-aligned refund approval workspace. */
+.finance-page.refund-page {
+    max-width: 1480px;
+    padding-top: 24px;
+}
+
+.refund-page .refund-page-hero {
+    position: relative;
+    min-height: 190px;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 28px;
+    padding: 30px 38px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.refund-page .refund-page-hero::before,
+.refund-page .refund-page-hero::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.refund-page .refund-page-hero::before {
+    top: -150px;
+    right: -70px;
+    width: 330px;
+    height: 330px;
+    box-shadow: 0 0 0 55px rgba(255, 255, 255, .045);
+}
+
+.refund-page .refund-page-hero::after {
+    right: 270px;
+    bottom: -155px;
+    width: 235px;
+    height: 235px;
+}
+
+.refund-page .refund-page-hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+.refund-page .refund-page-eyebrow {
+    display: block;
+    margin-bottom: 9px;
+    color: rgba(255, 255, 255, .82);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.refund-page .refund-page-hero .finance-title {
+    margin-bottom: 8px;
+    color: #fff;
+    font-size: clamp(34px, 4vw, 48px);
+}
+
+.refund-page .refund-page-hero .finance-description {
+    max-width: 720px;
+    color: rgba(255, 255, 255, .86) !important;
+    font-size: 15px;
+}
+
+.refund-page .refund-hero-summary {
+    display: grid;
+    min-width: 210px;
+    padding: 15px 19px;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: 2px 12px;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+
+.refund-page .refund-hero-summary > i {
+    grid-row: 1 / span 2;
+    font-size: 27px;
+}
+
+.refund-page .refund-hero-summary > strong {
+    font-family: var(--app-font-display);
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.refund-page .refund-hero-summary > span {
+    max-width: 160px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .82);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.refund-page .refund-list {
+    display: grid;
+    gap: 14px;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.refund-page .refund-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 48px minmax(170px, .9fr) minmax(230px, 1.2fr) minmax(130px, .55fr) auto;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 24px;
+    overflow: hidden;
+    border: 1px solid var(--app-color-hairline);
+    border-left: 4px solid var(--app-color-success-ink);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(71, 45, 28, .065);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.refund-page .refund-row:hover {
+    border-color: rgba(139, 90, 43, .28);
+    border-left-color: var(--app-color-success-ink);
+    box-shadow: 0 12px 28px rgba(71, 45, 28, .1);
+}
+
+/* Modals live inside each row; transformed ancestors make Bootstrap backdrops flicker. */
+.refund-page .refund-row:has(.modal.show) {
+    border-color: var(--app-color-hairline);
+    border-left-color: var(--app-color-success-ink);
+    box-shadow: 0 8px 22px rgba(71, 45, 28, .065);
+}
+
+.refund-page .refund-row:last-child {
+    border-bottom: 1px solid var(--app-color-hairline);
+}
+
+.refund-page .refund-row-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--app-color-success-soft);
+    color: var(--app-color-success-ink);
+    font-size: 19px;
+}
+
+.refund-page .refund-row small {
+    margin-bottom: 2px;
+    color: #806d61;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+}
+
+.refund-page .refund-member strong,
+.refund-page .refund-book strong {
+    font-size: 14px;
+}
+
+.refund-page .refund-amount strong {
+    font-family: var(--app-font-display);
+    font-size: 20px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.refund-page .refund-actions {
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.refund-page .refund-actions .btn {
+    min-height: 44px;
+}
+
+.refund-page .refund-actions .refund-action-icon {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    max-height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    line-height: 1;
+    white-space: normal;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--app-color-application-primary);
+    font-size: 17px;
+}
+
+.refund-page .refund-actions .refund-action-icon > i {
+    width: 1em;
+    height: 1em;
+    margin: 0;
+    display: block;
+    line-height: 1;
+}
+
+.refund-page .refund-actions .refund-action-icon:hover,
+.refund-page .refund-actions .refund-action-icon:focus-visible {
+    border-color: var(--app-color-primary);
+    background: #fbf3ec;
+    color: var(--app-color-application-primary-hover);
+}
+
+.refund-page .refund-actions .refund-action-icon--approve {
+    border-color: var(--app-color-success-border);
+    background: var(--app-color-success-soft);
+    color: var(--app-color-success-ink);
+}
+
+.refund-page .refund-actions .refund-action-icon--approve:hover,
+.refund-page .refund-actions .refund-action-icon--approve:focus-visible {
+    border-color: var(--app-color-success-ink);
+    background: #dceee0;
+    color: #245c32;
+}
+
+.refund-page .refund-empty {
+    min-height: 320px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(71, 45, 28, .07);
+}
+
+.refund-page .refund-empty-icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: var(--app-color-success-soft);
+    color: var(--app-color-success-ink);
+    font-size: 26px;
+}
+
+.refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-content {
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: var(--app-color-overlay-shadow);
+}
+
+.refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-header {
+    background: linear-gradient(135deg, #fbf1eb, #f7e8dd);
+}
+
+.refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-header > div {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+}
+
+.refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-header .modal-title,
+.refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-header .modal-subtitle {
+    grid-column: 2;
+}
+
+.refund-page .refund-modal-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    grid-row: 1 / span 2;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--app-color-success-soft);
+    color: var(--app-color-success-ink);
+    font-size: 18px;
+}
+
+.refund-page .refund-modal-icon--warning {
+    background: var(--app-color-warning-soft);
+    color: var(--app-color-warning-ink);
+}
+
+.refund-page .deposit-receipt-account,
+.refund-page .deposit-receipt-book,
+.refund-page .deposit-receipt-details,
+.refund-page .deposit-receipt-total,
+.refund-page .refund-confirm-summary {
+    border-radius: 11px;
+}
+
+.refund-page .deposit-receipt-account {
+    background: #fbf6ef;
+}
+
+.refund-page .deposit-receipt-total {
+    border-color: var(--app-color-success-border);
+    background: var(--app-color-success-soft);
+}
+
+.refund-page .deposit-receipt-total strong {
+    color: var(--app-color-success-ink);
+}
+
+.refund-page .refund-confirm-note {
+    border-left-color: var(--app-color-warning-ink);
+    border-radius: 10px;
+    background: var(--app-color-warning-soft);
+}
+
+@media (max-width: 1199.98px) {
+    .refund-page .refund-row {
+        grid-template-columns: 48px minmax(160px, .85fr) minmax(210px, 1fr) minmax(120px, .5fr);
+    }
+
+    .refund-page .refund-actions {
+        grid-column: 2 / -1;
+        justify-content: flex-end;
+        padding-top: 14px;
+        border-top: 1px solid var(--app-color-hairline-soft);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .finance-page.refund-page {
+        padding: 16px 14px 36px;
+    }
+
+    .refund-page .refund-page-hero {
+        min-height: 170px;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 26px 24px;
+        border-radius: 14px;
+    }
+
+    .refund-page .refund-hero-summary {
+        width: 100%;
+        min-width: 0;
+        margin-top: 18px;
+        grid-template-columns: auto auto 1fr;
+    }
+
+    .refund-page .refund-hero-summary > i {
+        grid-row: auto;
+        font-size: 20px;
+    }
+
+    .refund-page .refund-hero-summary > strong {
+        font-size: 22px;
+    }
+
+    .refund-page .refund-hero-summary > span {
+        max-width: none;
+    }
+
+    .refund-page .refund-row {
+        grid-template-columns: 44px minmax(0, 1fr);
+        align-items: start;
+        gap: 14px 12px;
+        padding: 20px;
+        border-radius: 13px;
+    }
+
+    .refund-page .refund-row-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .refund-page .refund-member {
+        align-self: center;
+    }
+
+    .refund-page .refund-book,
+    .refund-page .refund-amount,
+    .refund-page .refund-actions {
+        grid-column: 1 / -1;
+    }
+
+    .refund-page .refund-book,
+    .refund-page .refund-amount {
+        padding-top: 12px;
+        border-top: 1px solid var(--app-color-hairline-soft);
+    }
+
+    .refund-page .refund-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 14px;
+    }
+
+    .refund-page .refund-actions .btn {
+        width: 44px;
+    }
+
+    .refund-page .deposit-receipt-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .refund-page .deposit-receipt-book {
+        min-height: 0;
+    }
+}
+
+@media (max-width: 479.98px) {
+    .refund-page .deposit-receipt-total {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .refund-page :is(.refund-receipt-modal, .refund-confirm-modal) .modal-footer .btn,
+    .refund-page .refund-confirm-modal .modal-footer form {
+        width: 100%;
+    }
+
+    .refund-page .refund-confirm-summary > div {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .refund-page .refund-confirm-summary dd {
+        text-align: left;
+    }
+}

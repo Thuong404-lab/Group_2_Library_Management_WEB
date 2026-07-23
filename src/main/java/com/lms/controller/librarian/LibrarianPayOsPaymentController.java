@@ -61,9 +61,10 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @PostMapping("/fine/{fineId}")
     public String createFinePayment(@PathVariable Integer fineId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            PayOsPayment payment = paymentService.createFinePaymentForLibrarian(fineId);
+            PayOsPayment payment = paymentService.createFinePaymentForLibrarian(fineId, requireStaff(userDetails));
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", readableMessage(exception));
@@ -73,9 +74,10 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
 
     @PostMapping("/fine/borrow/{borrowId}")
     public String createBorrowFinePayment(@PathVariable Integer borrowId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
-            PayOsPayment payment = paymentService.createFineBatchPaymentForLibrarian(borrowId);
+            PayOsPayment payment = paymentService.createFineBatchPaymentForLibrarian(borrowId, requireStaff(userDetails));
             return "redirect:/librarian/payments/payos/" + payment.getOrderCode();
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", readableMessage(exception));

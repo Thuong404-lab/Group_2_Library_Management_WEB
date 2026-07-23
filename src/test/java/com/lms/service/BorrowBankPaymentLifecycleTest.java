@@ -62,6 +62,7 @@ class BorrowBankPaymentLifecycleTest {
     @Mock WalletRepository walletRepository;
     @Mock TransactionRepository transactionRepository;
     @Mock FinancialService financialService;
+    @Mock MembershipService membershipService;
     @Mock LoanService loanService;
     @Mock StaffAccountRepository staffAccountRepository;
 

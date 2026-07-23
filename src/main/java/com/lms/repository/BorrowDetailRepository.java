@@ -197,6 +197,19 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
            "ORDER BY bd.borrowDetailId DESC")
     List<BorrowDetail> findAllBorrowDetailsWithRelationships();
 
+    @EntityGraph(attributePaths = {"borrow.member.user", "book", "bookItem"})
+    @Query("""
+            select bd
+            from BorrowDetail bd
+            where bd.returnDate is null
+              and bd.dueDate < :cutoff
+              and upper(trim(bd.status)) in :statuses
+            order by bd.dueDate asc, bd.borrowDetailId asc
+            """)
+    List<BorrowDetail> findActiveOverdueDetails(
+            @Param("cutoff") LocalDateTime cutoff,
+            @Param("statuses") List<String> statuses);
+
     @Query("SELECT bd FROM BorrowDetail bd " +
             "WHERE bd.borrow.member.memberId = :memberId " +
             "AND bd.borrow.borrowDate >= :limitDate " +

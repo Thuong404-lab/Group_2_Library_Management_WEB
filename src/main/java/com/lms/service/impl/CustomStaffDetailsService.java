@@ -45,6 +45,7 @@ public class CustomStaffDetailsService implements UserDetailsService {
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
+                false,
                 authorities);
     }
 }
