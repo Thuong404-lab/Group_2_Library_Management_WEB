@@ -13,6 +13,7 @@ import com.lms.service.LoanService;
 import com.lms.service.LocalizedMessageService;
 import com.lms.util.BorrowCodeFormatter;
 import com.lms.service.FinancialService;
+import com.lms.service.MembershipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +37,7 @@ public class LoanServiceImpl implements LoanService {
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
-    private static final String STATUS_DAMAGED = "Damaged";
-    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
-    private static final String STATUS_LOST = "Lost";
+    private static final String STATUS_UNAVAILABLE = "Unavailable";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
     private static final String STATUS_OVERDUE = "Overdue";
@@ -56,21 +55,23 @@ public class LoanServiceImpl implements LoanService {
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final FinancialService financialService;
+    private final MembershipService membershipService;
 
     public LoanServiceImpl(BorrowRepository borrowRepository,
-            BorrowDetailRepository borrowDetailRepository,
-            MemberRepository memberRepository,
-            StaffAccountRepository staffAccountRepository,
-            BookItemRepository bookItemRepository,
-            BookRepository bookRepository,
-            MemberAccountRepository memberAccountRepository,
-            WalletRepository walletRepository,
-            TransactionRepository transactionRepository,
-            ReservationRepository reservationRepository,
-            SystemSettingRepository systemSettingRepository,
-            NotificationRepository notificationRepository,
-            MemberNotificationRepository memberNotificationRepository,
-            FinancialService financialService) {
+                           BorrowDetailRepository borrowDetailRepository,
+                           MemberRepository memberRepository,
+                           StaffAccountRepository staffAccountRepository,
+                           BookItemRepository bookItemRepository,
+                           BookRepository bookRepository,
+                           MemberAccountRepository memberAccountRepository,
+                           WalletRepository walletRepository,
+                           TransactionRepository transactionRepository,
+                           ReservationRepository reservationRepository,
+                           SystemSettingRepository systemSettingRepository,
+                           NotificationRepository notificationRepository,
+                           MemberNotificationRepository memberNotificationRepository,
+                           FinancialService financialService,
+                           MembershipService membershipService) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.memberRepository = memberRepository;
@@ -85,6 +86,7 @@ public class LoanServiceImpl implements LoanService {
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.financialService = financialService;
+        this.membershipService = membershipService;
     }
 
     // UC-13.1: Xem chi tiáº¿t phiáº¿u mÆ°á»£n
@@ -105,13 +107,8 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.loan.barcodeNotFound", barcode)));
 
-        BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
-                .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
-                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus())
-                                || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())
-                                || "Return_Pending".equalsIgnoreCase(d.getStatus())
-                                || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
-                .findFirst()
+        BorrowDetail activeDetail = borrowDetailRepository.findFirstByBookItem_BookItemIdAndStatusInIgnoreCase(
+                        item.getBookItemId(), List.of("Borrowed", "Overdue", "Return_Pending", "Renew_Pending"))
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.loan.activeHistoryNotFound")));
 
@@ -226,7 +223,10 @@ public class LoanServiceImpl implements LoanService {
         }
 
         long currentBorrowCount = borrowDetailRepository.countActiveBorrowedBooks(member.getMemberId());
-        int maxLimit = member.getTier() != null ? member.getTier().getBorrowLimit() : 3;
+        if (member.getTier() == null || member.getTier().getBorrowLimit() == null) {
+            throw new DataProcessingException(localizedMessageService.get("backend.tier.memberTierMissing"));
+        }
+        int maxLimit = member.getTier().getBorrowLimit();
         int totalRequestedBooks = (int) currentBorrowCount + bookItemsToBorrow.size();
 
         if (totalRequestedBooks > maxLimit) {
@@ -388,6 +388,13 @@ public class LoanServiceImpl implements LoanService {
                 && returnDate.isBefore(detail.getBorrow().getBorrowDate())) {
             throw new ValidationException(localizedMessageService.get("backend.return.beforeBorrowDate"));
         }
+        BookItem item = detail.getBookItem();
+        if (item != null && getConditionLevel(bookCondition) < getConditionLevel(item.getBookCondition())) {
+            throw new ValidationException(localizedMessageService.get(
+                    "backend.return.conditionCannotImprove",
+                    item.getBookCondition(),
+                    bookCondition));
+        }
         if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0
                 && "wallet".equals(resolvedPaymentMethod)) {
             Member member = detail.getBorrow() == null ? null : detail.getBorrow().getMember();
@@ -403,7 +410,6 @@ public class LoanServiceImpl implements LoanService {
         if ("Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
             rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
         }
-        BookItem item = detail.getBookItem();
         boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
         if (item != null) {
@@ -441,6 +447,27 @@ public class LoanServiceImpl implements LoanService {
                 NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
                 "systemNotification.return.desk.title",
                 "systemNotification.return.desk.content", detail.getBook().getTitle());
+
+        // Tự động phân gán cho độc giả đứng đầu hàng đợi Đặt trước (FIFO) nếu bản sao ở trạng thái Available
+        if (item != null && "Available".equalsIgnoreCase(item.getStatus()) && detail.getBook() != null && detail.getBook().getBookId() != null) {
+            Integer bookId = detail.getBook().getBookId();
+            List<Reservation> waitingReservations = reservationRepository
+                    .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
+            if (!waitingReservations.isEmpty()) {
+                Reservation nextReservation = waitingReservations.get(0);
+                nextReservation.setStatus("Ready");
+                reservationRepository.save(nextReservation);
+
+                item.setStatus("Waiting_Pickup");
+                bookItemRepository.save(item);
+
+                sendInternalNotification(nextReservation.getMember(),
+                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.SYSTEM,
+                        "systemNotification.reservation.ready.title",
+                        "systemNotification.reservation.ready.content",
+                        nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
+            }
+        }
 
         return damageFineTx;
     }
@@ -779,12 +806,14 @@ public class LoanServiceImpl implements LoanService {
                 .ifPresent(hold::setPerformedByStaff);
         borrowDetailRepository.save(detail);
         transactionRepository.save(hold);
-        if (detail.getBorrow().getMember() != null)
+        if (detail.getBorrow().getMember() != null) {
+            membershipService.synchronizeMemberTier(detail.getBorrow().getMember().getMemberId());
             sendInternalNotification(detail.getBorrow().getMember(),
                     NotificationType.LOAN, NotificationEventType.RENEWAL_APPROVED, NotificationSource.LIBRARIAN,
                     "systemNotification.renewal.approved.title", "systemNotification.renewal.approved.content",
                     detail.getBook().getTitle(),
                     detail.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        }
     }
 
     @Override
@@ -926,27 +955,18 @@ public class LoanServiceImpl implements LoanService {
     private String resolveReturnedItemStatus(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
-            return STATUS_LOST;
-        }
-        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
-            return STATUS_DAMAGED;
-        }
-        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage")) {
-            return STATUS_MINOR_DAMAGED;
+            return STATUS_UNAVAILABLE;
         }
         return STATUS_AVAILABLE;
     }
 
     private String resolveConditionCode(String bookCondition) {
-        String itemStatus = resolveReturnedItemStatus(bookCondition);
-        if (STATUS_LOST.equals(itemStatus))
-            return "LOST";
-        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        if (STATUS_DAMAGED.equals(itemStatus)
-                || normalized.contains("minor damage")
-                || normalized.contains("h\u01b0 h\u1ecfng"))
-            return "DAMAGED";
-        return "GOOD";
+        return switch (getConditionLevel(bookCondition)) {
+            case 4 -> "LOST";
+            case 3 -> "DAMAGED";
+            case 2 -> "MINOR_DAMAGE";
+            default -> "GOOD";
+        };
     }
 
     /**
@@ -978,8 +998,11 @@ public class LoanServiceImpl implements LoanService {
         borrowRepository.save(borrow);
     }
 
+    @Autowired(required = false)
+    private com.lms.service.EmailService emailService;
+
     /**
-     * Táº¡o thÃ´ng bÃ¡o há»‡ thá»‘ng vÃ  gá»­i cho Ä‘á»™c giáº£
+     * Tạo thông báo hệ thống và gửi cho độc giả (kèm gửi Email nếu khả dụng)
      */
     private void sendInternalNotification(Member member,
             NotificationType type,
@@ -1006,6 +1029,24 @@ public class LoanServiceImpl implements LoanService {
         mn.setNotification(saved);
         mn.setIsRead(false);
         memberNotificationRepository.save(mn);
+
+        if (emailService != null) {
+            String recipientEmail = (member.getUser() != null) ? member.getUser().getEmail() : null;
+            String recipientName = (member.getUser() != null) ? member.getUser().getFullName() : "Độc giả";
+            if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
+                final String to = recipientEmail.trim();
+                final String name = recipientName;
+                final String title = notif.getTitle();
+                final String content = notif.getContent();
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try {
+                        emailService.sendNotificationEmail(to, name, title, content);
+                    } catch (Exception ignored) {
+                        // Safe fallback if SMTP email server is unconfigured or unavailable
+                    }
+                });
+            }
+        }
     }
 
     @Override

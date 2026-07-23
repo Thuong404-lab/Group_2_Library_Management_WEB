@@ -4,6 +4,7 @@ import com.lms.dto.response.OverdueViolationView;
 import com.lms.entity.BorrowDetail;
 import com.lms.entity.Member;
 import com.lms.entity.User;
+import com.lms.exception.ValidationException;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.SystemSettingRepository;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,6 @@ public class OverdueViolationQueryService {
 
     private final LocalizedMessageService messages;
     private static final String FINE_PER_DAY_SETTING_KEY = "Fine_Per_Day";
-    private static final BigDecimal DEFAULT_FINE_PER_DAY = BigDecimal.valueOf(5000);
     private static final Set<String> OVERDUE_ELIGIBLE_STATUSES =
             Set.of("BORROWED", "OVERDUE", "RETURN_PENDING");
 
@@ -44,7 +44,8 @@ public class OverdueViolationQueryService {
         LocalDate today = LocalDate.now();
         BigDecimal finePerDay = getConfiguredFinePerDay();
 
-        return borrowDetailRepository.findAllBorrowDetailsWithRelationships().stream()
+        return borrowDetailRepository.findActiveOverdueDetails(
+                        today.atStartOfDay(), OVERDUE_ELIGIBLE_STATUSES.stream().toList()).stream()
                 .filter(detail -> isActiveOverdue(detail, today))
                 .map(detail -> toView(detail, today, finePerDay))
                 .sorted(Comparator.comparingLong(OverdueViolationView::overdueDays)
@@ -59,9 +60,9 @@ public class OverdueViolationQueryService {
             return systemSettingRepository.findBySettingKeyIgnoreCase(FINE_PER_DAY_SETTING_KEY)
                     .map(setting -> new BigDecimal(setting.getSettingValue()))
                     .filter(amount -> amount.signum() >= 0)
-                    .orElse(DEFAULT_FINE_PER_DAY);
+                    .orElseThrow(() -> new ValidationException(messages.get("backend.financial.fineRateNotConfigured")));
         } catch (NumberFormatException exception) {
-            return DEFAULT_FINE_PER_DAY;
+            throw new ValidationException(messages.get("backend.financial.fineRateNotConfigured"));
         }
     }
 

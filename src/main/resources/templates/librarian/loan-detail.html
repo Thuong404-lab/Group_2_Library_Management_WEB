@@ -20,21 +20,21 @@
         <div class="detail-header">
             <div>
                 <span class="text-uppercase tracking-wider small opacity-75">Phiếu mượn thư viện</span>
-                <h3 class="fw-bold mb-0" th:text="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}">BOR-42</h3>
+                <h3 class="fw-bold mb-0" th:text="${@borrowCodeFormatter.format(borrow.borrowId)}">BOR-42</h3>
             </div>
             <div>
-                <span th:if="${borrow.status == 'Active'}" class="status-badge status-active">Đang mượn</span>
-                <span th:if="${borrow.status == 'Waiting_Pickup'}" class="status-badge" style="background:#e8f4fd;color:#1565c0;border:1px solid #90caf9;font-size:0.85rem;padding:6px 12px;"><i class="bi bi-box-arrow-in-down me-1"></i>Chờ nhận sách vật lý</span>
-                <span th:if="${borrow.status == 'Returned'}" class="status-badge status-returned">Đã hoàn thành</span>
-                <span th:if="${borrow.status == 'Overdue'}" class="status-badge status-overdue">Quá hạn</span>
-                <span th:if="${borrow.status == 'Pending'}" class="status-badge status-pending">Chờ phê duyệt</span>
-                <span th:if="${borrow.status == 'Rejected' or borrow.status == 'Canceled' or borrow.status == 'Cancelled'}" class="status-badge status-overdue" th:text="${borrow.status}">Canceled</span>
-                <span th:if="${borrow.status == 'Payment_Pending' or borrow.status == 'Payment_Expired'}" class="status-badge status-pending" th:text="${borrow.status}">Payment status</span>
+                <span th:if="${borrow.status != null and #strings.equalsIgnoreCase(borrow.status, 'Active')}" class="status-badge status-active">Đang mượn</span>
+                <span th:if="${borrow.status != null and (#strings.equalsIgnoreCase(borrow.status, 'Waiting_Pickup') or #strings.equalsIgnoreCase(borrow.status, 'APPROVED'))}" class="status-badge" style="background:#e8f4fd;color:#1565c0;border:1px solid #90caf9;font-size:0.85rem;padding:6px 12px;"><i class="bi bi-box-arrow-in-down me-1"></i>Chờ nhận sách vật lý</span>
+                <span th:if="${borrow.status != null and #strings.equalsIgnoreCase(borrow.status, 'Returned')}" class="status-badge status-returned">Đã hoàn thành</span>
+                <span th:if="${borrow.status != null and #strings.equalsIgnoreCase(borrow.status, 'Overdue')}" class="status-badge status-overdue">Quá hạn</span>
+                <span th:if="${borrow.status != null and #strings.equalsIgnoreCase(borrow.status, 'Pending')}" class="status-badge status-pending">Chờ phê duyệt</span>
+                <span th:if="${borrow.status != null and (#strings.equalsIgnoreCase(borrow.status, 'Rejected') or #strings.equalsIgnoreCase(borrow.status, 'Canceled') or #strings.equalsIgnoreCase(borrow.status, 'Cancelled'))}" class="status-badge status-overdue" th:text="${borrow.status}">Canceled</span>
+                <span th:if="${borrow.status != null and (#strings.equalsIgnoreCase(borrow.status, 'Payment_Pending') or #strings.equalsIgnoreCase(borrow.status, 'Payment_Expired'))}" class="status-badge status-pending" th:text="${borrow.status}">Payment status</span>
             </div>
         </div>
 
         <!-- Nút xác nhận nhận bản vật lý (chỉ hiển thị khi ở trạng thái Waiting_Pickup) -->
-        <div th:if="${borrow.status == 'Waiting_Pickup'}" class="px-4 pt-3 pb-0">
+        <div th:if="${borrow.status != null and (#strings.equalsIgnoreCase(borrow.status, 'Waiting_Pickup') or #strings.equalsIgnoreCase(borrow.status, 'APPROVED'))}" class="px-4 pt-3 pb-0">
             <div class="alert d-flex align-items-center gap-3 mb-0" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;">
                 <i class="bi bi-info-circle-fill fs-5" style="color:#1565c0;"></i>
                 <div class="flex-grow-1">
@@ -45,7 +45,7 @@
                       class="app-confirm-form"
                       th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
                       th:data-confirm-subject-label="#{loan.code}"
-                      th:data-confirm-subject="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}"
+                      th:data-confirm-subject="${@borrowCodeFormatter.format(borrow.borrowId)}"
                       th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
                       th:data-confirm-action="#{librarian.borrowList.pickupAction}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

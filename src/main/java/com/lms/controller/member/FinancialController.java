@@ -228,6 +228,8 @@ public class FinancialController extends LocalizedControllerSupport {
                 "#TXN-" + transaction.getTransactionId(),
                 transaction.getTransactionDate(),
                 transactionTypeMessageKey(transaction.getTransactionType()),
+                transactionDescription(transaction),
+                transactionDetail(transaction),
                 transaction.getAmount(),
                 transactionStatusMessageKey(transaction.getStatus()),
                 completed);
@@ -249,9 +251,70 @@ public class FinancialController extends LocalizedControllerSupport {
                 "#KQ-" + payment.getPaymentId(),
                 payment.getPaidAt() != null ? payment.getPaidAt() : payment.getCreatedAt(),
                 typeLabel,
+                kqPayDescription(payment.getPurpose()),
+                message("transaction.detail.kqpayOrder", payment.getOrderCode()),
                 amount,
                 "transaction.status.completed",
                 true);
+    }
+
+    private String transactionDescription(Transaction transaction) {
+        String transactionType = transaction.getTransactionType();
+        if (transactionType == null) {
+            return message("transaction.description.other");
+        }
+        String descriptionKey = switch (transactionType.trim().toUpperCase()) {
+            case "TOP_UP" -> "transaction.description.topUp";
+            case "BORROW_FEE" -> "transaction.description.borrowFee";
+            case "RENEWAL_FEE" -> "transaction.description.renewalFee";
+            case "DEPOSIT" -> "transaction.description.deposit";
+            case "FINE", "OVERDUE_FINE" -> "transaction.description.fine";
+            case "DAMAGE_FEE" -> "transaction.description.damageFee";
+            case "REFUND" -> "transaction.description.refund";
+            case "PAYMENT", "FEE" -> "transaction.description.payment";
+            default -> "transaction.description.other";
+        };
+        return message(descriptionKey);
+    }
+
+    private String transactionDetail(Transaction transaction) {
+        List<String> details = new ArrayList<>();
+        if (transaction.getBorrow() != null && transaction.getBorrow().getBorrowId() != null) {
+            details.add(message("transaction.detail.borrow", transaction.getBorrow().getBorrowId()));
+        }
+        if (transaction.getRenewalDays() != null && transaction.getRenewalDays() > 0) {
+            details.add(message("transaction.detail.renewalDays", transaction.getRenewalDays()));
+        }
+        if (transaction.getChannel() != null && !transaction.getChannel().isBlank()) {
+            details.add(message("transaction.detail.channel",
+                    message(transactionChannelMessageKey(transaction.getChannel()))));
+        }
+        if (transaction.getReferenceCode() != null && !transaction.getReferenceCode().isBlank()) {
+            details.add(message("transaction.detail.reference", transaction.getReferenceCode()));
+        }
+        return String.join(" · ", details);
+    }
+
+    private String kqPayDescription(String purpose) {
+        if (purpose == null) {
+            return message("transaction.description.kqpay");
+        }
+        return message(switch (purpose.trim().toUpperCase()) {
+            case "TOP_UP" -> "transaction.description.kqpayTopUp";
+            case "BORROW_FEE" -> "transaction.description.kqpayBorrowFee";
+            case "FINE" -> "transaction.description.kqpayFine";
+            case "FINE_BATCH" -> "transaction.description.kqpayFineBatch";
+            default -> "transaction.description.kqpay";
+        });
+    }
+
+    private String transactionChannelMessageKey(String channel) {
+        return switch (channel.trim().toUpperCase()) {
+            case "WALLET" -> "transaction.channel.wallet";
+            case "CASH" -> "transaction.channel.cash";
+            case "PAYOS", "KQPAY", "BANK" -> "transaction.channel.payos";
+            default -> "transaction.channel.system";
+        };
     }
 
     private String transactionTypeMessageKey(String transactionType) {
@@ -266,6 +329,9 @@ public class FinancialController extends LocalizedControllerSupport {
             case "FINE" -> "transaction.type.fine";
             case "DAMAGE_FEE" -> "transaction.type.damageFee";
             case "REFUND" -> "transaction.type.refund";
+            case "PAYMENT" -> "transaction.type.payment";
+            case "OVERDUE_FINE" -> "transaction.type.overdueFine";
+            case "FEE" -> "transaction.type.fee";
             default -> "transaction.type.other";
         };
     }

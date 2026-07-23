@@ -62,7 +62,7 @@ public class MembershipController extends LocalizedControllerSupport {
             Member member = membershipService.getMemberByUsername(username);
             List<MembershipTier> allTiers = membershipService.getAllTiers();
 
-            double currentSpent = 0.0;
+            BigDecimal currentSpent = BigDecimal.ZERO;
             MembershipTier nextTier = null;
             BigDecimal amountNeeded = BigDecimal.ZERO;
 
@@ -72,11 +72,8 @@ public class MembershipController extends LocalizedControllerSupport {
                 nextTier = membershipService.getNextTier(member.getTier());
 
                 if (nextTier != null && nextTier.getCondition() != null) {
-                    // Chuyển đổi currentSpent (double) sang BigDecimal để thực hiện phép trừ chuẩn xác
-                    BigDecimal currentSpentBd = BigDecimal.valueOf(currentSpent);
-
                     // amountNeeded = condition - currentSpent
-                    amountNeeded = nextTier.getCondition().subtract(currentSpentBd);
+                    amountNeeded = nextTier.getCondition().subtract(currentSpent);
 
                     // Nếu số tiền cần nạp/chi tiêu thêm âm (đã vượt mốc) thì gán bằng ZERO
                     if (amountNeeded.compareTo(BigDecimal.ZERO) < 0) {

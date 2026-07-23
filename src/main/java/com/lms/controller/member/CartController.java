@@ -201,9 +201,12 @@ public class CartController extends LocalizedControllerSupport {
                         java.util.function.Function.identity(),
                         java.util.stream.Collectors.counting()));
         boolean selectionMatchesCart = !requestedCounts.isEmpty() && requestedCounts.entrySet().stream()
-                .allMatch(entry -> java.util.Collections.frequency(cartBookIds, entry.getKey()) >= entry.getValue());
+                .allMatch(entry -> cartBookIds.contains(entry.getKey()));
         if (!selectionMatchesCart) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
+            return "redirect:/member/cart";
+        }
+        if (!hasAvailableStock(requestedCounts, redirectAttributes)) {
             return "redirect:/member/cart";
         }
 
@@ -270,10 +273,13 @@ public class CartController extends LocalizedControllerSupport {
                         java.util.function.Function.identity(),
                         java.util.stream.Collectors.counting()));
         boolean allInCart = !selectedCounts.isEmpty() && selectedCounts.entrySet().stream()
-                .allMatch(entry -> java.util.Collections.frequency(cartBookIds, entry.getKey()) >= entry.getValue());
+                .allMatch(entry -> cartBookIds.contains(entry.getKey()));
 
         if (!allInCart) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
+            return "redirect:/member/cart";
+        }
+        if (!hasAvailableStock(selectedCounts, redirectAttributes)) {
             return "redirect:/member/cart";
         }
 
@@ -324,5 +330,19 @@ public class CartController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.cart.creationFailed", e));
             return "redirect:/member/cart";
         }
+    }
+
+    private boolean hasAvailableStock(java.util.Map<Integer, Long> requestedCounts,
+            RedirectAttributes redirectAttributes) {
+        for (java.util.Map.Entry<Integer, Long> entry : requestedCounts.entrySet()) {
+            long availableCopies = bookItemRepository
+                    .countByBook_BookIdAndStatusIgnoreCase(entry.getKey(), "Available");
+            if (entry.getValue() > availableCopies) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        message("backend.borrow.stockExceeded", availableCopies));
+                return false;
+            }
+        }
+        return true;
     }
 }

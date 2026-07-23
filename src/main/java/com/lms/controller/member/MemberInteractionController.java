@@ -22,7 +22,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.lms.dto.request.MemberBookAcquisitionRequest;
 import com.lms.service.MemberBookAcquisitionService;
-import com.lms.domain.AcquisitionRequestPolicy;
+import com.lms.util.AcquisitionRequestPolicy;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
 

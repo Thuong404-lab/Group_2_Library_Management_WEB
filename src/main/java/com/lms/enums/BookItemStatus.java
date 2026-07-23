@@ -1,2 +1,2 @@
 package com.lms.enums;
-public enum BookItemStatus { Available, Borrowed, Lost, Damaged, MinorDamaged }
+public enum BookItemStatus { Available, Borrowed, Payment_Pending, Waiting_Pickup, Unavailable }

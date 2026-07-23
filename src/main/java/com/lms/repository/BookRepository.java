@@ -24,6 +24,10 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
     
     boolean existsByGenre_GenreId(Integer genreId);
 
+    @Query("SELECT b.genre.genreId, COUNT(b) FROM Book b " +
+           "WHERE b.genre IS NOT NULL GROUP BY b.genre.genreId")
+    List<Object[]> countTitlesByGenre();
+
     @Query("select (count(b) > 0) from Book b " +
             "where upper(replace(replace(b.isbn, '-', ''), ' ', '')) = :isbn")
     boolean existsByNormalizedIsbn(@Param("isbn") String isbn);
@@ -47,7 +51,9 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
     @Query("SELECT DISTINCT b FROM Book b LEFT JOIN b.authors a " +
            "WHERE (:keyword = '' OR LOWER(b.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(a.authorName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(b.isbn) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "OR LOWER(b.isbn) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR EXISTS (SELECT barcodeItem.bookItemId FROM BookItem barcodeItem " +
+           "WHERE barcodeItem.book = b AND LOWER(barcodeItem.barcode) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
            "AND (:bookCondition = '' OR EXISTS (SELECT bi.bookItemId FROM BookItem bi " +
            "WHERE bi.book = b AND bi.bookCondition = :bookCondition))")
     Page<Book> searchBookItems(@Param("keyword") String keyword,

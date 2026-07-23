@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 
@@ -16,6 +18,10 @@ import java.util.Optional;
 // NgÆ°á»i phá»¥ trÃ¡ch: Tráº§n Ngá»c Linh Äang (CE191088)
 
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"wallet", "wallet.member", "wallet.member.user", "borrow", "borrowDetail"})
+    @Query("select t from Transaction t where t.transactionId = :transactionId")
+    Optional<Transaction> findByIdForUpdate(@Param("transactionId") Integer transactionId);
 
     boolean existsByReferenceCode(String referenceCode);
 
@@ -181,17 +187,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             from Transaction t
             where t.wallet.member.memberId = :memberId
               and upper(t.transactionType) in :types
-              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+              and lower(t.status) = 'pending'
             order by t.transactionDate desc
             """)
     List<Transaction> findUnpaidFineTransactions(@Param("memberId") Integer memberId,
             @Param("types") List<String> types);
 
+    @EntityGraph(attributePaths = {"wallet", "wallet.member", "wallet.member.user", "borrow", "borrowDetail", "borrowDetail.book", "borrowDetail.bookItem"})
     @Query("""
             select t
             from Transaction t
             where upper(t.transactionType) in :types
-              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+              and lower(t.status) = 'pending'
             order by t.transactionDate asc, t.transactionId asc
             """)
     List<Transaction> findAllPendingFineTransactions(@Param("types") List<String> types);
@@ -201,7 +208,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             from Transaction t
             where t.borrow.borrowId = :borrowId
               and upper(t.transactionType) in :types
-              and (t.status is null or lower(t.status) not in ('completed', 'paid'))
+              and lower(t.status) = 'pending'
             order by t.transactionDate asc, t.transactionId asc
             """)
     List<Transaction> findPendingFineTransactionsByBorrowId(@Param("borrowId") Integer borrowId,
@@ -286,18 +293,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
             select coalesce(sum(abs(t.amount)), 0)
             from Transaction t
             where t.wallet.member.memberId = :memberId
-              and upper(t.transactionType) = 'TOP_UP'
+              and upper(t.transactionType) in ('BORROW_FEE', 'RENEWAL_FEE')
               and lower(t.status) in ('completed', 'paid')
             """)
-    BigDecimal sumCompletedTopUpByMemberId(@Param("memberId") Integer memberId);
+    BigDecimal sumCompletedMembershipSpendByMemberId(@Param("memberId") Integer memberId);
 
     @Query("""
             select t.wallet.member.memberId, coalesce(sum(abs(t.amount)), 0)
             from Transaction t
-            where upper(t.transactionType) = 'TOP_UP'
+            where upper(t.transactionType) in ('BORROW_FEE', 'RENEWAL_FEE')
+              and lower(t.status) in ('completed', 'paid')
+            group by t.wallet.member.memberId
+            """)
+    List<Object[]> sumCompletedMembershipSpendForAllMembers();
+
+    @Query("""
+            select t.wallet.member.memberId, coalesce(sum(abs(t.amount)), 0)
+            from Transaction t
+            where upper(t.transactionType) in ('BORROW_FEE', 'RENEWAL_FEE')
               and lower(t.status) in ('completed', 'paid')
             group by t.wallet.member.memberId
             order by sum(abs(t.amount)) desc, t.wallet.member.memberId asc
             """)
-    List<Object[]> findTopMembersByCompletedTopUp(Pageable pageable);
+    List<Object[]> findTopMembersByCompletedMembershipSpend(Pageable pageable);
 }

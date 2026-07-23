@@ -52,8 +52,8 @@ public class FineBatchPaymentService {
 
     @Transactional(rollbackFor = Exception.class)
     public void payAllFromWallet(Integer memberId) {
-        List<Transaction> pending = transactionRepository.findUnpaidFineTransactions(
-                memberId, List.of("FINE", "DAMAGE_FEE"));
+        List<Transaction> pending = new java.util.ArrayList<>(transactionRepository.findUnpaidFineTransactions(
+                memberId, List.of("FINE", "DAMAGE_FEE")));
         if (pending.isEmpty()) {
             throw new ConflictException(messages.get("backend.payment.noFinesDue"));
         }
@@ -75,15 +75,24 @@ public class FineBatchPaymentService {
         if (balance.compareTo(total) < 0) {
             throw new ConflictException(messages.get("backend.payment.batchInsufficientBalance"));
         }
-        wallet.setBalance(balance.subtract(total));
+        BigDecimal newBalance = balance.subtract(total);
+        wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
         LocalDateTime paidAt = LocalDateTime.now();
+        BigDecimal runningBalance = balance;
         for (Transaction fine : lockedFines) {
+            BigDecimal itemAmount = fine.getAmount().abs();
+            BigDecimal itemBalanceAfter = runningBalance.subtract(itemAmount);
             fine.setAmount(fine.getAmount().abs().negate());
             fine.setStatus("Completed");
             fine.setTransactionDate(paidAt);
+            fine.setPaidAt(paidAt);
+            fine.setChannel("WALLET");
+            fine.setBalanceBefore(runningBalance);
+            fine.setBalanceAfter(itemBalanceAfter);
             lockedTransactionRepository.save(fine);
+            runningBalance = itemBalanceAfter;
         }
 
         createNotification(
@@ -101,7 +110,8 @@ public class FineBatchPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void payBorrowFinesByCash(Integer borrowId) {
+    public void payBorrowFinesByCash(Integer borrowId, com.lms.entity.Staff performedBy) {
+        requireStaff(performedBy);
         List<Transaction> fines = lockBorrowFines(borrowId);
         BigDecimal total = fines.stream()
                 .map(fine -> fine.getAmount().abs())
@@ -111,6 +121,10 @@ public class FineBatchPaymentService {
             fine.setAmount(fine.getAmount().abs().negate());
             fine.setStatus("Completed");
             fine.setTransactionDate(paidAt);
+            fine.setPaidAt(paidAt);
+            fine.setChannel("CASH");
+            fine.setPerformedByStaff(performedBy);
+            fine.setReferenceCode("CASH-FINE-" + fine.getTransactionId());
             lockedTransactionRepository.save(fine);
         }
         createNotification(
@@ -122,7 +136,8 @@ public class FineBatchPaymentService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void payBorrowFinesFromWallet(Integer borrowId) {
+    public void payBorrowFinesFromWallet(Integer borrowId, com.lms.entity.Staff performedBy) {
+        requireStaff(performedBy);
         List<Transaction> fines = lockBorrowFines(borrowId);
         Integer memberId = fines.get(0).getWallet().getMember().getMemberId();
         BigDecimal total = fines.stream()
@@ -134,15 +149,25 @@ public class FineBatchPaymentService {
         if (balance.compareTo(total) < 0) {
             throw new ConflictException(messages.get("backend.payment.batchInsufficientBalance"));
         }
-        wallet.setBalance(balance.subtract(total));
+        BigDecimal newBalance = balance.subtract(total);
+        wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
         LocalDateTime paidAt = LocalDateTime.now();
+        BigDecimal runningBalance = balance;
         for (Transaction fine : fines) {
+            BigDecimal itemAmount = fine.getAmount().abs();
+            BigDecimal itemBalanceAfter = runningBalance.subtract(itemAmount);
             fine.setAmount(fine.getAmount().abs().negate());
             fine.setStatus("Completed");
             fine.setTransactionDate(paidAt);
+            fine.setPaidAt(paidAt);
+            fine.setChannel("WALLET");
+            fine.setPerformedByStaff(performedBy);
+            fine.setBalanceBefore(runningBalance);
+            fine.setBalanceAfter(itemBalanceAfter);
             lockedTransactionRepository.save(fine);
+            runningBalance = itemBalanceAfter;
         }
         createNotification(
                 wallet.getMember(),
@@ -153,7 +178,7 @@ public class FineBatchPaymentService {
     }
 
     private List<Transaction> lockBorrowFines(Integer borrowId) {
-        List<Transaction> pending = getPendingForBorrow(borrowId);
+        List<Transaction> pending = new java.util.ArrayList<>(getPendingForBorrow(borrowId));
         if (pending.isEmpty()) {
             throw new ConflictException(messages.get("backend.payment.noFinesDue"));
         }
@@ -212,9 +237,15 @@ public class FineBatchPaymentService {
         String type = normalize(fine.getTransactionType());
         String status = normalize(fine.getStatus());
         if ((!"FINE".equals(type) && !"DAMAGE_FEE".equals(type))
-                || "COMPLETED".equals(status) || "PAID".equals(status)
+                || !"PENDING".equals(status)
                 || fine.getAmount() == null || fine.getAmount().signum() == 0) {
             throw new ConflictException(messages.get("backend.payment.fineListChanged"));
+        }
+    }
+
+    private void requireStaff(com.lms.entity.Staff staff) {
+        if (staff == null || staff.getStaffId() == null) {
+            throw new ConflictException(messages.get("backend.financial.staffRequired"));
         }
     }
 

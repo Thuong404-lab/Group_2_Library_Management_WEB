@@ -407,6 +407,19 @@ public class BorrowController extends LocalizedControllerSupport {
             model.addAttribute("selectedBook", book);
             model.addAttribute("availableCount", availableCount);
             model.addAttribute("maxRequestQuantity", maxRequestQuantity);
+            List<BigDecimal> cumulativeDailyFees = new java.util.ArrayList<>();
+            cumulativeDailyFees.add(BigDecimal.ZERO);
+            BigDecimal runningDailyFee = BigDecimal.ZERO;
+            List<com.lms.entity.BookItem> availableItems = bookItemRepository
+                    .findByBook_BookIdOrderByBookItemIdAsc(bookId).stream()
+                    .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
+                    .limit(maxRequestQuantity)
+                    .toList();
+            for (com.lms.entity.BookItem item : availableItems) {
+                runningDailyFee = runningDailyFee.add(getBorrowFeeForCondition(item.getBookCondition()));
+                cumulativeDailyFees.add(runningDailyFee);
+            }
+            model.addAttribute("cumulativeDailyFees", cumulativeDailyFees);
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.invalidBook"));
             return "redirect:/";
@@ -466,21 +479,8 @@ public class BorrowController extends LocalizedControllerSupport {
             }
 
             // 4. Tính toán chi phí mượn sách có áp dụng giảm giá thành viên
-            BigDecimal feePerBookPerDay = BigDecimal
-                    .valueOf(systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK")
-                            .map(s -> {
-                                try {
-                                    return Integer.parseInt(s.getSettingValue());
-                                } catch (Exception e) {
-                                    return 5000;
-                                }
-                            })
-                            .orElse(5000));
-            double discount = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
-                    ? member.getTier().getDiscountPercent().doubleValue()
-                    : 0.0;
-            BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf((long) quantity * numberOfDays));
-            BigDecimal finalFee = baseFee.subtract(baseFee.multiply(BigDecimal.valueOf(discount / 100)));
+            BigDecimal finalFee = borrowService.calculateBorrowFeePreview(
+                    principal.getName(), java.util.Collections.nCopies(quantity, bookId), numberOfDays);
 
             BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                     .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
@@ -702,6 +702,31 @@ public class BorrowController extends LocalizedControllerSupport {
 
     private long getAvailableCopyCount(Integer bookId) {
         return bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+    }
+
+    private BigDecimal getBorrowFeeForCondition(String bookCondition) {
+        String condition = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
+        if (condition.contains("severely")) {
+            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
+        }
+        if (condition.contains("minor")) {
+            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
+        }
+        return getMoneySetting("BORROW_FEE_PER_BOOK", 5000);
+    }
+
+    private BigDecimal getMoneySetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(setting -> setting.getSettingValue())
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(value -> value.signum() >= 0)
+                    .orElse(BigDecimal.valueOf(defaultValue));
+        } catch (NumberFormatException ignored) {
+            return BigDecimal.valueOf(defaultValue);
+        }
     }
 
     private Integer getMaxBorrowDays() {

@@ -8,4 +8,6 @@ public interface EmailService {
     void sendEmail(String to, String subject, String text);
 
     void sendHtmlEmail(String to, String subject, String htmlContent);
+
+    void sendNotificationEmail(String to, String recipientName, String title, String content);
 }

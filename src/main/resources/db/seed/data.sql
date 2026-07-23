@@ -55,16 +55,12 @@ BEGIN TRY
       (1,'ROLE_ADMIN'),(2,'ROLE_LIBRARIAN'),(3,'ROLE_MEMBER');
     SET IDENTITY_INSERT dbo.Roles OFF;
 
-    INSERT dbo.LocalizationLanguages(language_code,english_name,native_name,is_default,is_active) VALUES
-      (N'en',N'English',N'English',1,1),
-      (N'vi',N'Vietnamese',N'Tiếng Việt',0,1);
-
     SET IDENTITY_INSERT dbo.MembershipTiers ON;
     INSERT dbo.MembershipTiers(tier_id,tier_name,discount_percent,borrow_limit,[condition],benefits) VALUES
-      (1,N'Member',0,5,0,N'Borrow up to 5 books for the standard 14-day period.'),
-      (2,N'Silver',5,7,500000,N'5% service-fee discount and a 7-book limit.'),
-      (3,N'Gold',10,10,2000000,N'10% service-fee discount and a 10-book limit.'),
-      (4,N'Diamond',15,15,5000000,N'15% service-fee discount, 15-book limit and reservation priority.');
+      (1,N'Member',0,5,0,N'Borrow up to 5 books concurrently.'),
+      (2,N'Silver',5,7,500000,N'5% borrowing-fee discount and a 7-book concurrent limit.'),
+      (3,N'Gold',10,10,2000000,N'10% borrowing-fee discount and a 10-book concurrent limit.'),
+      (4,N'Diamond',15,15,5000000,N'15% borrowing-fee discount and a 15-book concurrent limit.');
     SET IDENTITY_INSERT dbo.MembershipTiers OFF;
 
     SET IDENTITY_INSERT dbo.Users ON;
@@ -209,73 +205,13 @@ BEGIN TRY
       (30,8,N'Designing Data-Intensive Applications','9786040000030',N'Designing reliable, scalable and maintainable data systems.','Active',NULL);
     SET IDENTITY_INSERT dbo.Books OFF;
 
-    /* English is canonical; Vietnamese is an independent translation layer. */
-    INSERT dbo.CategoryTranslations(category_id,language_code,category_name)
-    SELECT category_id,N'en',category_name FROM dbo.Categories;
-    INSERT dbo.CategoryTranslations(category_id,language_code,category_name) VALUES
-      (1,N'vi',N'Văn học'),(2,N'vi',N'Khoa học'),(3,N'vi',N'Công nghệ'),(4,N'vi',N'Kinh tế'),
-      (5,N'vi',N'Lịch sử'),(6,N'vi',N'Tâm lý - Kỹ năng'),(7,N'vi',N'Thiếu nhi'),(8,N'vi',N'Ngoại ngữ');
-
-    INSERT dbo.GenreTranslations(genre_id,language_code,genre_name)
-    SELECT genre_id,N'en',genre_name FROM dbo.Genres;
-    INSERT dbo.GenreTranslations(genre_id,language_code,genre_name) VALUES
-      (1,N'vi',N'Văn học Việt Nam'),(2,N'vi',N'Văn học nước ngoài'),(3,N'vi',N'Trinh thám'),
-      (4,N'vi',N'Khoa học phổ thông'),(5,N'vi',N'Môi trường'),(6,N'vi',N'Lập trình'),
-      (7,N'vi',N'Trí tuệ nhân tạo'),(8,N'vi',N'Cơ sở dữ liệu'),(9,N'vi',N'Quản trị'),
-      (10,N'vi',N'Tài chính'),(11,N'vi',N'Lịch sử Việt Nam'),(12,N'vi',N'Lịch sử thế giới'),
-      (13,N'vi',N'Phát triển bản thân'),(14,N'vi',N'Tâm lý học'),(15,N'vi',N'Truyện thiếu nhi'),
-      (16,N'vi',N'Tiếng Anh');
-
     INSERT dbo.MembershipTierTranslations(tier_id,language_code,tier_name,benefits)
     SELECT tier_id,N'en',tier_name,benefits FROM dbo.MembershipTiers;
     INSERT dbo.MembershipTierTranslations(tier_id,language_code,tier_name,benefits) VALUES
-      (1,N'vi',N'Thành viên',N'Mượn tối đa 5 cuốn; thời hạn tiêu chuẩn 14 ngày.'),
-      (2,N'vi',N'Bạc',N'Giảm 5% phí dịch vụ; mượn tối đa 7 cuốn.'),
-      (3,N'vi',N'Vàng',N'Giảm 10% phí dịch vụ; mượn tối đa 10 cuốn.'),
-      (4,N'vi',N'Kim cương',N'Giảm 15% phí dịch vụ; mượn tối đa 15 cuốn và ưu tiên đặt trước.');
-
-    INSERT dbo.ShelfTranslations(shelf_id,language_code,shelf_name,location)
-    SELECT shelf_id,N'en',shelf_name,location FROM dbo.Shelves;
-    INSERT dbo.ShelfTranslations(shelf_id,language_code,shelf_name,location) VALUES
-      (1,N'vi',N'Kệ A1',N'Tầng 1 - Văn học Việt Nam'),(2,N'vi',N'Kệ A2',N'Tầng 1 - Văn học nước ngoài'),
-      (3,N'vi',N'Kệ B1',N'Tầng 1 - Khoa học'),(4,N'vi',N'Kệ C1',N'Tầng 2 - Công nghệ'),
-      (5,N'vi',N'Kệ C2',N'Tầng 2 - Công nghệ'),(6,N'vi',N'Kệ D1',N'Tầng 2 - Kinh tế'),
-      (7,N'vi',N'Kệ E1',N'Tầng 3 - Lịch sử'),(8,N'vi',N'Kệ F1',N'Tầng 3 - Kỹ năng'),
-      (9,N'vi',N'Kệ G1',N'Tầng 3 - Thiếu nhi'),(10,N'vi',N'Kệ H1',N'Tầng 3 - Ngoại ngữ');
-
-    INSERT dbo.BookTranslations(book_id,language_code,title,description)
-    SELECT book_id,N'en',title,description FROM dbo.Books;
-    INSERT dbo.BookTranslations(book_id,language_code,title,description) VALUES
-      (1,N'vi',N'Chí Phèo',N'Kiệt tác hiện thực về số phận người nông dân Việt Nam.'),
-      (2,N'vi',N'Mắt Biếc',N'Câu chuyện tuổi trẻ và tình yêu trong trẻo.'),
-      (3,N'vi',N'Dế Mèn Phiêu Lưu Ký',N'Hành trình trưởng thành của Dế Mèn.'),
-      (4,N'vi',N'Tắt Đèn',N'Tác phẩm tiêu biểu của văn học hiện thực Việt Nam.'),
-      (5,N'vi',N'Những Cuộc Phiêu Lưu Của Sherlock Holmes',N'Tuyển tập truyện trinh thám kinh điển.'),
-      (6,N'vi',N'Án Mạng Trên Chuyến Tàu Tốc Hành Phương Đông',N'Vụ án nổi tiếng của thám tử Hercule Poirot.'),
-      (7,N'vi',N'1984',N'Tiểu thuyết phản địa đàng kinh điển.'),
-      (8,N'vi',N'Nhà Giả Kim',N'Hành trình theo đuổi ước mơ và vận mệnh.'),
-      (9,N'vi',N'Sapiens: Lược Sử Loài Người',N'Lược khảo lịch sử phát triển của loài người.'),
-      (10,N'vi',N'Lược Sử Thời Gian',N'Giới thiệu dễ tiếp cận về vũ trụ học.'),
-      (11,N'vi',N'Clean Code',N'Nguyên tắc viết mã nguồn dễ đọc và bảo trì.'),
-      (12,N'vi',N'Refactoring',N'Cải tiến thiết kế mã nguồn hiện hữu.'),
-      (13,N'vi',N'The Pragmatic Programmer',N'Tư duy và thực hành phát triển phần mềm hiệu quả.'),
-      (14,N'vi',N'Artificial Intelligence: A Modern Approach',N'Giáo trình nền tảng về trí tuệ nhân tạo.'),
-      (15,N'vi',N'Database System Concepts',N'Kiến thức nền tảng về hệ quản trị cơ sở dữ liệu.'),
-      (16,N'vi',N'Cha Giàu Cha Nghèo',N'Kiến thức nhập môn về tư duy tài chính cá nhân.'),
-      (17,N'vi',N'Đắc Nhân Tâm',N'Kỹ năng giao tiếp và xây dựng quan hệ.'),
-      (18,N'vi',N'Tư Duy Nhanh Và Chậm',N'Nghiên cứu về hai hệ thống tư duy của con người.'),
-      (19,N'vi',N'Atomic Habits',N'Phương pháp xây dựng thói quen nhỏ và bền vững.'),
-      (20,N'vi',N'Mindset',N'Sức mạnh của tư duy phát triển.'),
-      (21,N'vi',N'Sức Mạnh Của Thói Quen',N'Cơ chế hình thành và thay đổi thói quen.'),
-      (22,N'vi',N'Hoàng Tử Bé',N'Câu chuyện giàu tính nhân văn dành cho mọi lứa tuổi.'),
-      (23,N'vi',N'Harry Potter Và Hòn Đá Phù Thủy',N'Khởi đầu hành trình tại trường Hogwarts.'),
-      (24,N'vi',N'Lược Sử Vạn Vật',N'Khám phá khoa học tự nhiên qua lối kể gần gũi.'),
-      (25,N'vi',N'Những Tù Nhân Của Địa Lý',N'Địa lý ảnh hưởng tới chính trị thế giới.'),
-      (26,N'vi',N'Tương Lai Của Trái Đất',N'Các thách thức môi trường và phát triển bền vững.'),
-      (27,N'vi',N'Khởi Nghiệp Tinh Gọn',N'Tư duy thử nghiệm nhanh trong xây dựng sản phẩm.'),
-      (28,N'vi',N'Nhà Đầu Tư Thông Minh',N'Các nguyên tắc đầu tư giá trị dài hạn.'),
-      (29,N'vi',N'English Grammar in Use',N'Ngữ pháp tiếng Anh thực hành.'),
-      (30,N'vi',N'Designing Data-Intensive Applications',N'Thiết kế hệ thống dữ liệu tin cậy và có khả năng mở rộng.');
+      (1,N'vi',N'Thành viên',N'Được mượn đồng thời tối đa 5 cuốn.'),
+      (2,N'vi',N'Bạc',N'Giảm 5% phí mượn; được mượn đồng thời tối đa 7 cuốn.'),
+      (3,N'vi',N'Vàng',N'Giảm 10% phí mượn; được mượn đồng thời tối đa 10 cuốn.'),
+      (4,N'vi',N'Kim cương',N'Giảm 15% phí mượn; được mượn đồng thời tối đa 15 cuốn.');
 
     INSERT dbo.BookAuthors(book_id,author_id) VALUES
       (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9),(10,10),
@@ -306,8 +242,8 @@ BEGIN TRY
 
     UPDATE dbo.BookItems SET status='Borrowed' WHERE book_item_id IN (1,4,7,10,25,28);
     UPDATE dbo.BookItems SET status='Waiting_Pickup' WHERE book_item_id=19;
-    UPDATE dbo.BookItems SET status='Damaged',book_condition=N'Hư hỏng',damage_note=N'Gáy sách bong nhẹ, đang chờ sửa.' WHERE book_item_id=89;
-    UPDATE dbo.BookItems SET status='MinorDamaged',book_condition=N'Minor damage' WHERE book_item_id=90;
+    UPDATE dbo.BookItems SET status='Available',book_condition=N'Severely damaged',damage_note=N'Gáy sách bong nhẹ.' WHERE book_item_id=89;
+    UPDATE dbo.BookItems SET status='Available',book_condition=N'Minor damage' WHERE book_item_id=90;
 
     SET IDENTITY_INSERT dbo.Borrows ON;
     INSERT dbo.Borrows(borrow_id,member_id,staff_id,borrow_date,status,rejection_code,rejection_reason) VALUES
@@ -398,33 +334,11 @@ BEGIN TRY
       ('Overdue_Violation_Lock_Limit',N'3',N'Overdue violations before account restrictions apply.'),
       ('MIN_TOP_UP',N'10000',N'Minimum wallet top-up amount (VND).');
 
-    INSERT dbo.SystemSettingTranslations(setting_id,language_code,description)
-    SELECT setting_id,N'en',description FROM dbo.SystemSettings;
-    INSERT dbo.SystemSettingTranslations(setting_id,language_code,description)
-    SELECT setting_id,N'vi',
-      CASE setting_key
-        WHEN 'Fine_Per_Day' THEN N'Phí phạt quá hạn mỗi ngày cho một cuốn (VND).'
-        WHEN 'Max_Borrow_Days' THEN N'Số ngày mượn tiêu chuẩn.'
-        WHEN 'Max_Books_Per_Member' THEN N'Số cuốn tối đa trong một yêu cầu mượn.'
-        WHEN 'BORROW_FEE_PER_BOOK' THEN N'Phí mượn cho mỗi cuốn (VND).'
-        WHEN 'Deposit_Amount' THEN N'Tiền cọc đặt trước một cuốn (VND).'
-        WHEN 'MAX_RENEWALS' THEN N'Số lần gia hạn tối đa cho một cuốn.'
-        WHEN 'RENEW_DAYS' THEN N'Số ngày cộng thêm khi gia hạn được duyệt.'
-        WHEN 'Max_Renewal_Days' THEN N'Số ngày gia hạn tối đa trong một yêu cầu.'
-        WHEN 'RENEWAL_FEE_PER_DAY' THEN N'Phí gia hạn cho mỗi ngày (VND).'
-        WHEN 'Damage_Compensation_Amount' THEN N'Mức bồi thường mặc định khi sách mất hoặc hư hỏng nặng.'
-        WHEN 'Damage_Compensation_Threshold' THEN N'Mức tình trạng bắt đầu áp dụng bồi thường.'
-        WHEN 'Overdue_Violation_Lock_Limit' THEN N'Số vi phạm quá hạn khiến tài khoản bị hạn chế.'
-        WHEN 'MIN_TOP_UP' THEN N'Số tiền nạp ví tối thiểu (VND).'
-      END
-    FROM dbo.SystemSettings;
-
     SET IDENTITY_INSERT dbo.Transactions ON;
     INSERT dbo.Transactions(transaction_id,wallet_id,borrow_id,transaction_type,amount,transaction_date,status,borrow_detail_id,renewal_days,reference_code,performed_by_staff_id,channel,balance_before,balance_after) VALUES
       (1,1,NULL,'TOP_UP',100000,DATEADD(day,-15,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0001',2,'CASH',200000,300000),
       (2,1,1,'BORROW_FEE',-5000,DATEADD(day,-9,@Now),'Completed',1,NULL,'DEMO-BORROW-0001',2,'WALLET',300000,295000),
       (3,2,2,'BORROW_FEE',-5000,DATEADD(day,-20,@Now),'Completed',2,NULL,'DEMO-BORROW-0002',2,'WALLET',185000,180000),
-      (4,2,2,'FINE',-30000,DATEADD(day,-1,@Now),'Pending',2,NULL,'DEMO-FINE-0001',NULL,'SYSTEM',NULL,NULL),
       (5,3,3,'BORROW_FEE',-5000,DATEADD(day,-11,@Now),'Completed',3,NULL,'DEMO-BORROW-0003',3,'WALLET',95000,90000),
       (6,4,4,'BORROW_FEE',-5000,DATEADD(day,-10,@Now),'Completed',4,NULL,'DEMO-BORROW-0004',2,'WALLET',155000,150000),
       (7,4,4,'RENEWAL_FEE',-10000,DATEADD(hour,-5,@Now),'Pending',4,10,'DEMO-RENEW-0001',NULL,'WALLET',150000,140000),
@@ -438,9 +352,7 @@ BEGIN TRY
       (15,11,11,'BORROW_FEE',-5000,DATEADD(day,-2,@Now),'Expired',12,NULL,'DEMO-BORROW-0011',NULL,'PAYOS',NULL,NULL),
       (16,12,NULL,'DEPOSIT',-50000,DATEADD(day,-5,@Now),'Completed',NULL,NULL,'DEMO-DEPOSIT-0012',NULL,'WALLET',175000,125000),
       (17,14,NULL,'TOP_UP',200000,DATEADD(day,-8,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0014',NULL,'PAYOS',220000,420000),
-      (18,15,NULL,'DAMAGE_FEE',-40000,DATEADD(day,-6,@Now),'Completed',NULL,NULL,'DEMO-DAMAGE-0015',3,'CASH',NULL,NULL),
-      (19,18,NULL,'TOP_UP',75000,DATEADD(day,-4,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0018',NULL,'PAYOS',150000,225000),
-      (20,2,2,'FINE',-25000,DATEADD(hour,-3,@Now),'Pending',2,NULL,'DEMO-FINE-0002',NULL,'SYSTEM',NULL,NULL);
+      (19,18,NULL,'TOP_UP',75000,DATEADD(day,-4,@Now),'Completed',NULL,NULL,'DEMO-TOPUP-0018',NULL,'PAYOS',150000,225000);
     SET IDENTITY_INSERT dbo.Transactions OFF;
 
     SET IDENTITY_INSERT dbo.PayOSPayments ON;
@@ -448,13 +360,9 @@ BEGIN TRY
       (1,6,13,'TOP_UP',NULL,50000,900000000000001,'demo-link-0001',NULL,NULL,'PAID','DEMO-BANK-0001',DATEADD(day,-3,@Now),DATEADD(day,-3,DATEADD(minute,2,@Now))),
       (2,14,17,'TOP_UP',NULL,200000,900000000000002,'demo-link-0002',NULL,NULL,'PAID','DEMO-BANK-0002',DATEADD(day,-8,@Now),DATEADD(day,-8,DATEADD(minute,3,@Now))),
       (3,11,NULL,'BORROW_FEE',11,5000,900000000000003,'demo-link-0003',NULL,NULL,'EXPIRED',NULL,DATEADD(day,-2,@Now),NULL),
-      (4,2,NULL,'FINE_BATCH',NULL,55000,900000000000004,'demo-link-0004',NULL,NULL,'CANCELLED',NULL,DATEADD(day,-1,@Now),NULL),
       (5,8,NULL,'TOP_UP',NULL,100000,900000000000005,'demo-link-0005',NULL,NULL,'EXPIRED',NULL,DATEADD(day,-4,@Now),NULL),
       (6,9,NULL,'DEPOSIT',9,50000,900000000000006,'demo-link-0006',NULL,NULL,'CANCELLED',NULL,DATEADD(day,-2,@Now),NULL);
     SET IDENTITY_INSERT dbo.PayOSPayments OFF;
-
-    INSERT dbo.PayOSPaymentFineItems(payment_id,fine_transaction_id,amount_snapshot) VALUES
-      (4,4,30000),(4,20,25000);
 
     INSERT dbo.PayOSPaymentAuditLogs(payment_id,actor_user_id,event_type,source,old_status,new_status,successful,message,created_at) VALUES
       (1,9,'PAYMENT_CREATED','APPLICATION',NULL,'PENDING',1,N'Tạo yêu cầu nạp ví demo.',DATEADD(day,-3,@Now)),
@@ -462,7 +370,6 @@ BEGIN TRY
       (2,17,'PAYMENT_CREATED','APPLICATION',NULL,'PENDING',1,N'Tạo yêu cầu nạp ví demo.',DATEADD(day,-8,@Now)),
       (2,NULL,'WEBHOOK_RECEIVED','PAYOS','PENDING','PAID',1,N'Webhook demo được xác minh thành công.',DATEADD(day,-8,DATEADD(minute,3,@Now))),
       (3,14,'PAYMENT_EXPIRED','SYSTEM','PENDING','EXPIRED',1,N'Thanh toán phí mượn demo đã hết hạn.',DATEADD(day,-1,@Now)),
-      (4,5,'PAYMENT_CANCELLED','MEMBER','PENDING','CANCELLED',1,N'Thanh toán nhóm tiền phạt demo đã được hủy.',DATEADD(hour,-20,@Now)),
       (5,11,'PAYMENT_EXPIRED','SYSTEM','PENDING','EXPIRED',1,N'Liên kết demo đã hết hạn.',DATEADD(day,-3,@Now)),
       (6,12,'PAYMENT_CANCELLED','MEMBER','PENDING','CANCELLED',1,N'Thành viên hủy thanh toán demo.',DATEADD(day,-2,DATEADD(minute,4,@Now)));
 
@@ -484,22 +391,6 @@ BEGIN TRY
       (11,3,N'Renewal approved',N'Your book renewal request was approved.',DATEADD(day,-2,@Now),'Active',N'LOAN',N'LIBRARIAN',N'RENEWAL_APPROVED',NULL,NULL,NULL),
       (12,NULL,N'Reservation deposit refunded',N'The reservation deposit was returned to your wallet.',DATEADD(day,-1,@Now),'Active',N'RESERVATION',N'SYSTEM',N'RESERVATION_REFUNDED',NULL,NULL,NULL);
     SET IDENTITY_INSERT dbo.Notifications OFF;
-
-    INSERT dbo.NotificationTranslations(notification_id,language_code,title,content)
-    SELECT notification_id,N'en',title,content FROM dbo.Notifications;
-    INSERT dbo.NotificationTranslations(notification_id,language_code,title,content) VALUES
-      (1,N'vi',N'Chào mừng đến thư viện',N'Tài khoản demo của bạn đã sẵn sàng.'),
-      (2,N'vi',N'Phiếu mượn đã được duyệt',N'Vui lòng đến quầy nhận sách trong thời hạn quy định.'),
-      (3,N'vi',N'Nhắc trả sách',N'Một cuốn sách của bạn sắp đến hạn trả.'),
-      (4,N'vi',N'Phạt quá hạn',N'Hệ thống đã ghi nhận khoản phạt quá hạn demo.'),
-      (5,N'vi',N'Xác nhận yêu cầu trả sách',N'Yêu cầu trả sách đã được tiếp nhận tại quầy.'),
-      (6,N'vi',N'Đặt trước đã sẵn sàng',N'Sách đặt trước đã sẵn sàng để nhận.'),
-      (7,N'vi',N'Nạp ví thành công',N'Giao dịch nạp ví demo đã hoàn tất.'),
-      (8,N'vi',N'Phản hồi đánh giá',N'Thủ thư đã phản hồi đánh giá của bạn.'),
-      (9,N'vi',N'Đề xuất sách được duyệt',N'Đề xuất của bạn đã được đưa vào kế hoạch mua sách.'),
-      (10,N'vi',N'Bảo trì định kỳ',N'Hệ thống demo sẽ bảo trì vào cuối tuần.'),
-      (11,N'vi',N'Gia hạn được duyệt',N'Yêu cầu gia hạn sách của bạn đã được duyệt.'),
-      (12,N'vi',N'Tiền cọc đã hoàn',N'Khoản cọc đặt trước đã được hoàn vào ví.');
 
     INSERT dbo.MemberNotifications(member_id,notification_id,is_read,read_date) VALUES
       (1,1,1,DATEADD(day,-29,@Now)),(1,2,0,NULL),(1,3,0,NULL),(2,1,1,DATEADD(day,-28,@Now)),

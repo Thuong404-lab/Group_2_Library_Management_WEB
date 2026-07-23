@@ -23,7 +23,7 @@ public class StorageController extends LocalizedControllerSupport {
 
     @GetMapping
     public String listStorageLocations() {
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 
     @GetMapping("/add")
@@ -41,7 +41,7 @@ public class StorageController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 
     @PostMapping("/update/{id}")
@@ -55,7 +55,7 @@ public class StorageController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 
     @PostMapping("/delete/{id}")
@@ -66,6 +66,6 @@ public class StorageController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 }

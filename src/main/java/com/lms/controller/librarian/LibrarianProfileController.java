@@ -1,8 +1,11 @@
 package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
+import com.lms.exception.ConflictException;
+import com.lms.exception.ValidationException;
 import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
+import com.lms.repository.StaffAccountRepository;
 import com.lms.service.ProfileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,9 +26,12 @@ import com.lms.config.CustomUserDetails;
 public class LibrarianProfileController extends LocalizedControllerSupport {
 
     private final ProfileService profileService;
+    private final StaffAccountRepository staffAccountRepository;
 
-    public LibrarianProfileController(ProfileService profileService) {
+    public LibrarianProfileController(ProfileService profileService,
+                                      StaffAccountRepository staffAccountRepository) {
         this.profileService = profileService;
+        this.staffAccountRepository = staffAccountRepository;
     }
 
     @GetMapping
@@ -33,33 +39,34 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
         // Spring Security đã lọc quyền trước đó, ở đây chỉ việc lấy đúng thông tin cá nhân
         String username = principal.getName();
         if (!model.containsAttribute("librarian")) {
-            User librarian = profileService.getProfile(username);
+            User librarian = profileService.getStaffProfile(username);
             model.addAttribute("librarian", librarian);
         }
+        model.addAttribute("staffAccount", staffAccountRepository.findByUsername(username).orElse(null));
         return "librarian/profile";
     }
 
     @PostMapping("/update")
     public String updateProfile(@RequestParam String fullName,
-                                @RequestParam String email,
                                 @RequestParam String phone,
                                 @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
         if (principal == null) {
-            return "redirect:/login";
+            return "redirect:/staff-login";
         }
 
+        User currentUser = null;
         try {
             String currentUsername = principal.getName();
-            String currentEmail = profileService.getProfile(currentUsername).getEmail();
-            profileService.updateProfile(currentUsername, fullName, currentEmail, phone, avatarFile);
+            currentUser = profileService.getStaffProfile(currentUsername);
+            profileService.updateStaffProfile(currentUsername, fullName, phone, avatarFile);
             
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
                 CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
                 User sessionUser = customUserDetails.getUser();
-                User updatedUser = profileService.getProfile(currentUsername);
+                User updatedUser = profileService.getStaffProfile(currentUsername);
                 
                 sessionUser.setFullName(updatedUser.getFullName());
                 sessionUser.setAvatar(updatedUser.getAvatar());
@@ -69,21 +76,20 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
 
             redirectAttributes.addFlashAttribute("successMessage", message("backend.profile.updated"));
         } catch (ApplicationException e) {
-            if (e instanceof com.lms.exception.ValidationException && ((com.lms.exception.ValidationException) e).getField() != null) {
-                String field = ((com.lms.exception.ValidationException) e).getField();
+            String field = fieldOf(e);
+            if (field != null) {
                 redirectAttributes.addFlashAttribute(field + "Error", e.getMessage());
             } else {
                 redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.profile.updateFailed", e));
             }
             User tempUser = new User();
             tempUser.setFullName(fullName);
-            tempUser.setEmail(email);
+            tempUser.setEmail(currentUser == null ? null : currentUser.getEmail());
             tempUser.setPhone(phone);
-            try {
-                User current = profileService.getProfile(principal.getName());
-                tempUser.setAvatar(current.getAvatar());
-                tempUser.setStatus(current.getStatus());
-            } catch (Exception ignored) {}
+            if (currentUser != null) {
+                tempUser.setAvatar(currentUser.getAvatar());
+                tempUser.setStatus(currentUser.getStatus());
+            }
             redirectAttributes.addFlashAttribute("librarian", tempUser);
         }
         return "redirect:/librarian/profile";
@@ -95,6 +101,9 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
                                  @RequestParam String confirmPassword,
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/staff-login";
+        }
         if (!newPassword.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("passwordError", message("backend.password.mismatch"));
             return "redirect:/librarian/profile";
@@ -102,11 +111,21 @@ public class LibrarianProfileController extends LocalizedControllerSupport {
 
         try {
             String username = principal.getName();
-            profileService.changePassword(username, oldPassword, newPassword);
+            profileService.changeStaffPassword(username, oldPassword, newPassword);
             redirectAttributes.addFlashAttribute("passwordSuccess", message("backend.password.changed"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("passwordError", e.getMessage());
         }
         return "redirect:/librarian/profile";
+    }
+
+    private String fieldOf(ApplicationException exception) {
+        if (exception instanceof ValidationException validationException) {
+            return validationException.getField();
+        }
+        if (exception instanceof ConflictException conflictException) {
+            return conflictException.getField();
+        }
+        return null;
     }
 }

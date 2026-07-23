@@ -11,9 +11,10 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page accounts-page">
-        <header class="member-page-header">
+    <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page accounts-page admin-member-list-page">
+        <header class="member-page-header admin-member-list-hero">
             <div>
+                <span class="member-page-eyebrow" th:text="#{admin.accounts.eyebrow}">MEMBER MANAGEMENT</span>
                 <h1 class="member-page-title" th:text="#{admin.accounts.heading}">User Accounts</h1>
                 <p class="member-page-description" th:text="#{admin.accounts.description}">Library user account
                     information</p>
@@ -21,6 +22,7 @@
             <div class="member-page-actions">
                 <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
                     data-bs-target="#createMemberAccountModal">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i>
                     <span th:text="#{admin.accounts.create}">Create Account</span>
                 </button>
             </div>
@@ -81,12 +83,14 @@
                 <div class="member-toolbar">
                     <form class="member-search-form" method="get" th:action="@{/admin/member-list}" data-auto-filter-form
                         data-focus-key="adminAccountFilterFocus">
-                        <div class="input-group member-search-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
-                                th:value="${keyword}" th:placeholder="#{admin.accounts.searchPlaceholder}">
+                        <div class="member-search-group">
+                            <div class="member-keyword-control">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
+                                </span>
+                                <input class="form-control" type="search" name="keyword" data-auto-search
+                                    th:value="${keyword}" th:placeholder="#{admin.accounts.searchPlaceholder}">
+                            </div>
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 th:aria-label="#{admin.accounts.filterTier}">
@@ -142,16 +146,16 @@
 
                         <tbody>
                             <tr th:each="account, iterStat : ${accounts.content}">
-                                <td class="ps-3 fw-bold app-number"
+                                <td class="ps-3 fw-bold app-number" th:data-label="#{common.number}"
                                     th:text="${@displayNumber.count(accounts.number * accounts.size + iterStat.index + 1)}">
                                     1</td>
-                                <td>
+                                <td th:data-label="#{member.profile.username}">
                                     <span class="fw-bold text-classic" th:text="${account.username}">username</span>
                                     <div class="small text-muted app-code-number"
                                         th:text="${account.accountId != null ? #messages.msg('common.accountIdValue', account.accountId) : #messages.msg('common.accountIdMissing')}">
                                         Account ID: 1</div>
                                 </td>
-                                <td>
+                                <td th:data-label="#{admin.accounts.userInfo}">
                                     <div th:if="${account.user != null}">
                                         <div class="fw-bold" th:text="${account.user.fullName}">Full name</div>
                                         <div class="small text-muted">
@@ -168,7 +172,7 @@
                                     </div>
                                 </td>
 
-                                <td th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                <td th:data-label="#{member.profile.tier}" th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
@@ -182,7 +186,7 @@
                                     </span>
                                 </td>
 
-                                <td>
+                                <td th:data-label="#{common.status}">
                                     <span class="status-badge" th:classappend="${
               account.status == 'Active' ? 'status-active' :
               account.status == 'Blocked' ? 'status-blocked' :
@@ -192,7 +196,7 @@
                                     </span>
                                 </td>
 
-                                <td class="text-end pe-3 member-actions"
+                                <td class="text-end pe-3 member-actions" th:data-label="#{common.actions}"
                                     th:classappend="${account.status != 'Active'} ? ' member-actions--reserved-deactivate' : ''"
                                     th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
                                     <button type="button" class="member-icon-action account-action-tooltip"
