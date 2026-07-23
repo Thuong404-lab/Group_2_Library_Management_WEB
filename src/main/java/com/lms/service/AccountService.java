@@ -39,4 +39,7 @@ public interface AccountService {
 
     // Lấy email hiện tại của tài khoản thành viên để gửi liên kết đặt lại mật khẩu.
     String getMemberEmail(Integer accountId);
+
+    // Lấy email hiện tại của tài khoản nhân sự để gửi liên kết đặt lại mật khẩu.
+    String getStaffEmail(Integer accountId);
 }
