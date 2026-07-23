@@ -427,4 +427,3 @@ UNION ALL SELECT N'BorrowDetails',COUNT(*) FROM dbo.BorrowDetails
 UNION ALL SELECT N'Transactions',COUNT(*) FROM dbo.Transactions
 UNION ALL SELECT N'Notifications',COUNT(*) FROM dbo.Notifications;
 GO
-

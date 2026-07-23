@@ -14,22 +14,27 @@
     <!-- Header đồng bộ -->
     <header class="member-page-header borrow-page-hero">
         <div class="borrow-hero-copy">
+            <span class="borrow-page-eyebrow" th:text="#{librarian.borrowList.eyebrow}">LOAN MANAGEMENT</span>
             <h1 class="member-page-title" th:text="#{librarian.borrowList.heading}">Loan and Return Management</h1>
             <p class="member-page-description" th:text="#{librarian.borrowList.description}">Manage all member circulation records and system pagination.</p>
-        </div>
-        <div class="borrow-hero-decoration" aria-hidden="true">
-            <i class="bi bi-arrow-left-right"></i>
         </div>
     </header>
 
     <section class="member-data-card borrow-list-content borrow-management-card">
         <div class="member-data-card-body">
 
+            <div class="member-summary-chips borrow-summary-chips"
+                 th:aria-label="#{librarian.borrowList.summary}">
+                <span class="app-number"
+                      th:text="#{librarian.borrowList.total(${@displayNumber.count(totalItems)})}">0 loan records</span>
+            </div>
+
             <!-- Search & Filter đồng bộ toolbar -->
             <div class="member-toolbar borrow-list-filter-card">
                 <form class="member-search-form w-100" method="get" th:action="@{/librarian/borrow/list}"
                       data-auto-filter-form data-focus-key="librarianBorrowFilterFocus">
-                    <div class="input-group member-search-group">
+                    <div class="member-search-group">
+                        <div class="borrow-keyword-control">
                             <span class="input-group-text">
                                 <i class="bi bi-search"></i>
                             </span>
@@ -38,6 +43,7 @@
                         <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
                                th:value="${keyword}"
                                th:placeholder="#{librarian.borrowList.searchPlaceholder}" placeholder="Enter member name, email, phone number, or loan ID...">
+                        </div>
 
                         <!-- Trạng thái phiếu Select -->
                         <select class="form-select member-filter-select" name="status" data-auto-submit
