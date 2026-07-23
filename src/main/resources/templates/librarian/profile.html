@@ -50,10 +50,11 @@
                              th:classappend="${librarian?.avatar == null or #strings.isEmpty(librarian?.avatar)} ? ' d-none'">
                         <label for="avatarUploadLibrarian" class="btn-camera-classic" th:title="#{member.profile.changeAvatar}">
                             <i class="bi bi-camera-fill" aria-hidden="true"></i>
-                            <span class="visually-hidden" th:text="#{member.profile.changeAvatar}">Change avatar</span>
+                            <span class="sr-only" th:text="#{member.profile.changeAvatar}">Change avatar</span>
                         </label>
                     </div>
-                    <p th:if="${avatarError}" class="profile-field-error" th:text="${avatarError}">Invalid profile image.</p>
+                    <p id="avatarError" class="profile-field-error" th:classappend="${avatarError == null} ? ' d-none'"
+                       th:text="${avatarError != null ? avatarError : #messages.msg('validation.avatarType')}">Invalid profile image.</p>
                     <h2 class="profile-person-name" th:text="${librarian?.fullName}">Librarian</h2>
                     <p class="profile-person-email" th:text="${librarian?.email}">librarian@example.com</p>
                     <div class="profile-identity-badges">
@@ -84,7 +85,10 @@
                 </div>
                 <div class="profile-card-body">
                     <form id="profileForm" th:action="@{/librarian/profile/update}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        <input type="file" id="avatarUploadLibrarian" name="avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" class="d-none">
+                        <input type="file" id="avatarUploadLibrarian" name="avatarFile"
+                               accept="image/jpeg,image/png,image/webp,image/gif" class="d-none"
+                               th:data-size-error="#{validation.avatarMaxSize}"
+                               th:data-type-error="#{validation.avatarType}">
                         <div class="row g-3">
                             <div class="col-md-6 profile-form-field">
                                 <label for="librarianFullName" th:text="#{librarian.profile.fullName}">Staff Full Name</label>
@@ -98,8 +102,9 @@
                             </div>
                             <div class="col-md-6 profile-form-field">
                                 <label for="librarianEmail" th:text="#{librarian.profile.workEmail}">Work Email Address</label>
-                                <input id="librarianEmail" type="email" name="email" class="form-control" th:classappend="${emailError} ? 'is-invalid' : ''" th:value="${librarian?.email}" required readonly>
-                                <div class="invalid-feedback" th:text="${emailError != null ? emailError : #messages.msg('validation.emailRequired')}">Please enter a valid email.</div>
+                                <input id="librarianEmail" type="email" class="form-control"
+                                       th:value="${librarian?.email}" disabled aria-describedby="librarianEmailHelp">
+                                <small id="librarianEmailHelp" th:text="#{librarian.profile.emailReadonly}">Contact an administrator to change the work email.</small>
                             </div>
                             <div class="col-md-6 profile-form-field">
                                 <label for="librarianPhone" th:text="#{librarian.profile.phone}">Phone Number</label>
@@ -129,7 +134,9 @@
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" th:aria-label="#{common.close}"></button>
                 </div>
-                <form id="changePasswordForm" th:action="@{/librarian/profile/change-password}" method="post" class="needs-validation" novalidate th:data-password-mismatch="#{backend.password.mismatch}">
+                <form id="changePasswordForm" th:action="@{/librarian/profile/change-password}" method="post"
+                      class="needs-validation" novalidate th:data-password-mismatch="#{backend.password.mismatch}"
+                      th:data-server-error="${passwordError != null}">
                     <div class="modal-body">
                         <div class="profile-form-field">
                             <label for="oldPassword" th:text="#{member.profile.currentPassword}">Current Password</label>
@@ -160,16 +167,32 @@
     </div>
 </div>
 
+<th:block layout:fragment="scripts">
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('avatarUploadLibrarian');
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+    const avatarError = document.getElementById('avatarError');
 
     if (fileInput) {
         fileInput.addEventListener('change', function (event) {
             const file = event.target.files[0];
+            fileInput.setCustomValidity('');
+            if (avatarError) avatarError.classList.add('d-none');
             if (!file) return;
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            const validationMessage = file.size > 5 * 1024 * 1024
+                ? fileInput.dataset.sizeError
+                : (!allowedTypes.includes(file.type) ? fileInput.dataset.typeError : '');
+            if (validationMessage) {
+                fileInput.setCustomValidity(validationMessage);
+                if (avatarError) {
+                    avatarError.textContent = validationMessage;
+                    avatarError.classList.remove('d-none');
+                }
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function (loadEvent) {
                 if (avatarPlaceholder) avatarPlaceholder.classList.add('d-none');
@@ -203,6 +226,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const passwordForm = document.getElementById('changePasswordForm');
     if (passwordForm) {
+        if (passwordForm.dataset.serverError === 'true') {
+            const modalElement = document.getElementById('changePasswordModal');
+            if (modalElement && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modalElement).show();
+        }
         passwordForm.addEventListener('submit', function (event) {
             const newPassword = document.getElementById('newPassword');
             const confirmPassword = document.getElementById('confirmPassword');
@@ -216,5 +243,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+</th:block>
 </body>
 </html>

@@ -16,16 +16,24 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     private final String passwordHash;
     private final String status;
     private final Integer accountId; // Can be MemberAccount.id or StaffAccount.id
+    private final boolean inactiveAccessAllowed;
     
     private final Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
     public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId, Collection<? extends GrantedAuthority> authorities) {
+        this(user, username, passwordHash, status, accountId, true, authorities);
+    }
+
+    public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId,
+                             boolean inactiveAccessAllowed,
+                             Collection<? extends GrantedAuthority> authorities) {
         this.user = user;
         this.username = username;
         this.passwordHash = passwordHash;
         this.status = status;
         this.accountId = accountId;
+        this.inactiveAccessAllowed = inactiveAccessAllowed;
         this.authorities = authorities;
     }
 
@@ -88,7 +96,8 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isEnabled() {
-        return isAccountNonLocked();
+        return "Active".equalsIgnoreCase(status)
+                || (inactiveAccessAllowed && "Inactive".equalsIgnoreCase(status));
     }
 
     @Override
