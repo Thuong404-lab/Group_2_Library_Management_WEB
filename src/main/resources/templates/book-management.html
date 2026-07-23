@@ -92,9 +92,9 @@
 
             <!-- Panel kho sách: chỉ hiện khi subsection=inventory -->
             <div class="member-data-card inventory-management-card" th:if="${currentSubSection == 'inventory'}"
-                th:classappend="${param.tab != null and param.tab[0] == 'categories'} ? ' inventory-container-cardless'">
+                th:classappend="${param.tab != null and (param.tab[0] == 'categories' or param.tab[0] == 'audit')} ? ' inventory-container-cardless'">
                 <div class="member-data-card-body"
-                    th:classappend="${param.tab != null and param.tab[0] == 'categories'} ? ' inventory-container-body-cardless'">
+                    th:classappend="${param.tab != null and (param.tab[0] == 'categories' or param.tab[0] == 'audit')} ? ' inventory-container-body-cardless'">
 
                     <!-- Librarian layout maps these flash attributes globally. Admin consumes
                          the same attributes here through the shared AppFeedback component. -->
@@ -138,12 +138,15 @@
                                 <!-- Toolbar (Search & Add Button) -->
                                 <div class="member-toolbar">
                                     <form class="member-search-form" method="get" th:action="${staffPrefix == '/admin'} ? @{/admin/books} : @{/librarian/books}">
-                                        <div class="input-group member-search-group">
-                                            <span class="input-group-text"><i class="bi bi-search"
-                                                    aria-hidden="true"></i></span>
-                                            <input class="form-control border-start-0 ps-0" type="text" name="keyword"
-                                                th:value="${keyword}"
-                                                th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                        <div
+                                            class="member-search-group inventory-filter-grid inventory-filter-grid--with-select">
+                                            <div class="member-keyword-control">
+                                                <span class="input-group-text"><i class="bi bi-search"
+                                                        aria-hidden="true"></i></span>
+                                                <input class="form-control" type="search" name="keyword"
+                                                    th:value="${keyword}"
+                                                    th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                            </div>
                                             <select class="form-select member-filter-select" id="bookAvailabilityFilter"
                                                 name="availability"
                                                 th:aria-label="#{librarian.inventory.filterAvailability}">
@@ -318,7 +321,7 @@
                                 </header>
                                 <div class="member-data-card">
                                     <div class="member-data-card-body">
-                                        <div class="member-summary-chips"
+                                        <div class="member-summary-chips inventory-summary"
                                             th:aria-label="#{librarian.inventory.categorySummary}">
                                             <span><strong class="app-stat-number"
                                                     th:text="${@displayNumber.count(totalCategories)}">0</strong> <span
@@ -329,11 +332,15 @@
                                         </div>
                                         <div class="member-toolbar">
                                             <div class="member-search-form">
-                                                <div class="input-group member-search-group">
-                                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                                    <input type="search" class="form-control border-start-0 ps-0"
-                                                        id="categoryGenreSearch"
-                                                        th:placeholder="#{librarian.inventory.categorySearchPlaceholder}">
+                                                <div
+                                                    class="member-search-group inventory-filter-grid inventory-filter-grid--search-only">
+                                                    <div class="member-keyword-control">
+                                                        <span class="input-group-text"><i class="bi bi-search"
+                                                                aria-hidden="true"></i></span>
+                                                        <input type="search" class="form-control"
+                                                            id="categoryGenreSearch"
+                                                            th:placeholder="#{librarian.inventory.categorySearchPlaceholder}">
+                                                    </div>
                                                     <button type="button" class="btn member-search-button"
                                                         id="categoryGenreSearchButton"
                                                         th:text="#{common.search}">Search</button>
@@ -649,7 +656,9 @@
                                         and manage physical copies for each book title.</p>
                                     </div>
                                 </header>
-                                <div class="member-summary-chips inventory-summary" th:aria-label="#{librarian.inventory.copyOverview}">
+                                <div class="member-data-card inventory-copy-card">
+                                    <div class="member-data-card-body inventory-copy-card-body">
+                                <div class="member-summary-chips inventory-summary inventory-copy-summary" th:aria-label="#{librarian.inventory.copyOverview}">
                                     <span><strong class="app-stat-number"
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Total'])}">0</strong>
                                         <span th:text="#{librarian.inventory.totalCopies}">Total Copies</span></span>
@@ -664,12 +673,15 @@
                                     <form class="member-search-form" method="get" th:action="${staffPrefix == '/admin'} ? @{/admin/books} : @{/librarian/books}">
                                         <input type="hidden" name="subsection" value="inventory">
                                         <input type="hidden" name="tab" value="audit">
-                                        <div class="input-group member-search-group">
-                                            <span class="input-group-text"><i class="bi bi-search"
-                                                    aria-hidden="true"></i></span>
-                                            <input class="form-control border-start-0 ps-0" type="search" name="keyword"
-                                                th:value="${keyword}"
-                                                th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                        <div
+                                            class="member-search-group inventory-filter-grid inventory-filter-grid--with-select">
+                                            <div class="member-keyword-control">
+                                                <span class="input-group-text"><i class="bi bi-search"
+                                                        aria-hidden="true"></i></span>
+                                                <input class="form-control" type="search" name="keyword"
+                                                    th:value="${keyword}"
+                                                    th:placeholder="#{librarian.inventory.searchPlaceholder}">
+                                            </div>
                                             <select class="form-select member-filter-select" name="bookCondition"
                                                 th:aria-label="#{librarian.inventory.condition}">
                                                 <option value="" th:text="#{librarian.inventory.allConditions}">All
@@ -776,9 +788,11 @@
                                         <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
                                                 th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})}"
-                                                th:text="#{common.last}">Last</a></li>
+                                            th:text="#{common.last}">Last</a></li>
                                     </ul>
                                 </nav>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1478,12 +1492,15 @@
                                 <span th:text="#{librarian.storage.totalShelves}">Total Shelves</span></span></div>
                         <div class="member-toolbar">
                             <div class="member-search-form">
-                                <div class="input-group member-search-group">
-                                    <span class="input-group-text" aria-hidden="true"><i
-                                            class="bi bi-search"></i></span>
-                                    <input type="search" id="bookshelfSearch" class="form-control"
-                                        th:placeholder="#{librarian.storage.searchPlaceholder}"
-                                        th:aria-label="#{librarian.storage.searchPlaceholder}">
+                                <div
+                                    class="member-search-group inventory-filter-grid inventory-filter-grid--search-only">
+                                    <div class="member-keyword-control">
+                                        <span class="input-group-text" aria-hidden="true"><i
+                                                class="bi bi-search"></i></span>
+                                        <input type="search" id="bookshelfSearch" class="form-control"
+                                            th:placeholder="#{librarian.storage.searchPlaceholder}"
+                                            th:aria-label="#{librarian.storage.searchPlaceholder}">
+                                    </div>
                                     <button type="button" id="bookshelfSearchButton"
                                         class="btn member-search-button text-nowrap"
                                         th:text="#{common.search}">Search</button>
