@@ -20,6 +20,8 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     long countByStatusIgnoreCase(String status);
 
+    long countByBookConditionIgnoreCase(String bookCondition);
+
     long countByBook_StatusIgnoreCase(String bookStatus);
 
     long countByBook_StatusIgnoreCaseAndStatusIgnoreCase(String bookStatus, String itemStatus);
