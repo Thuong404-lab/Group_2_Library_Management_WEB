@@ -80,10 +80,36 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tab", defaultValue = "all") String tab,
             Model model) {
 
         page = Math.max(0, page);
         size = Math.max(1, Math.min(size, 100));
+
+        if ("members".equalsIgnoreCase(tab)) {
+            String displayKeyword = keyword == null ? "" : keyword.trim();
+            String searchKeyword = displayKeyword;
+            if (searchKeyword.regionMatches(true, 0, "MEM-", 0, 4)) {
+                searchKeyword = searchKeyword.substring(4).trim();
+            }
+
+            Page<com.lms.entity.MemberAccount> accountPage = searchKeyword.isBlank()
+                    ? memberAccountRepository.findAll(PageRequest.of(page, 20, Sort.by("member.memberId").ascending()))
+                    : memberAccountRepository.searchMemberAccounts(
+                            searchKeyword, PageRequest.of(page, 20, Sort.by("member.memberId").ascending()));
+
+            model.addAttribute("accounts", accountPage.getContent());
+            model.addAttribute("accountPage", accountPage);
+            model.addAttribute("currentPage", page);
+            model.addAttribute("pageSize", 20);
+            model.addAttribute("totalPages", accountPage.getTotalPages());
+            model.addAttribute("totalItems", accountPage.getTotalElements());
+            model.addAttribute("keyword", displayKeyword);
+            model.addAttribute("activeTab", "members");
+            model.addAttribute("activeMenu", "borrow-list");
+            return "librarian/borrow-list";
+        }
+
         java.util.Set<String> allowedStatuses = java.util.Set.of("Active", "Waiting_Pickup", "Returned",
                 "Overdue", "Pending", "Rejected", "Return_Pending", "Canceled", "Cancelled",
                 "Payment_Pending", "Payment_Expired");
@@ -114,6 +140,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("activeTab", "all");
         model.addAttribute("activeMenu", "borrow-list");
 
         return "librarian/borrow-list";
@@ -212,7 +239,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             try {
                 Reservation selectedReservation = borrowService.getReservationById(reservationId);
                 if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
-                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
+                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())
+                        || "Ready".equalsIgnoreCase(selectedReservation.getStatus())) {
                     model.addAttribute("selectedReservation", selectedReservation);
                     populateMemberStats(model, selectedReservation.getMember(), usernameByMemberId);
                 }

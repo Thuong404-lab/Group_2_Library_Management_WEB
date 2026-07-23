@@ -51,6 +51,10 @@ public class InventoryServiceImpl implements InventoryService {
     private final BorrowDetailRepository borrowDetailRepository;
     private final ShelfRepository shelfRepository;
     private final AuthorRepository authorRepository;
+    private final com.lms.repository.ReservationRepository reservationRepository;
+    private final com.lms.repository.NotificationRepository notificationRepository;
+    private final com.lms.repository.MemberNotificationRepository memberNotificationRepository;
+    private final com.lms.service.EmailService emailService;
     private final LocalizedMessageService messages;
 
     public InventoryServiceImpl(BookRepository bookRepository,
@@ -60,6 +64,10 @@ public class InventoryServiceImpl implements InventoryService {
             BorrowDetailRepository borrowDetailRepository,
             ShelfRepository shelfRepository,
             AuthorRepository authorRepository,
+            com.lms.repository.ReservationRepository reservationRepository,
+            com.lms.repository.NotificationRepository notificationRepository,
+            com.lms.repository.MemberNotificationRepository memberNotificationRepository,
+            com.lms.service.EmailService emailService,
             LocalizedMessageService messages) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
@@ -68,6 +76,10 @@ public class InventoryServiceImpl implements InventoryService {
         this.borrowDetailRepository = borrowDetailRepository;
         this.shelfRepository = shelfRepository;
         this.authorRepository = authorRepository;
+        this.reservationRepository = reservationRepository;
+        this.notificationRepository = notificationRepository;
+        this.memberNotificationRepository = memberNotificationRepository;
+        this.emailService = emailService;
         this.messages = messages;
     }
 
@@ -303,6 +315,7 @@ public class InventoryServiceImpl implements InventoryService {
                     ? STATUS_UNAVAILABLE
                     : STATUS_AVAILABLE);
             bookItemRepository.save(item);
+            autoAssignNewCopyIfReservationWaiting(item);
             existingBarcodes.add(barcode);
         }
     }
@@ -491,5 +504,73 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ConflictException(messages.get("backend.inventory.deleteCategoryConflict"));
         }
         categoryRepository.delete(category);
+    }
+
+    private void autoAssignNewCopyIfReservationWaiting(BookItem item) {
+        if (item == null || item.getBook() == null || !STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+            return;
+        }
+        Integer bookId = item.getBook().getBookId();
+        List<com.lms.entity.Reservation> waitingList = reservationRepository.findByBook_BookIdAndStatusInOrderByReservationDateAsc(
+                bookId, List.of("Deposit_Paid", "Pending"));
+        if (!waitingList.isEmpty()) {
+            com.lms.entity.Reservation nextReservation = waitingList.get(0);
+            nextReservation.setStatus("Ready");
+            reservationRepository.save(nextReservation);
+
+            item.setStatus(STATUS_WAITING_PICKUP);
+            bookItemRepository.save(item);
+
+            sendInternalNotification(nextReservation.getMember(),
+                    com.lms.enums.NotificationType.RESERVATION, com.lms.enums.NotificationEventType.RESERVATION_APPROVED, com.lms.enums.NotificationSource.SYSTEM,
+                    "systemNotification.reservation.ready.title",
+                    "systemNotification.reservation.ready.content",
+                    nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
+        }
+    }
+
+    private void sendInternalNotification(com.lms.entity.Member member,
+            com.lms.enums.NotificationType type,
+            com.lms.enums.NotificationEventType eventType,
+            com.lms.enums.NotificationSource source,
+            String titleKey,
+            String contentKey,
+            Object... arguments) {
+        if (member == null) {
+            return;
+        }
+        com.lms.entity.Notification notif = new com.lms.entity.Notification();
+        messages.prepareNotification(notif, titleKey, contentKey, arguments);
+        notif.setNotificationType(type);
+        notif.setEventType(eventType);
+        notif.setNotificationSource(source);
+        notif.setCreatedDate(java.time.LocalDateTime.now());
+        notif.setStatus(STATUS_ACTIVE);
+        com.lms.entity.Notification saved = notificationRepository.save(notif);
+
+        com.lms.entity.MemberNotification mn = new com.lms.entity.MemberNotification();
+        mn.setId(new com.lms.entity.MemberNotificationId(member.getMemberId(), saved.getNotificationId()));
+        mn.setMember(member);
+        mn.setNotification(saved);
+        mn.setIsRead(false);
+        memberNotificationRepository.save(mn);
+
+        if (emailService != null) {
+            String recipientEmail = (member.getUser() != null) ? member.getUser().getEmail() : null;
+            String recipientName = (member.getUser() != null) ? member.getUser().getFullName() : "Độc giả";
+            if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
+                final String to = recipientEmail.trim();
+                final String name = recipientName;
+                final String title = notif.getTitle();
+                final String content = notif.getContent();
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try {
+                        emailService.sendNotificationEmail(to, name, title, content);
+                    } catch (Exception ignored) {
+                        // Fallback
+                    }
+                });
+            }
+        }
     }
 }

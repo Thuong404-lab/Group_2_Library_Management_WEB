@@ -150,6 +150,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"));
         data.put("readyReservations",
                 reservationRepository.countByStatusIgnoreCase("READY"));
+        data.put("pendingRefundReservations",
+                reservationRepository.countByStatusIgnoreCase("REFUND_PENDING"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("dueTodayDetails",
                 borrowDetailRepository.countCurrentLoansDueInRange(

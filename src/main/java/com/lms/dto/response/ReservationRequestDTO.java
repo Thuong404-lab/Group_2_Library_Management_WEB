@@ -9,7 +9,7 @@ public class ReservationRequestDTO {
     private LocalDateTime bookingDate;
     private Integer queuePosition;
     
-    // New fields for search
+    private String status;
     private String memberEmail;
     private String memberPhone;
     private String memberUsername;
@@ -25,7 +25,7 @@ public class ReservationRequestDTO {
     }
 
     public ReservationRequestDTO(Integer id, String memberName, String bookTitle, LocalDateTime bookingDate, Integer queuePosition,
-                                 String memberEmail, String memberPhone, String memberUsername) {
+                                 String memberEmail, String memberPhone, String memberUsername, String status) {
         this.id = id;
         this.memberName = memberName;
         this.bookTitle = bookTitle;
@@ -34,6 +34,7 @@ public class ReservationRequestDTO {
         this.memberEmail = memberEmail;
         this.memberPhone = memberPhone;
         this.memberUsername = memberUsername;
+        this.status = status;
     }
 
     // Getters and Setters
@@ -47,6 +48,9 @@ public class ReservationRequestDTO {
     public void setBookingDate(LocalDateTime bookingDate) { this.bookingDate = bookingDate; }
     public Integer getQueuePosition() { return queuePosition; }
     public void setQueuePosition(Integer queuePosition) { this.queuePosition = queuePosition; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public String getMemberEmail() { return memberEmail; }
     public void setMemberEmail(String memberEmail) { this.memberEmail = memberEmail; }
