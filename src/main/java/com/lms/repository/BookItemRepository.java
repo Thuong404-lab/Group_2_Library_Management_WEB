@@ -42,6 +42,15 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     List<BookItem> findByBook_BookIdOrderByBarcodeAsc(Integer bookId);
 
+    @Query("""
+            select item
+            from BookItem item
+            left join fetch item.shelf
+            where item.book.bookId in :bookIds
+            order by item.book.bookId asc, item.barcode asc
+            """)
+    List<BookItem> findByBookIdsWithShelf(@Param("bookIds") List<Integer> bookIds);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select item
