@@ -345,7 +345,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("bookItemsByBookId", bookItemsByBookId);
 
         data.put("totalBookCount", bookRepository.count());
-        data.put("unavailableTitleCount", bookRepository.countTitlesWithoutAvailableCopies());
+        data.put("activeTitleCount", bookRepository.countByStatusIgnoreCase("Active"));
+        data.put("inactiveTitleCount", bookRepository.countByStatusIgnoreCase("Inactive"));
         data.put("inventoryStatusCounts", inventoryStatusCounts());
         if ("books".equals(activeTab)) {
             data.put("categories", categoryRepository.findAll());

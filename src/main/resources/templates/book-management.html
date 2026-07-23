@@ -90,18 +90,13 @@
                                     </span>
                                     <span>
                                         <strong class="app-stat-number"
-                                            th:text="${@displayNumber.count(inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0)}">0</strong>
-                                        <span th:text="#{librarian.inventory.totalCopies}">Total Copies</span>
+                                            th:text="${@displayNumber.count(activeTitleCount != null ? activeTitleCount : 0)}">0</strong>
+                                        <span th:text="#{status.active}">Active</span>
                                     </span>
                                     <span>
                                         <strong class="app-stat-number"
-                                            th:text="${@displayNumber.count(inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0)}">0</strong>
-                                        <span th:text="#{book.status.available}">Available</span>
-                                    </span>
-                                    <span>
-                                        <strong class="app-stat-number"
-                                            th:text="${@displayNumber.count(unavailableTitleCount != null ? unavailableTitleCount : 0)}">0</strong>
-                                        <span th:text="#{book.status.unavailable}">Unavailable</span>
+                                            th:text="${@displayNumber.count(inactiveTitleCount != null ? inactiveTitleCount : 0)}">0</strong>
+                                        <span th:text="#{status.inactive}">Inactive</span>
                                     </span>
                                 </div>
 
@@ -125,12 +120,12 @@
                                                     th:selected="${param.availability == null || #strings.isEmpty(param.availability[0])}"
                                                     th:text="#{librarian.inventory.allAvailability}">All availability
                                                 </option>
-                                                <option value="Available"
-                                                    th:selected="${param.availability != null && param.availability[0] == 'Available'}"
-                                                    th:text="#{book.status.available}">Available</option>
-                                                <option value="Unavailable"
-                                                    th:selected="${param.availability != null && param.availability[0] == 'Unavailable'}"
-                                                    th:text="#{book.status.unavailable}">Unavailable</option>
+                                                <option value="Active"
+                                                    th:selected="${param.availability != null && param.availability[0] == 'Active'}"
+                                                    th:text="#{status.active}">Active</option>
+                                                <option value="Inactive"
+                                                    th:selected="${param.availability != null && param.availability[0] == 'Inactive'}"
+                                                    th:text="#{status.inactive}">Inactive</option>
                                             </select>
                                             <button type="submit" class="btn member-search-button text-nowrap"
                                                 th:text="#{common.search}">Search</button>
@@ -162,8 +157,8 @@
                                         </thead>
                                         <tbody>
                                             <tr class="book-data-row" th:each="book, iterStat : ${books.content}"
-                                                th:with="availableCopies=${bookAvailableQuantities[book.bookId] != null ? bookAvailableQuantities[book.bookId] : 0}, bookAvailable=${availableCopies > 0}"
-                                                th:data-book-availability="${bookAvailable ? 'Available' : 'Unavailable'}">
+                                                th:with="bookActive=${book.status == 'Active'}"
+                                                th:data-book-availability="${book.status}">
                                                 <td class="ps-3 fw-bold app-number" th:data-label="#{common.number}"
                                                     th:text="${@displayNumber.count(iterStat.index + 1 + (books.number * books.size))}">
                                                     1</td>
@@ -192,8 +187,8 @@
                                                     th:title="${book.description}">Description</td>
                                                 <td th:data-label="#{common.status}">
                                                     <span class="status-badge"
-                                                        th:classappend="${bookAvailable} ? ' status-active' : ' status-zero'"
-                                                        th:text="${bookAvailable} ? #{book.status.available} : #{book.status.unavailable}">Available</span>
+                                                        th:classappend="${bookActive} ? ' status-active' : ' status-zero'"
+                                                        th:text="${bookActive} ? #{status.active} : #{status.inactive}">Active</span>
                                                 </td>
                                                 <td class="text-end member-actions" th:data-label="#{common.actions}">
                                                     <button type="button" class="member-icon-action"

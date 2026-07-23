@@ -305,6 +305,8 @@ public class InventoryServiceImpl implements InventoryService {
             bookItemRepository.save(item);
             existingBarcodes.add(barcode);
         }
+        book.setStatus(STATUS_ACTIVE);
+        bookRepository.save(book);
     }
 
     @Override
@@ -356,6 +358,15 @@ public class InventoryServiceImpl implements InventoryService {
         int rank = conditionRank(normalizedCondition);
         item.setStatus(rank >= 3 ? STATUS_UNAVAILABLE : STATUS_AVAILABLE);
         bookItemRepository.save(item);
+        synchronizeBookStatus(item.getBook());
+    }
+
+    private void synchronizeBookStatus(Book book) {
+        List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+        boolean hasLendableCopy = items.stream()
+                .anyMatch(item -> !STATUS_UNAVAILABLE.equalsIgnoreCase(item.getStatus()));
+        book.setStatus(hasLendableCopy ? STATUS_ACTIVE : "Inactive");
+        bookRepository.save(book);
     }
 
     private int conditionRank(String condition) {
