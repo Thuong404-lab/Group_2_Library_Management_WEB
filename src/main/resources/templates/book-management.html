@@ -661,6 +661,9 @@
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Borrowed'])}">0</strong>
                                         <span th:text="#{librarian.inventory.borrowedCopies}">Borrowed</span></span>
                                     <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Payment_Pending'])}">0</strong>
+                                        <span th:text="#{book.status.paymentPending}">Awaiting payment</span></span>
+                                    <span><strong class="app-stat-number"
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Waiting_Pickup'])}">0</strong>
                                         <span th:text="#{loan.status.waitingPickup}">Waiting for Pickup</span></span>
                                     <span><strong class="app-stat-number"
@@ -1253,8 +1256,8 @@
                                                     </td>
                                                     <td th:data-label="#{common.status}">
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Waiting_Pickup'} ? ' status-pending' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive')))"
-                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))}">Available</span>
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Payment_Pending' or item.status == 'Waiting_Pickup'} ? ' status-pending' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive')))"
+                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Payment_Pending' ? #messages.msg('book.status.paymentPending') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status))))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions"
                                                         th:data-label="#{common.actions}">

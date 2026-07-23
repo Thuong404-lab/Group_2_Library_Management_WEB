@@ -35,6 +35,7 @@ import java.util.Set;
 public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED = "Borrowed";
+    private static final String STATUS_PAYMENT_PENDING = "Payment_Pending";
     private static final String STATUS_WAITING_PICKUP = "Waiting_Pickup";
     private static final String STATUS_UNAVAILABLE = "Unavailable";
     private static final String STATUS_ACTIVE = "Active";
@@ -106,6 +107,7 @@ public class InventoryServiceImpl implements InventoryService {
         Map<String, Long> counts = new HashMap<>();
         counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
+        counts.put(STATUS_PAYMENT_PENDING, bookItemRepository.countByStatusIgnoreCase(STATUS_PAYMENT_PENDING));
         counts.put(STATUS_WAITING_PICKUP, bookItemRepository.countByStatusIgnoreCase(STATUS_WAITING_PICKUP));
         counts.put(STATUS_UNAVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_UNAVAILABLE));
         return counts;

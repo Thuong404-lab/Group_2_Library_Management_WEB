@@ -165,7 +165,7 @@ class BorrowBankPaymentLifecycleTest {
         Borrow result = service.processBorrowing(request, "librarian");
 
         assertThat(result.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(item.getStatus()).isEqualTo("Waiting_Pickup");
+        assertThat(item.getStatus()).isEqualTo("Payment_Pending");
         verify(borrowDetailRepository).save(any(BorrowDetail.class));
         verify(notificationRepository, never()).save(any(Notification.class));
     }
@@ -206,8 +206,8 @@ class BorrowBankPaymentLifecycleTest {
         Borrow result = service.memberSubmitBankMultiBookBorrowRequest("member01", List.of(11, 11), 14);
 
         assertThat(result.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(firstCopy.getStatus()).isEqualTo("Waiting_Pickup");
-        assertThat(secondCopy.getStatus()).isEqualTo("Waiting_Pickup");
+        assertThat(firstCopy.getStatus()).isEqualTo("Payment_Pending");
+        assertThat(secondCopy.getStatus()).isEqualTo("Payment_Pending");
         ArgumentCaptor<BorrowDetail> details = ArgumentCaptor.forClass(BorrowDetail.class);
         verify(borrowDetailRepository, times(2)).save(details.capture());
         assertThat(details.getAllValues())
