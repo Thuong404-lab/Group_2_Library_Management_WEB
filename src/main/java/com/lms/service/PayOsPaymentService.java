@@ -406,6 +406,35 @@ public class PayOsPaymentService {
         return refreshPayment(orderCode, null, true, "RECONCILIATION");
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelBorrowFeeForStaff(Long orderCode, Staff staff) {
+        if (staff == null || staff.getStaffId() == null) {
+            throw new ValidationException(messages.get("backend.financial.staffRequired"));
+        }
+        PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
+        if (!BORROW_FEE.equalsIgnoreCase(payment.getPurpose())) {
+            throw new ValidationException(messages.get("backend.payment.onlyBorrowFeeCanCancel"));
+        }
+        if (!PENDING.equalsIgnoreCase(payment.getStatus())) {
+            throw new ConflictException(messages.get("backend.payment.onlyPendingCanCancel"));
+        }
+
+        try {
+            client().paymentRequests().cancel(orderCode, "Librarian cancelled borrowing fee payment");
+        } catch (Exception exception) {
+            throw new ExternalServiceException(messages.get("backend.payment.cancelFailed"), exception);
+        }
+
+        String oldStatus = payment.getStatus();
+        settlementService.cancelPendingBorrow(payment, "CANCELLED");
+        payment.setStatus("CANCELLED");
+        PayOsPayment saved = paymentRepository.save(payment);
+        auditService.record(saved, "PAYMENT_CANCELLED", "STAFF", oldStatus, saved.getStatus(), true,
+                messages.get("backend.payment.audit.cancelledByStaff", staff.getStaffId()));
+        return saved;
+    }
+
     private PayOsPayment refreshPayment(Long orderCode, Integer expectedMemberId,
                                         boolean failOnGatewayError, String source) {
         PayOsPayment current = expectedMemberId == null
