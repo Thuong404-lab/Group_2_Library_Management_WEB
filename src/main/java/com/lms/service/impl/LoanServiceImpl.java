@@ -395,6 +395,13 @@ public class LoanServiceImpl implements LoanService {
                 && returnDate.isBefore(detail.getBorrow().getBorrowDate())) {
             throw new ValidationException(localizedMessageService.get("backend.return.beforeBorrowDate"));
         }
+        BookItem item = detail.getBookItem();
+        if (item != null && getConditionLevel(bookCondition) < getConditionLevel(item.getBookCondition())) {
+            throw new ValidationException(localizedMessageService.get(
+                    "backend.return.conditionCannotImprove",
+                    item.getBookCondition(),
+                    bookCondition));
+        }
         if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0
                 && "wallet".equals(resolvedPaymentMethod)) {
             Member member = detail.getBorrow() == null ? null : detail.getBorrow().getMember();
@@ -410,7 +417,6 @@ public class LoanServiceImpl implements LoanService {
         if ("Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
             rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
         }
-        BookItem item = detail.getBookItem();
         boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
         if (item != null) {
