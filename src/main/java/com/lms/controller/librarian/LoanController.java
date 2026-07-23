@@ -289,25 +289,11 @@ public class LoanController extends LocalizedControllerSupport {
      */
     @GetMapping("/borrow-schedule")
     public String showBorrowSchedule(@RequestParam(value = "keyword", required = false) String keyword,
-                                     @RequestParam(value = "page", defaultValue = "0") int page,
-                                     Model model) {
-        int safePage = Math.max(0, page);
-        String displayKeyword = keyword == null ? "" : keyword.trim();
-        String searchKeyword = displayKeyword;
-        if (searchKeyword.regionMatches(true, 0, "MEM-", 0, 4)) {
-            searchKeyword = searchKeyword.substring(4).trim();
+                                     @RequestParam(value = "page", defaultValue = "0") int page) {
+        if (keyword != null && !keyword.isBlank()) {
+            return "redirect:/librarian/borrow/list?tab=members&keyword=" + java.net.URLEncoder.encode(keyword, java.nio.charset.StandardCharsets.UTF_8) + "&page=" + page;
         }
-
-        Page<com.lms.entity.MemberAccount> accountPage = searchKeyword.isBlank()
-                ? memberAccountRepository.findAll(PageRequest.of(safePage, 20, Sort.by("member.memberId").ascending()))
-                : memberAccountRepository.searchMemberAccounts(
-                        searchKeyword, PageRequest.of(safePage, 20, Sort.by("member.memberId").ascending()));
-
-        model.addAttribute("accounts", accountPage.getContent());
-        model.addAttribute("accountPage", accountPage);
-        model.addAttribute("keyword", displayKeyword);
-        model.addAttribute("activeMenu", "borrow-schedule");
-        return "librarian/borrow-schedule";
+        return "redirect:/librarian/borrow/list?tab=members&page=" + page;
     }
 
     /**

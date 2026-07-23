@@ -28,6 +28,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
 
     List<Reservation> findByStatusInOrderByReservationDateAsc(Collection<String> statuses);
 
+    List<Reservation> findByBook_BookIdAndStatusInOrderByReservationDateAsc(
+            Integer bookId,
+            Collection<String> statuses);
+
     List<Reservation> findByStatusIgnoreCaseAndReservationDateLessThanEqual(
             String status, java.time.LocalDateTime cutoff);
 

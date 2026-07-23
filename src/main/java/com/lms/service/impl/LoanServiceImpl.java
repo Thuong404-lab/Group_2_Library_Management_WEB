@@ -107,13 +107,8 @@ public class LoanServiceImpl implements LoanService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.loan.barcodeNotFound", barcode)));
 
-        BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
-                .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
-                        && (STATUS_BORROWED.equalsIgnoreCase(d.getStatus())
-                                || STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())
-                                || "Return_Pending".equalsIgnoreCase(d.getStatus())
-                                || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
-                .findFirst()
+        BorrowDetail activeDetail = borrowDetailRepository.findFirstByBookItem_BookItemIdAndStatusInIgnoreCase(
+                        item.getBookItemId(), List.of("Borrowed", "Overdue", "Return_Pending", "Renew_Pending"))
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.loan.activeHistoryNotFound")));
 
@@ -452,6 +447,27 @@ public class LoanServiceImpl implements LoanService {
                 NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
                 "systemNotification.return.desk.title",
                 "systemNotification.return.desk.content", detail.getBook().getTitle());
+
+        // Tự động phân gán cho độc giả đứng đầu hàng đợi Đặt trước (FIFO) nếu bản sao ở trạng thái Available
+        if (item != null && "Available".equalsIgnoreCase(item.getStatus()) && detail.getBook() != null && detail.getBook().getBookId() != null) {
+            Integer bookId = detail.getBook().getBookId();
+            List<Reservation> waitingReservations = reservationRepository
+                    .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
+            if (!waitingReservations.isEmpty()) {
+                Reservation nextReservation = waitingReservations.get(0);
+                nextReservation.setStatus("Ready");
+                reservationRepository.save(nextReservation);
+
+                item.setStatus("Waiting_Pickup");
+                bookItemRepository.save(item);
+
+                sendInternalNotification(nextReservation.getMember(),
+                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.SYSTEM,
+                        "systemNotification.reservation.ready.title",
+                        "systemNotification.reservation.ready.content",
+                        nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
+            }
+        }
 
         return damageFineTx;
     }
@@ -982,8 +998,11 @@ public class LoanServiceImpl implements LoanService {
         borrowRepository.save(borrow);
     }
 
+    @Autowired(required = false)
+    private com.lms.service.EmailService emailService;
+
     /**
-     * Táº¡o thÃ´ng bÃ¡o há»‡ thá»‘ng vÃ  gá»­i cho Ä‘á»™c giáº£
+     * Tạo thông báo hệ thống và gửi cho độc giả (kèm gửi Email nếu khả dụng)
      */
     private void sendInternalNotification(Member member,
             NotificationType type,
@@ -1010,6 +1029,24 @@ public class LoanServiceImpl implements LoanService {
         mn.setNotification(saved);
         mn.setIsRead(false);
         memberNotificationRepository.save(mn);
+
+        if (emailService != null) {
+            String recipientEmail = (member.getUser() != null) ? member.getUser().getEmail() : null;
+            String recipientName = (member.getUser() != null) ? member.getUser().getFullName() : "Độc giả";
+            if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
+                final String to = recipientEmail.trim();
+                final String name = recipientName;
+                final String title = notif.getTitle();
+                final String content = notif.getContent();
+                java.util.concurrent.CompletableFuture.runAsync(() -> {
+                    try {
+                        emailService.sendNotificationEmail(to, name, title, content);
+                    } catch (Exception ignored) {
+                        // Safe fallback if SMTP email server is unconfigured or unavailable
+                    }
+                });
+            }
+        }
     }
 
     @Override

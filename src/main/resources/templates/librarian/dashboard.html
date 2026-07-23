@@ -126,6 +126,16 @@
                     </div>
                 </a>
 
+                <a th:href="@{/librarian/members/refunds}"
+                    class="overview-kpi-card overview-kpi-card--warning">
+                    <div class="overview-kpi-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label" th:text="#{librarian.dashboard.pendingRefunds}">Duyệt hoàn tiền cọc</p>
+                        <strong class="overview-kpi-value" th:text="${pendingRefundReservations ?: 0}">0</strong>
+                        <span class="overview-kpi-caption" th:text="#{librarian.dashboard.pendingRefundsCaption}">Yêu cầu chờ duyệt</span>
+                    </div>
+                </a>
+
                 <a th:href="@{/librarian/books(subsection='inventory',availability='Available')}"
                     class="overview-kpi-card overview-kpi-card--neutral">
                     <div class="overview-kpi-icon"><i class="bi bi-book" aria-hidden="true"></i></div>
@@ -149,6 +159,13 @@
                         requests.</p>
                 </header>
                 <div class="overview-work-queue-grid">
+                    <a th:href="@{/librarian/members/refunds}" class="overview-work-item"
+                        th:classappend="${pendingRefundReservations > 0} ? ' is-urgent' : ''">
+                        <i class="bi bi-wallet2" aria-hidden="true"></i>
+                        <div><strong th:text="${pendingRefundReservations ?: 0}">0</strong><span
+                                th:text="#{librarian.dashboard.pendingRefunds}">Duyệt hoàn tiền cọc</span></div>
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
                     <a th:href="@{/librarian/borrow/create(tab='returns')}" class="overview-work-item"
                         th:classappend="${pendingReturns > 0} ? ' is-urgent'">
                         <i class="bi bi-box-arrow-in-left" aria-hidden="true"></i>
