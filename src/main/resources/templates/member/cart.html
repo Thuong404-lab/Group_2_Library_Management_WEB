@@ -47,9 +47,9 @@
                 <article th:each="book : ${cartItems}" class="member-reference-list__item member-cart-item">
                     <label class="member-cart-item-check">
                         <input class="book-select-checkbox cart-checkbox" type="checkbox" name="selectedBookIds" th:value="${book.bookId}"
-                               th:data-qty="${quantities.get(book.bookId)}"
-                               th:disabled="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}"
-                               th:checked="${availableStocks.get(book.bookId) >= quantities.get(book.bookId)}">
+                               th:data-qty="${availableStocks.get(book.bookId) > 0 ? (quantities.get(book.bookId) <= availableStocks.get(book.bookId) ? quantities.get(book.bookId) : availableStocks.get(book.bookId)) : 0}"
+                               th:disabled="${availableStocks.get(book.bookId) <= 0}"
+                               th:checked="${availableStocks.get(book.bookId) > 0}">
                     </label>
 
                     <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
@@ -61,12 +61,30 @@
                         <span class="member-cart-genre" th:text="${book.genre != null ? book.genre.genreName : #messages.msg('member.cart.defaultGenre')}">Uncategorized</span>
 
                         <div class="member-cart-item-tags">
-                            <span th:if="${availableStocks.get(book.bookId) >= quantities.get(book.bookId)}" class="member-reference-pill member-cart-availability" th:text="#{member.cart.available}">Available</span>
-                            <span th:if="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" class="member-reference-pill is-unavailable" th:text="#{member.cart.outOfStock}">Out of stock</span>
-                            <span class="member-reference-pill member-cart-quantity" th:text="#{member.cart.quantity(${quantities.get(book.bookId)})}">Quantity: 1</span>
+                            <span th:if="${availableStocks.get(book.bookId) > 0}" class="member-reference-pill member-cart-availability"
+                                  th:text="#{member.cart.availableCopies(${availableStocks.get(book.bookId)})}">2 physical copies available</span>
+                            <span th:if="${availableStocks.get(book.bookId) <= 0}" class="member-reference-pill is-unavailable" th:text="#{member.cart.outOfStock}">Out of stock</span>
                         </div>
 
-                        <div th:if="${availableStocks.get(book.bookId) < quantities.get(book.bookId)}" class="member-field-error small mt-1" th:text="#{member.cart.outOfStockNotice}">Out of stock notice</div>
+                        <div th:if="${availableStocks.get(book.bookId) > 0}" class="member-cart-quantity-control">
+                            <span class="member-cart-quantity-label" th:text="#{member.cart.quantityLabel}">Quantity</span>
+                            <div class="member-cart-stepper">
+                                <button type="button" data-quantity-action="decrease" th:aria-label="#{member.cart.decreaseQuantity}">
+                                    <i class="bi bi-dash" aria-hidden="true"></i>
+                                </button>
+                                <input type="number" class="member-cart-quantity-input"
+                                       min="1" th:max="${availableStocks.get(book.bookId)}"
+                                       th:value="${quantities.get(book.bookId) <= availableStocks.get(book.bookId) ? quantities.get(book.bookId) : availableStocks.get(book.bookId)}"
+                                       th:aria-label="#{member.cart.quantityFor(${book.title})}">
+                                <button type="button" data-quantity-action="increase" th:aria-label="#{member.cart.increaseQuantity}">
+                                    <i class="bi bi-plus" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <span class="member-cart-quantity-limit"
+                                  th:text="#{member.cart.quantityLimit(${availableStocks.get(book.bookId)})}">Maximum 2</span>
+                        </div>
+
+                        <div th:if="${availableStocks.get(book.bookId) <= 0}" class="member-field-error small mt-1" th:text="#{member.cart.outOfStockNotice}">Out of stock notice</div>
                     </div>
 
                     <form th:action="@{/member/cart/remove}" method="post" class="member-cart-remove-form">
@@ -108,7 +126,7 @@
 
                 <div class="member-cart-fee-breakdown">
                     <div>
-                        <span th:text="#{member.cart.bookCount}">Number of titles:</span>
+                        <span th:text="#{member.cart.copyCount}">Number of books:</span>
                         <strong id="jsCount" th:text="${cartItems.size()}">0</strong>
                     </div>
                     <div>
@@ -164,6 +182,26 @@
 
             const selectAll = document.getElementById("selectAllBooks");
             const checkboxes = document.querySelectorAll(".book-select-checkbox");
+            const quantityInputs = document.querySelectorAll(".member-cart-quantity-input");
+
+            function updateQuantity(input, requestedValue) {
+                const min = parseInt(input.min) || 1;
+                const max = parseInt(input.max) || min;
+                const quantity = Math.min(max, Math.max(min, parseInt(requestedValue) || min));
+                input.value = quantity;
+
+                const item = input.closest(".member-cart-item");
+                const checkbox = item?.querySelector(".book-select-checkbox");
+                if (checkbox) {
+                    checkbox.dataset.qty = quantity;
+                }
+
+                const decreaseButton = item?.querySelector('[data-quantity-action="decrease"]');
+                const increaseButton = item?.querySelector('[data-quantity-action="increase"]');
+                if (decreaseButton) decreaseButton.disabled = quantity <= min;
+                if (increaseButton) increaseButton.disabled = quantity >= max;
+                calculateRealtimeFee();
+            }
 
             function calculateRealtimeFee() {
                 let totalBooksCount = 0;
@@ -266,6 +304,27 @@
                         selectAll.checked = (checkedCount === totalCBs && totalCBs > 0);
                     }
                     calculateRealtimeFee();
+                });
+            });
+
+            quantityInputs.forEach(input => {
+                input.addEventListener("input", function () {
+                    updateQuantity(this, this.value);
+                });
+                input.addEventListener("blur", function () {
+                    updateQuantity(this, this.value);
+                });
+                updateQuantity(input, input.value);
+            });
+
+            document.querySelectorAll("[data-quantity-action]").forEach(button => {
+                button.addEventListener("click", function () {
+                    const input = this.closest(".member-cart-quantity-control")
+                        ?.querySelector(".member-cart-quantity-input");
+                    if (!input) return;
+                    const delta = this.dataset.quantityAction === "increase" ? 1 : -1;
+                    updateQuantity(input, (parseInt(input.value) || 1) + delta);
+                    input.focus();
                 });
             });
 

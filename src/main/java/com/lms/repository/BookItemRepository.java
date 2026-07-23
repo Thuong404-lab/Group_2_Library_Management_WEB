@@ -40,6 +40,8 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     List<BookItem> findByBook_BookId(Integer bookId);
 
+    List<BookItem> findByBook_BookIdIn(List<Integer> bookIds);
+
     List<BookItem> findByBook_BookIdOrderByBarcodeAsc(Integer bookId);
 
     @Query("""
