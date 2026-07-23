@@ -126,7 +126,7 @@
                         <div class="form-text" th:text="#{admin.settings.vndPerBook}">VND / book</div>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageCompensation}">Book Damage Compensation Fee</span>
                         </label>
@@ -137,16 +137,16 @@
                             severely damaged</div>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageThreshold}">Damage Compensation Threshold</span>
                         </label>
-                        <div class="input-group">
-                            <input name="damageCompensationThreshold" type="number" class="form-control" min="0"
-                                max="100" step="1" required
-                                th:value="${settingMap['Damage_Compensation_Threshold'] != null ? settingMap['Damage_Compensation_Threshold'] : 50}">
-                            <span class="input-group-text">%</span>
-                        </div>
+                        <select name="damageCompensationThreshold" class="form-select" required>
+                            <option th:each="option : ${damageThresholdOptions}" th:value="${option.key}"
+                                th:selected="${settingMap['Damage_Compensation_Threshold'] == option.key}"
+                                th:text="${option.value}">
+                            </option>
+                        </select>
                         <div class="form-text" th:text="#{admin.settings.damageThresholdHint}">Compensation is charged
                             when damage exceeds this value</div>
                     </div>

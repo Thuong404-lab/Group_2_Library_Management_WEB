@@ -143,7 +143,7 @@ public class SystemServiceImpl implements SystemService {
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
-        validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
+        validateDamageThreshold(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
@@ -219,8 +219,8 @@ public class SystemServiceImpl implements SystemService {
         }
     }
 
-    private void validatePercentage(Integer value, String message) {
-        if (value == null || value < 0 || value > 100) {
+    private void validateDamageThreshold(Integer value, String message) {
+        if (value == null || value < 2 || value > 4) {
             throw new ValidationException(message);
         }
     }
