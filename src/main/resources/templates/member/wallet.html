@@ -260,33 +260,51 @@
                             <h2 class="modal-title" id="memberTopUpModalLabel" th:text="#{member.wallet.topUpTitle}">Top Up Wallet</h2>
                         </div>
                     </div>
-                    <form method="post" th:action="@{/member/payments/payos/top-up}" id="memberTopUpForm">
+                    <form method="post" th:action="@{/member/payments/payos/top-up}" id="memberTopUpForm" novalidate>
                         <div class="modal-body">
                             <div class="member-wallet-current-balance mb-4">
-                                <span class="text-muted" th:text="#{member.wallet.currentBalance}">Current Balance</span>
-                                <strong>
-                                    <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                                </strong>
+                                <span class="member-wallet-current-balance__icon" aria-hidden="true">
+                                    <i class="bi bi-wallet2"></i>
+                                </span>
+                                <span class="member-wallet-current-balance__copy">
+                                    <span class="member-wallet-current-balance__label" th:text="#{member.wallet.currentBalance}">Current Balance</span>
+                                    <strong class="member-wallet-current-balance__amount">
+                                        <span th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                                        <span class="member-wallet-current-balance__currency" th:text="#{currency.vnd}">VND</span>
+                                    </strong>
+                                </span>
                             </div>
                             <div class="member-form-field">
                                 <label for="memberTopUpAmount" th:text="#{member.wallet.topUpAmount}">Top-up Amount</label>
                                 <div class="input-group">
                                     <input id="memberTopUpAmount" name="amount" type="text" inputmode="numeric"
                                            data-vnd-input data-min-amount="10000" data-max-amount="500000000"
+                                           th:data-current-balance="${walletBalance != null ? walletBalance : 0}"
+                                           data-max-balance="500000000"
+                                           data-error-target="#memberTopUpAmountMessage"
+                                           th:data-required-message="#{member.wallet.amountRequired}"
                                            th:data-min-message="#{validation.money.minimum('{0}')}"
                                            th:data-max-message="#{validation.money.maximum('{0}')}"
+                                           th:data-balance-message="#{validation.money.walletMaximum('{0}')}"
+                                           aria-describedby="memberTopUpAmountMessage"
                                            required class="form-control" th:placeholder="#{member.wallet.amountPlaceholder}" autocomplete="off" autofocus/>
                                     <span class="input-group-text" th:text="#{currency.vnd}">VND</span>
                                 </div>
-                                <div class="member-field-support mt-2">
-                                    <span th:text="#{member.wallet.minimumAmount}">Minimum amount: 10,000 VND.</span>
+                                <div class="member-field-message mt-2" id="memberTopUpAmountMessage" role="status" aria-live="polite"
+                                     th:data-default-message="#{member.wallet.minimumAmount}"
+                                     th:text="#{member.wallet.minimumAmount}">
+                                    Minimum amount: 10,000 VND.
                                 </div>
                             </div>
                             <div class="member-wallet-quick-amounts" id="memberTopUpQuickAmounts">
-                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="50000">50.000</button>
-                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="100000">100.000</button>
-                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="200000">200.000</button>
-                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="500000">500.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="50000"
+                                        th:text="${#locale.language == 'vi' ? '50.000' : '50,000'}">50.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="100000"
+                                        th:text="${#locale.language == 'vi' ? '100.000' : '100,000'}">100.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="200000"
+                                        th:text="${#locale.language == 'vi' ? '200.000' : '200,000'}">200.000</button>
+                                <button type="button" class="member-ui-button member-ui-button--compact member-ui-button--secondary" data-amount="500000"
+                                        th:text="${#locale.language == 'vi' ? '500.000' : '500,000'}">500.000</button>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -310,6 +328,9 @@
                         amountInput.dispatchEvent(new Event("input"));
                         amountInput.focus();
                     }
+                    document.querySelectorAll("#memberTopUpQuickAmounts [data-amount]").forEach(function (item) {
+                        item.classList.toggle("is-selected", item === button);
+                    });
                 });
             });
 
