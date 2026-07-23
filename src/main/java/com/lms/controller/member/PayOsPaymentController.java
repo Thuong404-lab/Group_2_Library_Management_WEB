@@ -82,6 +82,20 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
         return "member/payos-payment";
     }
 
+    @PostMapping("/{orderCode}/cancel")
+    public String cancelPayment(@PathVariable Long orderCode, Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Member member = currentMember(principal);
+            payOsPaymentService.cancelBorrowFeeForMember(orderCode, member.getMemberId());
+            redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelSuccess"));
+            return "redirect:/member/financial/fees";
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", readableMessage(exception));
+            return "redirect:/member/payments/payos/" + orderCode;
+        }
+    }
+
     @GetMapping("/{orderCode}/status")
     @ResponseBody
     public Map<String, Object> paymentStatus(@PathVariable Long orderCode, Principal principal) {

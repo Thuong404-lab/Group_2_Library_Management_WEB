@@ -237,6 +237,7 @@
             const discountPercent = /*[[${discountPercent}]]*/ 0.0;
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
             const feePerBookPerDay = /*[[${feePerBookPerDay}]]*/ 5000;
+            const cumulativeDailyFees = /*[[${cumulativeDailyFees}]]*/ [0, 5000];
 
             const formattingLocale = /*[[${#locale.language}]]*/ "en";
             const textSubmitBank = /*[[#{member.borrowCreate.submitBank}]]*/ "Pay and submit request";
@@ -244,6 +245,7 @@
             const textInvalidDays = /*[[#{member.borrowCreate.validation.invalidDays}]]*/ "Enter a valid number of loan days.";
             const textMaxExceeded = /*[[#{member.borrowCreate.validation.maxExceeded}]]*/ "The loan period cannot exceed {0} days.";
             const textBaseFeeSub = /*[[#{member.borrowCreate.baseFeeSub}]]*/ "{0} book(s) × {1} day(s) × {2} VND";
+            const textConditionFeeSub = /*[[#{member.borrowCreate.conditionFeeSub}]]*/ "Condition-based daily fee: {0} VND/day × {1} day(s)";
 
             window.calculateBorrowDetails = function () {
                 const maxDays = parseInt(borrowDaysInput.getAttribute("max")) || 14;
@@ -266,11 +268,11 @@
                 dueDateDisplay.textContent = dueDate.toLocaleDateString(formattingLocale);
 
                 // 2. Phí cơ bản: qty × ngày × đơn giá
-                const baseFee = qty * days * feePerBookPerDay;
-                baseFeeSubtext.textContent = textBaseFeeSub
-                    .replace("{0}", qty)
-                    .replace("{1}", days)
-                    .replace("{2}", feePerBookPerDay.toLocaleString(formattingLocale));
+                const dailyFee = Number(cumulativeDailyFees[qty] ?? (qty * feePerBookPerDay));
+                const baseFee = days * dailyFee;
+                baseFeeSubtext.textContent = textConditionFeeSub
+                    .replace("{0}", dailyFee.toLocaleString(formattingLocale))
+                    .replace("{1}", days);
                 baseFeeDisplay.textContent = `${baseFee.toLocaleString(formattingLocale)} VND`;
 
                 // 3. Giảm giá hạng thành viên
@@ -291,7 +293,8 @@
                 const maxDays = parseInt(borrowDaysInput.getAttribute("max")) || 14;
                 const days = parseInt(borrowDaysInput.value) || 0;
                 const qty = parseInt(document.getElementById('quantityInput')?.value) || 1;
-                const baseFee = qty * days * feePerBookPerDay;
+                const dailyFee = Number(cumulativeDailyFees[qty] ?? (qty * feePerBookPerDay));
+                const baseFee = days * dailyFee;
                 const discountAmount = Math.round(baseFee * (discountPercent / 100));
                 const finalFee = baseFee - discountAmount;
 

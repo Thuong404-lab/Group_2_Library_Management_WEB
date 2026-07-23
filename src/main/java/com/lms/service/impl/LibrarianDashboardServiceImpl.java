@@ -150,6 +150,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
                 reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"));
         data.put("readyReservations",
                 reservationRepository.countByStatusIgnoreCase("READY"));
+        data.put("pendingRefundReservations",
+                reservationRepository.countByStatusIgnoreCase("REFUND_PENDING"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
         data.put("dueTodayDetails",
                 borrowDetailRepository.countCurrentLoansDueInRange(
@@ -451,6 +453,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Total", bookItemRepository.count());
         counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
+        counts.put("Payment_Pending", bookItemRepository.countByStatusIgnoreCase("Payment_Pending"));
         counts.put("Waiting_Pickup", bookItemRepository.countByStatusIgnoreCase("Waiting_Pickup"));
         counts.put("Unavailable", bookItemRepository.countByStatusIgnoreCase("Unavailable"));
         return counts;

@@ -661,6 +661,9 @@
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Borrowed'])}">0</strong>
                                         <span th:text="#{librarian.inventory.borrowedCopies}">Borrowed</span></span>
                                     <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Payment_Pending'])}">0</strong>
+                                        <span th:text="#{book.status.paymentPending}">Awaiting payment</span></span>
+                                    <span><strong class="app-stat-number"
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Waiting_Pickup'])}">0</strong>
                                         <span th:text="#{loan.status.waitingPickup}">Waiting for Pickup</span></span>
                                     <span><strong class="app-stat-number"
@@ -1142,9 +1145,11 @@
                                                     class="text-danger">*</span></label>
                                             <select name="shelfId" class="form-select add-copy-control" required
                                                 onchange="this.setCustomValidity(''); this.classList.remove('is-invalid')">
-                                                <option value="" selected disabled
+                                                <option value="" disabled
+                                                    th:selected="${bookShelves[book.bookId] == null}"
                                                     th:text="#{librarian.inventory.selectShelf}">Select Shelf</option>
                                                 <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
+                                                    th:selected="${bookShelves[book.bookId] != null and bookShelves[book.bookId] == shelf.shelfId}"
                                                     th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
                                                     Shelf</option>
                                             </select>
@@ -1154,17 +1159,10 @@
                                         </div>
                                         <div>
                                             <label class="form-label fw-semibold"><span
-                                                    th:text="#{librarian.inventory.condition}">Condition</span> <span
-                                                    class="text-danger">*</span></label>
-                                            <select name="bookCondition" class="form-select add-copy-control" required>
-                                                <option value="New" th:text="#{book.condition.good}">New</option>
-                                                <option value="Minor damage" th:text="#{book.condition.minorDamage}">
-                                                    Minor damage</option>
-                                                <option value="Severely damaged"
-                                                    th:text="#{book.condition.severeDamage}">Severely damaged</option>
-                                                <option value="Lost book" th:text="#{book.condition.lost}">Lost book
-                                                </option>
-                                            </select>
+                                                    th:text="#{librarian.inventory.condition}">Condition</span></label>
+                                            <input type="text" class="form-control add-copy-control"
+                                                th:value="#{book.condition.good}" readonly>
+                                            <input type="hidden" name="bookCondition" value="New">
                                         </div>
                                     </div>
                                     <div class="modal-footer border-top-0"><button type="button"
@@ -1233,8 +1231,11 @@
                                                         th:data-label="#{librarian.inventory.copyCode}"
                                                         th:text="${item.barcode != null ? item.barcode : '—'}">BC001-001
                                                     </td>
-                                                    <td th:data-label="#{librarian.inventory.condition}"
-                                                        th:text="${item.bookCondition}">Condition</td>
+                                                    <td th:data-label="#{librarian.inventory.condition}">
+                                                        <span class="book-condition-badge"
+                                                            th:classappend="${item.bookCondition == 'New'} ? ' condition-new' : (${item.bookCondition == 'Minor damage'} ? ' condition-minor' : (${item.bookCondition == 'Severely damaged'} ? ' condition-severe' : (${item.bookCondition == 'Lost book'} ? ' condition-lost' : '')))"
+                                                            th:text="${item.bookCondition}">Condition</span>
+                                                    </td>
                                                     <td class="app-date-time copy-date-time"
                                                         th:data-label="#{librarian.inventory.addedDate}">
                                                         <th:block th:if="${item.addedDate != null}">
@@ -1253,8 +1254,8 @@
                                                     </td>
                                                     <td th:data-label="#{common.status}">
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Waiting_Pickup'} ? ' status-pending' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive')))"
-                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))}">Available</span>
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Payment_Pending'} ? ' status-payment-pending' : (${item.status == 'Waiting_Pickup'} ? ' status-waiting-pickup' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive'))))"
+                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Payment_Pending' ? #messages.msg('book.status.paymentPending') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status))))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions"
                                                         th:data-label="#{common.actions}">

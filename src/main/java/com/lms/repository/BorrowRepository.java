@@ -96,6 +96,8 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
 
     // 1b. Lấy toàn bộ theo trạng thái (không phân trang) - dùng cho scheduled job
     List<Borrow> findAllByStatus(String status);
+    List<Borrow> findByStatusIgnoreCase(String status);
+    List<Borrow> findByStatusInIgnoreCase(List<String> statuses);
 
     // 2. Phân trang lọc theo từ khóa tìm kiếm (Keyword: fullName, email, phone hoặc borrowId)
     @Query("SELECT b FROM Borrow b WHERE " +
