@@ -451,6 +451,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Total", bookItemRepository.count());
         counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
+        counts.put("Payment_Pending", bookItemRepository.countByStatusIgnoreCase("Payment_Pending"));
         counts.put("Waiting_Pickup", bookItemRepository.countByStatusIgnoreCase("Waiting_Pickup"));
         counts.put("Unavailable", bookItemRepository.countByStatusIgnoreCase("Unavailable"));
         return counts;
