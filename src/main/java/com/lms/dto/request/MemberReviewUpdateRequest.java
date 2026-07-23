@@ -1,6 +1,6 @@
 package com.lms.dto.request;
 
-import com.lms.domain.ReviewPolicy;
+import com.lms.util.ReviewPolicy;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
