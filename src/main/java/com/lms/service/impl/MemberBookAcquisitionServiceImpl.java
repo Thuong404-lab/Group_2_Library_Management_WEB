@@ -1,8 +1,8 @@
 package com.lms.service.impl;
 
 import com.lms.dto.request.MemberBookAcquisitionRequest;
-import com.lms.domain.AcquisitionRequestPolicy;
-import com.lms.domain.IsbnUtils;
+import com.lms.util.AcquisitionRequestPolicy;
+import com.lms.util.IsbnUtils;
 import com.lms.entity.MemberAccount;
 import com.lms.entity.BookAcquisitionRequest;
 import com.lms.entity.Member;
