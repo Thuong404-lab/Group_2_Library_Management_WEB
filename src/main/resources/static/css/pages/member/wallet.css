@@ -37,7 +37,9 @@
 .member-wallet-page .member-wallet-status--completed { border-color: rgba(47,111,62,.24); color: var(--member-color-success-ink); }
 .member-wallet-page .member-wallet-status--pending { border-color: rgba(154,109,23,.28); color: var(--member-color-warning-ink); }
 .member-wallet-page .member-wallet-status--unpaid { border-color: rgba(146,59,54,.26); color: var(--member-color-danger-ink); }
-.member-wallet-page .member-wallet-amount { margin-top: 10px; font-size: 18px; line-height: 1.35; }
+.member-wallet-page .member-wallet-transaction-description { margin: 12px 0 0; color: var(--member-color-ink); font-size: 15px; font-weight: 600; line-height: 1.45; }
+.member-wallet-page .member-wallet-transaction-detail { margin: 4px 0 0; color: var(--member-color-muted); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.member-wallet-page .member-wallet-amount { margin-top: 8px; font-size: 18px; line-height: 1.35; }
 .member-wallet-page .member-wallet-amount strong { font-weight: 500; }
 .member-wallet-page .member-wallet-amount--credit { color: var(--member-color-success-ink); }
 .member-wallet-page .member-wallet-amount--debit { color: var(--member-color-danger-ink); }
@@ -63,8 +65,13 @@
 .fine-payment-value { max-width: 62%; color: var(--member-color-ink); text-align: right; font-weight: 600; }
 .fine-payment-method { padding: 12px 14px; background: #fff; border: 1px solid var(--member-color-hairline); border-radius: 10px; }
 .fine-payment-method:has(.form-check-input:checked) { border-color: var(--member-palette-500); background: var(--member-palette-50); }
-.member-wallet-current-balance { padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--member-color-surface-soft); border: 1px solid var(--member-color-hairline); border-radius: 10px; }
-.member-wallet-current-balance strong { color: var(--member-color-primary); }
+.member-wallet-current-balance { position: relative; padding: 18px 20px; display: flex; align-items: center; gap: 14px; overflow: hidden; background: linear-gradient(135deg, var(--member-palette-50), #fff 72%); border-left: 4px solid var(--member-color-primary); border-radius: 12px; box-shadow: 0 8px 24px rgba(91, 55, 27, .08); }
+.member-wallet-current-balance::after { position: absolute; width: 92px; height: 92px; right: -28px; bottom: -48px; border-radius: 50%; background: color-mix(in srgb, var(--member-color-primary) 8%, transparent); content: ""; pointer-events: none; }
+.member-wallet-current-balance__icon { width: 42px; height: 42px; display: inline-grid; flex: 0 0 42px; place-items: center; border-radius: 50%; background: var(--member-color-primary); color: #fff; font-size: 19px; box-shadow: 0 6px 14px rgba(91, 55, 27, .18); }
+.member-wallet-current-balance__copy { position: relative; z-index: 1; min-width: 0; display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 16px; }
+.member-wallet-current-balance__label { color: var(--member-color-muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.member-wallet-current-balance__amount { display: inline-flex; align-items: baseline; gap: 6px; color: var(--member-color-primary); font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1.2; white-space: nowrap; }
+.member-wallet-current-balance__currency { font-size: 13px; font-weight: 700; letter-spacing: .04em; }
 .member-wallet-dialog .member-page-eyebrow { display: block; margin-bottom: 6px; color: var(--member-palette-600); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .member-wallet-dialog .member-form-field > label,
 .member-wallet-dialog .member-form-label { display: block; margin-bottom: 8px; color: var(--member-color-ink); font-size: 14px; font-weight: 600; }
@@ -73,9 +80,13 @@
 .member-wallet-dialog .form-control { border-radius: 10px 0 0 10px; }
 .member-wallet-dialog .input-group-text { border-radius: 0 10px 10px 0; color: var(--member-color-muted); font-weight: 600; }
 .member-wallet-dialog .form-control:focus { border-color: var(--member-palette-500); box-shadow: 0 0 0 3px var(--member-focus-ring); }
-.member-wallet-dialog .member-field-support { color: var(--member-color-muted); font-size: 12px; line-height: 1.5; }
+.member-wallet-dialog .form-control.is-invalid { border-color: var(--member-color-danger-ink); box-shadow: none; }
+.member-wallet-dialog .form-control.is-invalid:focus { box-shadow: 0 0 0 3px rgba(154, 47, 38, .12); }
+.member-wallet-dialog .member-field-message { min-height: 18px; color: var(--member-color-muted); font-size: 12px; line-height: 1.5; }
+.member-wallet-dialog .member-field-message.is-visible { color: var(--member-color-danger-ink); font-weight: 500; }
 .member-wallet-quick-amounts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .member-wallet-quick-amounts .member-ui-button { min-width: 82px; }
+.member-wallet-quick-amounts .member-ui-button.is-selected { border-color: var(--member-color-primary); background: var(--member-palette-50); color: var(--member-color-primary); box-shadow: inset 0 0 0 1px var(--member-color-primary); }
 
 @media (max-width: 767.98px) {
     .fine-payment-layout { grid-template-columns: 1fr; }
@@ -88,6 +99,6 @@
     .member-wallet-hero-actions { width: 100%; min-width: 0; }
     .member-wallet-page .member-notifications-summary { align-items: flex-start; }
     .member-wallet-page .member-reference-list__body { padding: 14px; }
-    .member-wallet-current-balance { align-items: flex-start; flex-direction: column; gap: 6px; }
+    .member-wallet-current-balance__copy { align-items: flex-start; flex-direction: column; gap: 5px; }
     .member-wallet-quick-amounts .member-ui-button { flex: 1 1 calc(50% - 5px); }
 }

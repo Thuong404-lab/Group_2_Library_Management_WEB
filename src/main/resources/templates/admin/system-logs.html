@@ -8,33 +8,64 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='logs'">
+    <div layout:fragment="content" th:with="activeMenu='logs'" class="admin-system-log-page">
 
-        <div
-            class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba">
+        <header class="system-log-hero">
             <div>
-                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                <span class="system-log-eyebrow" th:text="#{admin.logs.eyebrow}">SYSTEM MONITORING</span>
+                <h1 class="system-log-page-title">
                     <span th:text="#{admin.logs.heading}">System Logs</span>
-                </h2>
-                <div class="text-muted">
+                </h1>
+                <p class="system-log-page-description">
                     <span th:text="#{admin.logs.description}">Track important activities in the system</span>
-                </div>
+                </p>
             </div>
-        </div>
+        </header>
 
-        <div class="card-classic shadow-sm">
-            <div class="card-header bg-white border-bottom border-color p-4">
+        <div class="card-classic system-log-card">
+            <div class="card-header system-log-card-header">
                 <form id="systemLogFilterForm" class="system-log-filter" method="get" th:action="@{/admin/system/logs}">
                     <div class="system-log-filter-field">
                         <label for="systemLogKeyword" th:text="#{admin.logs.keyword}">Keyword</label>
                         <input id="systemLogKeyword" type="text" name="keyword" class="form-control"
                             th:placeholder="#{admin.logs.searchPlaceholder}" th:value="${keyword}">
                     </div>
+                    <div class="system-log-action-filter">
+                        <label for="systemLogActionType" th:text="#{admin.logs.filterAction}">Filter log action</label>
+                        <select id="systemLogActionType" class="form-select system-log-tab-filter" name="actionType"
+                            th:aria-label="#{admin.logs.filterAction}" onchange="this.form.submit()">
+                            <option value="" th:text="#{admin.logs.allActions}">All activities</option>
+                            <th:block th:if="${currentSection == 'auth'}">
+                                <option value="LOGIN" th:selected="${actionType == 'LOGIN'}"
+                                    th:text="#{admin.logs.action.login}">Login</option>
+                                <option value="LOGOUT" th:selected="${actionType == 'LOGOUT'}"
+                                    th:text="#{admin.logs.action.logout}">Logout</option>
+                                <option value="GOOGLE" th:selected="${actionType == 'GOOGLE'}"
+                                    th:text="#{admin.logs.action.google}">Google Login</option>
+                            </th:block>
+                            <th:block th:if="${currentSection == 'operations'}">
+                                <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}"
+                                    th:text="#{admin.logs.action.create_account}">Create Account</option>
+                                <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}"
+                                    th:text="#{admin.logs.action.update_account}">Update Account</option>
+                                <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}"
+                                    th:text="#{admin.logs.action.update_settings}">Update Settings</option>
+                            </th:block>
+                            <th:block th:if="${currentSection == 'circulation'}">
+                                <option value="REQUEST_BORROW" th:selected="${actionType == 'REQUEST_BORROW'}"
+                                    th:text="#{admin.logs.action.request_borrow}">Loan Request</option>
+                                <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}"
+                                    th:text="#{admin.logs.action.request_return}">Return Request</option>
+                                <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}"
+                                    th:text="#{admin.logs.action.reserve_book}">Reserve Book</option>
+                            </th:block>
+                        </select>
+                    </div>
                     <input type="hidden" name="section" th:value="${currentSection}">
                     <div class="system-log-filter-actions">
                         <button type="submit" class="btn btn-classic system-log-search-button"
                             th:title="#{common.search}" th:aria-label="#{common.search}">
-                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <span th:text="#{common.search}">Search</span>
                         </button>
                         <a th:href="@{/admin/system/logs(section=${currentSection})}"
                             class="btn btn-outline-classic system-log-cancel-button">
@@ -68,48 +99,20 @@
                     </nav>
                 </form>
                 <div class="system-log-title-row">
-                    <h5 class="fw-bold mb-0 u-color-4a3b32-font-family-playfair-display-serif-70239336">
+                    <h2 class="system-log-list-title">
                         <i class="bi bi-journal-text me-2 text-classic"></i>
                         <span
                             th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.authHistory') : (currentSection == 'operations' ? #messages.msg('admin.logs.operationsHistory') : #messages.msg('admin.logs.circulationHistory'))}">
                             Log List
                         </span>
-                    </h5>
-                    <select form="systemLogFilterForm" class="form-select system-log-tab-filter" name="actionType"
-                        th:aria-label="#{admin.logs.filterAction}" onchange="this.form.submit()">
-                        <option value="" th:text="#{admin.logs.allActions}">All activities</option>
-                        <th:block th:if="${currentSection == 'auth'}">
-                            <option value="LOGIN" th:selected="${actionType == 'LOGIN'}"
-                                th:text="#{admin.logs.action.login}">Login</option>
-                            <option value="LOGOUT" th:selected="${actionType == 'LOGOUT'}"
-                                th:text="#{admin.logs.action.logout}">Logout</option>
-                            <option value="GOOGLE" th:selected="${actionType == 'GOOGLE'}"
-                                th:text="#{admin.logs.action.google}">Google Login</option>
-                        </th:block>
-                        <th:block th:if="${currentSection == 'operations'}">
-                            <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}"
-                                th:text="#{admin.logs.action.create_account}">Create Account</option>
-                            <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}"
-                                th:text="#{admin.logs.action.update_account}">Update Account</option>
-                            <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}"
-                                th:text="#{admin.logs.action.update_settings}">Update Settings</option>
-                        </th:block>
-                        <th:block th:if="${currentSection == 'circulation'}">
-                            <option value="REQUEST_BORROW" th:selected="${actionType == 'REQUEST_BORROW'}"
-                                th:text="#{admin.logs.action.request_borrow}">Loan Request</option>
-                            <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}"
-                                th:text="#{admin.logs.action.request_return}">Return Request</option>
-                            <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}"
-                                th:text="#{admin.logs.action.reserve_book}">Reserve Book</option>
-                        </th:block>
-                    </select>
+                    </h2>
                 </div>
 
             </div>
 
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 stable-table-layout">
+                <div class="table-responsive system-log-table-wrap">
+                    <table class="table table-hover align-middle mb-0 stable-table-layout system-log-table">
                         <colgroup>
                             <col style="width: 20%;">
                             <col style="width: 20%;">
@@ -127,7 +130,7 @@
 
                         <tbody>
                             <tr th:if="${logs == null or logs.content.isEmpty()}">
-                                <td colspan="4" class="text-center text-muted py-5">
+                                <td colspan="4" class="text-center text-muted py-5 system-log-empty-cell">
                                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                                     <span
                                         th:text="${currentSection == 'auth' ? #messages.msg('admin.logs.noAuth') : (currentSection == 'operations' ? #messages.msg('admin.logs.noOperations') : #messages.msg('admin.logs.noCirculation'))}">
@@ -137,7 +140,7 @@
                             </tr>
 
                             <tr th:each="log : ${logs.content}">
-                                <td>
+                                <td th:data-label="#{common.time}">
                                     <span class="app-date-time" th:if="${log.createdAt != null}"
                                         th:text="${#temporals.format(log.createdAt, 'dd/MM/yyyy · HH:mm:ss')}">
                                         dd/MM/yyyy · HH:mm:ss
@@ -147,9 +150,9 @@
                                     </span>
                                 </td>
 
-                                <td>
+                                <td th:data-label="#{admin.logs.actor}">
                                     <div class="fw-semibold"
-                                        th:text="${log.actorUsername != null ? log.actorUsername : 'System'}">
+                                        th:text="${log.actorUsername != null ? log.actorUsername : #messages.msg('common.system')}">
                                         admin
                                     </div>
                                     <small class="text-muted" th:if="${log.user != null}"
@@ -158,7 +161,7 @@
                                     </small>
                                 </td>
 
-                                <td>
+                                <td th:data-label="#{admin.logs.action}">
                                     <span class="log-action-badge" th:classappend="${
                                             log.actionType == 'LOGIN' ? 'log-action-success' :
                                             (log.actionType == 'LOGOUT' or log.actionType == 'DEACTIVATE_ACCOUNT' or log.actionType == 'DELETE_BOOK') ? 'log-action-danger' :
@@ -187,7 +190,8 @@
                                     </span>
                                 </td>
 
-                                <td class="admin-system-logs-td-max-width-08">
+                                <td class="admin-system-logs-td-max-width-08"
+                                    th:data-label="#{librarian.inventory.bookDescription}">
                                     <th:block th:switch="${log.actionType}">
                                         <span th:case="'LOGIN'" th:text="#{backend.auth.audit.login}"></span>
                                         <span th:case="'LOGOUT'" th:text="#{backend.auth.audit.logout}"></span>

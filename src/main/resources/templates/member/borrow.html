@@ -275,20 +275,41 @@
                 </div>
 
                 <!-- Phân trang chuẩn theo member design -->
-                <nav class="member-notification-pagination" th:if="${totalPages > 1}"
-                     th:with="startPage=${totalPages <= 10 ? 0 : (currentPage < 9 ? 0 : (currentPage - 8 > totalPages - 10 ? totalPages - 10 : currentPage - 8))}, endPage=${startPage + 9 < totalPages ? startPage + 9 : totalPages - 1}">
+                <nav class="member-notification-pagination borrow-pagination" th:if="${totalPages > 1}"
+                     th:aria-label="#{pagination.navigation}"
+                     th:with="startPage=${totalPages <= 10 ? 0 : (currentPage < 5 ? 0 : (currentPage > totalPages - 6 ? totalPages - 10 : currentPage - 4))},
+                              endPage=${startPage + 9 < totalPages ? startPage + 9 : totalPages - 1}">
                     <a class="member-page-control" th:classappend="${currentPage == 0} ? ' is-disabled'"
-                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=0)}"
+                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=0, lang=${#locale.language})}"
+                       th:aria-disabled="${currentPage == 0}" th:tabindex="${currentPage == 0 ? -1 : null}"
                        th:aria-label="#{pagination.first}"><i class="bi bi-chevron-double-left" aria-hidden="true"></i></a>
                     <a class="member-page-control" th:classappend="${currentPage == 0} ? ' is-disabled'"
-                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage - 1})}"
+                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage > 0 ? currentPage - 1 : 0}, lang=${#locale.language})}"
+                       th:aria-disabled="${currentPage == 0}" th:tabindex="${currentPage == 0 ? -1 : null}"
                        th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
-                    <span th:text="${(currentPage + 1) + ' / ' + totalPages}">1 / 1</span>
+
+                    <span class="borrow-pagination-ellipsis" th:if="${startPage > 0}" aria-hidden="true">…</span>
+                    <th:block th:each="pageIndex : ${#numbers.sequence(startPage, endPage)}">
+                        <span class="borrow-pagination-page is-active"
+                              th:if="${pageIndex == currentPage}"
+                              aria-current="page"
+                              th:aria-label="#{pagination.currentPage(${pageIndex + 1})}"
+                              th:text="${pageIndex + 1}">1</span>
+                        <a class="member-page-control borrow-pagination-page"
+                           th:unless="${pageIndex == currentPage}"
+                           th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${pageIndex}, lang=${#locale.language})}"
+                           th:aria-label="#{pagination.page(${pageIndex + 1})}"
+                           th:text="${pageIndex + 1}">2</a>
+                    </th:block>
+                    <span class="borrow-pagination-ellipsis" th:if="${endPage < totalPages - 1}" aria-hidden="true">…</span>
+
                     <a class="member-page-control" th:classappend="${currentPage == totalPages - 1} ? ' is-disabled'"
-                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage + 1})}"
+                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${currentPage < totalPages - 1 ? currentPage + 1 : totalPages - 1}, lang=${#locale.language})}"
+                       th:aria-disabled="${currentPage == totalPages - 1}" th:tabindex="${currentPage == totalPages - 1 ? -1 : null}"
                        th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
                     <a class="member-page-control" th:classappend="${currentPage == totalPages - 1} ? ' is-disabled'"
-                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${totalPages - 1})}"
+                       th:href="@{/member/borrow/management(tab=${activeTab}, search=${search}, status=${status}, fromDate=${fromDate}, toDate=${toDate}, page=${totalPages - 1}, lang=${#locale.language})}"
+                       th:aria-disabled="${currentPage == totalPages - 1}" th:tabindex="${currentPage == totalPages - 1 ? -1 : null}"
                        th:aria-label="#{pagination.last}"><i class="bi bi-chevron-double-right" aria-hidden="true"></i></a>
                 </nav>
             </div>
