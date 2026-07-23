@@ -1418,7 +1418,7 @@
 
                     <!-- View Copies Modal -->
                     <div class="modal fade" th:id="${'viewCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-dialog modal-dialog-centered modal-xl">
                             <div class="modal-content border-0 shadow">
                                 <div
                                     class="modal-header border-bottom border-color d-flex align-items-center justify-content-between gap-3">
@@ -1451,6 +1451,7 @@
                                                     <th th:text="#{librarian.inventory.copyCode}">Copy Code</th>
                                                     <th th:text="#{librarian.inventory.condition}">Condition</th>
                                                     <th th:text="#{librarian.inventory.addedDate}">Added Date</th>
+                                                    <th th:text="#{librarian.inventory.updatedDate}">Updated Date</th>
                                                     <th th:text="#{common.status}">Status</th>
                                                     <th class="text-end" th:text="#{common.actions}">Actions</th>
                                                 </tr>
@@ -1469,9 +1470,20 @@
                                                     <td class="fw-bold font-monospace" th:text="${item.barcode}">
                                                         BC001-001</td>
                                                     <td th:text="${item.bookCondition}">Condition</td>
-                                                    <td
-                                                        th:text="${item.updatedAt != null ? #temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm') : #messages.msg('common.none')}">
-                                                        Date</td>
+                                                    <td class="app-date-time copy-date-time">
+                                                        <th:block th:if="${item.addedDate != null}">
+                                                            <span th:text="${#temporals.format(item.addedDate, 'dd/MM/yyyy')}">17/07/2026</span>
+                                                            <span th:text="${#temporals.format(item.addedDate, 'HH:mm:ss')}">00:00:00</span>
+                                                        </th:block>
+                                                        <span th:if="${item.addedDate == null}" th:text="#{common.none}">—</span>
+                                                    </td>
+                                                    <td class="app-date-time copy-date-time">
+                                                        <th:block th:if="${item.updatedAt != null}">
+                                                            <span th:text="${#temporals.format(item.updatedAt, 'dd/MM/yyyy')}">17/07/2026</span>
+                                                            <span th:text="${#temporals.format(item.updatedAt, 'HH:mm:ss')}">00:00:00</span>
+                                                        </th:block>
+                                                        <span th:if="${item.updatedAt == null}" th:text="#{common.none}">—</span>
+                                                    </td>
                                                     <td>
                                                         <span class="status-badge"
                                                             th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Waiting_Pickup'} ? ' status-pending' : ' status-inactive'))"
@@ -1498,7 +1510,7 @@
                                                 </tr>
                                                 <tr
                                                     th:if="${bookItemsByBookId == null or bookItemsByBookId[book.bookId] == null or #lists.isEmpty(bookItemsByBookId[book.bookId])}">
-                                                    <td colspan="7" class="text-center text-muted py-4"
+                                                    <td colspan="8" class="text-center text-muted py-4"
                                                         th:text="#{librarian.inventory.noCopies}">No copies in
                                                         inventory.</td>
                                                 </tr>
