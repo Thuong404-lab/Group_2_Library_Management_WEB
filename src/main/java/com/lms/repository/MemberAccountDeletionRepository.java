@@ -17,19 +17,14 @@ public class MemberAccountDeletionRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public boolean hasBusinessHistory(Integer memberId) {
+    public boolean hasActiveBusiness(Integer memberId) {
         Integer result = jdbcTemplate.queryForObject("""
                 SELECT CASE WHEN
-                    EXISTS (SELECT 1 FROM dbo.Borrows WHERE member_id = ?)
-                    OR EXISTS (SELECT 1 FROM dbo.Reservations WHERE member_id = ?)
-                    OR EXISTS (SELECT 1 FROM dbo.Feedbacks WHERE member_id = ?)
-                    OR EXISTS (SELECT 1 FROM dbo.BookAcquisitionRequests WHERE member_id = ?)
-                    OR EXISTS (SELECT 1 FROM dbo.Transactions t
-                               JOIN dbo.Wallets w ON w.wallet_id = t.wallet_id
-                               WHERE w.member_id = ?)
-                    OR EXISTS (SELECT 1 FROM dbo.PayOSPayments WHERE member_id = ?)
+                    EXISTS (SELECT 1 FROM dbo.Borrows WHERE member_id = ? AND UPPER(status) NOT IN ('RETURNED', 'CANCELED', 'CANCELLED', 'REJECTED'))
+                    OR EXISTS (SELECT 1 FROM dbo.Reservations WHERE member_id = ? AND UPPER(status) NOT IN ('COMPLETED', 'CANCELED', 'CANCELLED', 'REFUNDED', 'EXPIRED', 'REJECTED'))
+                    OR EXISTS (SELECT 1 FROM dbo.PayOSPayments WHERE member_id = ? AND UPPER(status) NOT IN ('PAID', 'CANCELLED', 'CANCELED', 'EXPIRED'))
                 THEN 1 ELSE 0 END
-                """, Integer.class, memberId, memberId, memberId, memberId, memberId, memberId);
+                """, Integer.class, memberId, memberId, memberId);
         return Integer.valueOf(1).equals(result);
     }
 

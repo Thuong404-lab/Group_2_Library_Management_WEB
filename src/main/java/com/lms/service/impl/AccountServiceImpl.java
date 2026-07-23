@@ -265,7 +265,7 @@ public class AccountServiceImpl implements AccountService {
             throw new AccountFormValidationException(
                     Map.of("_global", messages.get("backend.account.incompleteMemberData")));
         }
-        if (memberAccountDeletionRepository.hasBusinessHistory(member.getMemberId())) {
+        if (memberAccountDeletionRepository.hasActiveBusiness(member.getMemberId())) {
             throw new AccountFormValidationException(
                     Map.of("_global", messages.get("backend.member.deleteHasHistory")));
         }
@@ -280,6 +280,43 @@ public class AccountServiceImpl implements AccountService {
         }
         auditLogService.log(ActionType.DELETE_ACCOUNT,
                 messages.get("backend.account.audit.deletedMember", username));
+    }
+
+    @Override
+    @Transactional
+    public void deactivateAccount(Integer accountId, String source, Integer currentAccountId) {
+        if ("staff".equalsIgnoreCase(source)) {
+            StaffAccount account = staffAccountRepository.findById(accountId)
+                    .orElseThrow(() -> new AccountFormValidationException(
+                            Map.of("_global", messages.get("backend.account.notFound"))));
+            account.setStatus("Inactive");
+            if (account.getStaff() != null && account.getStaff().getUser() != null) {
+                account.getStaff().getUser().setStatus(UserStatus.Inactive);
+            }
+            staffAccountRepository.save(account);
+            auditLogService.log(ActionType.UPDATE_ACCOUNT,
+                    messages.get("backend.account.audit.deactivatedStaff", account.getUsername()));
+        } else {
+            MemberAccount account = memberAccountRepository.findById(accountId)
+                    .orElseThrow(() -> new AccountFormValidationException(
+                            Map.of("_global", messages.get("backend.account.notFound"))));
+            account.setStatus("Inactive");
+            if (account.getMember() != null && account.getMember().getUser() != null) {
+                account.getMember().getUser().setStatus(UserStatus.Inactive);
+            }
+            memberAccountRepository.save(account);
+            auditLogService.log(ActionType.UPDATE_ACCOUNT,
+                    messages.get("backend.account.audit.statusChanged", account.getUsername(), "Active", "Inactive"));
+        }
+    }
+
+    @Override
+    public boolean checkMemberDeletability(Integer accountId) {
+        MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
+        if (account == null || account.getMember() == null) {
+            return false;
+        }
+        return !memberAccountDeletionRepository.hasActiveBusiness(account.getMember().getMemberId());
     }
 
     @Override
