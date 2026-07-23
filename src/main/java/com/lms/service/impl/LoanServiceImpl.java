@@ -37,9 +37,7 @@ public class LoanServiceImpl implements LoanService {
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
-    private static final String STATUS_DAMAGED = "Damaged";
-    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
-    private static final String STATUS_LOST = "Lost";
+    private static final String STATUS_UNAVAILABLE = "Unavailable";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
     private static final String STATUS_OVERDUE = "Overdue";
@@ -941,23 +939,16 @@ public class LoanServiceImpl implements LoanService {
     private String resolveReturnedItemStatus(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
-            return STATUS_LOST;
-        }
-        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
-            return STATUS_DAMAGED;
-        }
-        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage")) {
-            return STATUS_MINOR_DAMAGED;
+            return STATUS_UNAVAILABLE;
         }
         return STATUS_AVAILABLE;
     }
 
     private String resolveConditionCode(String bookCondition) {
-        String itemStatus = resolveReturnedItemStatus(bookCondition);
-        return switch (itemStatus) {
-            case STATUS_LOST -> "LOST";
-            case STATUS_DAMAGED -> "DAMAGED";
-            case STATUS_MINOR_DAMAGED -> "MINOR_DAMAGE";
+        return switch (getConditionLevel(bookCondition)) {
+            case 4 -> "LOST";
+            case 3 -> "DAMAGED";
+            case 2 -> "MINOR_DAMAGE";
             default -> "GOOD";
         };
     }

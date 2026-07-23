@@ -165,7 +165,7 @@ class BorrowBankPaymentLifecycleTest {
         Borrow result = service.processBorrowing(request, "librarian");
 
         assertThat(result.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(item.getStatus()).isEqualTo("Payment_Pending");
+        assertThat(item.getStatus()).isEqualTo("Waiting_Pickup");
         verify(borrowDetailRepository).save(any(BorrowDetail.class));
         verify(notificationRepository, never()).save(any(Notification.class));
     }
@@ -206,8 +206,8 @@ class BorrowBankPaymentLifecycleTest {
         Borrow result = service.memberSubmitBankMultiBookBorrowRequest("member01", List.of(11, 11), 14);
 
         assertThat(result.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(firstCopy.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(secondCopy.getStatus()).isEqualTo("Payment_Pending");
+        assertThat(firstCopy.getStatus()).isEqualTo("Waiting_Pickup");
+        assertThat(secondCopy.getStatus()).isEqualTo("Waiting_Pickup");
         ArgumentCaptor<BorrowDetail> details = ArgumentCaptor.forClass(BorrowDetail.class);
         verify(borrowDetailRepository, times(2)).save(details.capture());
         assertThat(details.getAllValues())
@@ -280,7 +280,7 @@ class BorrowBankPaymentLifecycleTest {
         book.setTitle("Clean Code");
         BookItem item = new BookItem();
         item.setBook(book);
-        item.setStatus("Payment_Pending");
+        item.setStatus("Waiting_Pickup");
         BorrowDetail detail = new BorrowDetail();
         detail.setBorrow(borrow);
         detail.setBook(book);
@@ -313,7 +313,7 @@ class BorrowBankPaymentLifecycleTest {
         borrow.setBorrowId(42);
         borrow.setStatus("Payment_Pending");
         BookItem item = new BookItem();
-        item.setStatus("Payment_Pending");
+        item.setStatus("Waiting_Pickup");
         BorrowDetail detail = new BorrowDetail();
         detail.setBorrow(borrow);
         detail.setBookItem(item);

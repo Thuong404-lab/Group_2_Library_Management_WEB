@@ -306,8 +306,8 @@ BEGIN TRY
 
     UPDATE dbo.BookItems SET status='Borrowed' WHERE book_item_id IN (1,4,7,10,25,28);
     UPDATE dbo.BookItems SET status='Waiting_Pickup' WHERE book_item_id=19;
-    UPDATE dbo.BookItems SET status='Damaged',book_condition=N'Hư hỏng',damage_note=N'Gáy sách bong nhẹ, đang chờ sửa.' WHERE book_item_id=89;
-    UPDATE dbo.BookItems SET status='MinorDamaged',book_condition=N'Minor damage' WHERE book_item_id=90;
+    UPDATE dbo.BookItems SET status='Available',book_condition=N'Severely damaged',damage_note=N'Gáy sách bong nhẹ.' WHERE book_item_id=89;
+    UPDATE dbo.BookItems SET status='Available',book_condition=N'Minor damage' WHERE book_item_id=90;
 
     SET IDENTITY_INSERT dbo.Borrows ON;
     INSERT dbo.Borrows(borrow_id,member_id,staff_id,borrow_date,status,rejection_code,rejection_reason) VALUES
