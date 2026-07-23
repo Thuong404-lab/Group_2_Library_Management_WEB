@@ -1485,7 +1485,7 @@ public class BorrowServiceImpl implements BorrowService {
         java.math.BigDecimal dailyFee = java.math.BigDecimal.ZERO;
         for (Integer bookId : normalizedBookIds) {
             java.util.ArrayDeque<BookItem> items = previewItems.computeIfAbsent(bookId, id ->
-                    new java.util.ArrayDeque<>(bookItemRepository.findByBook_BookIdOrderByBarcodeAsc(id).stream()
+                    new java.util.ArrayDeque<>(bookItemRepository.findByBook_BookIdOrderByBookItemIdAsc(id).stream()
                             .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
                             .toList()));
             BookItem item = items.pollFirst();
