@@ -206,6 +206,113 @@
                                             th:aria-label="#{admin.accounts.update}">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
+
+                                        <button type="button"
+                                            th:if="${staff.user != null and staff.user.email != null and !#strings.isEmpty(staff.user.email)}"
+                                            class="member-icon-action account-action-tooltip"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="${'#resetPasswordStaffModal' + account.accountId}"
+                                            th:data-bs-title="#{admin.accounts.sendReset}"
+                                            data-bs-custom-class="reset-password-tooltip"
+                                            th:aria-label="#{admin.accounts.sendReset}">
+                                            <i class="bi bi-key"></i>
+                                        </button>
+
+                                        <div class="modal fade text-start account-standard-modal"
+                                            th:if="${staff.user != null and staff.user.email != null and !#strings.isEmpty(staff.user.email)}"
+                                            th:id="${'resetPasswordStaffModal' + account.accountId}" tabindex="-1"
+                                            th:aria-labelledby="${'resetPasswordStaffModalLabel' + account.accountId}"
+                                            aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <form method="post"
+                                                        th:action="@{/admin/member-list/{id}/send-password-reset(id=${account.accountId})}">
+                                                        <input type="hidden" th:if="${_csrf != null}"
+                                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                        <input type="hidden" name="source" value="staff">
+
+                                                        <div class="modal-header member-modal-header">
+                                                            <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118"
+                                                                th:id="${'resetPasswordStaffModalLabel' + account.accountId}">
+                                                                <i class="bi bi-key-fill me-2"></i>
+                                                                <span th:text="#{admin.accounts.resetConfirmTitle}">
+                                                                    Confirm Password Reset Link
+                                                                </span>
+                                                            </h5>
+                                                        </div>
+
+                                                        <div class="modal-body member-modal-body">
+                                                            <p class="mb-3"
+                                                                th:text="#{admin.accounts.staffResetConfirmMessage}">
+                                                                The password reset link will be sent to the staff
+                                                                member's current email and remain valid for 24 hours.
+                                                            </p>
+                                                            <div class="account-info-panel">
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{member.profile.username}">
+                                                                            Username
+                                                                        </div>
+                                                                        <div class="fw-bold"
+                                                                            th:text="${account.username}">
+                                                                            username
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{common.accountId}">
+                                                                            Account ID
+                                                                        </div>
+                                                                        <div class="fw-bold app-code-number"
+                                                                            th:text="${account.accountId != null ? account.accountId : '—'}">
+                                                                            id
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{member.profile.fullName}">
+                                                                            Full Name
+                                                                        </div>
+                                                                        <div class="fw-bold"
+                                                                            th:text="${staff.user.fullName}">
+                                                                            full name
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{admin.accounts.resetEmail}">
+                                                                            Reset Email
+                                                                        </div>
+                                                                        <div>
+                                                                            <i
+                                                                                class="bi bi-envelope me-1 text-classic"></i>
+                                                                            <span
+                                                                                th:text="${staff.user.email}">email</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-footer member-modal-footer">
+                                                            <button type="button"
+                                                                class="btn member-modal-secondary"
+                                                                data-bs-dismiss="modal"
+                                                                th:text="#{common.cancel}">Cancel</button>
+                                                            <button type="submit"
+                                                                class="btn member-modal-primary">
+                                                                <i class="bi bi-send me-1"></i>
+                                                                <span th:text="#{admin.accounts.confirmSend}">
+                                                                    Send Link
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <button type="button" th:if="${account.accountId != 1}"
                                             class="member-icon-action member-icon-action-danger account-action-tooltip"
                                             data-bs-toggle="modal"

@@ -11,7 +11,13 @@
 .admin-payment-page .app-page-description { margin: 0; color: var(--app-color-muted); font-size: 16px; line-height: 1.5; }
 .admin-payment-page .app-page-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .admin-payment-page .app-card { width: 100%; max-width: 100%; box-sizing: border-box; color: var(--app-color-body); background: var(--app-color-canvas); border: 1px solid var(--app-color-hairline); border-radius: 12px; box-shadow: none; overflow: visible; }
-.admin-payment-page .app-card-body { padding: 24px; }
+.admin-payment-page .app-card-body {
+    padding: 24px;
+}
+.admin-payment-page .app-card-body:has(.payment-filter-grid) {
+    container-name: payment-filter;
+    container-type: inline-size;
+}
 .admin-payment-page .app-card-header,
 .admin-payment-page .app-card-footer { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--app-color-surface-soft); border-color: var(--app-color-hairline-soft); }
 .admin-payment-page .app-card-header { border-bottom: 1px solid var(--app-color-hairline-soft); border-radius: 12px 12px 0 0; }
@@ -145,6 +151,17 @@
     color: var(--app-color-muted-soft);
     background: var(--app-color-surface-soft);
     border-color: var(--app-color-hairline);
+}
+@container payment-filter (max-width: 1050px) {
+    .admin-payment-page .payment-filter-grid,
+    .admin-payment-page .audit-filter-grid {
+        grid-template-columns: minmax(180px, 1.5fr) repeat(4, minmax(120px, 1fr));
+    }
+    .admin-payment-page .payment-filter-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+        padding-left: 0;
+    }
 }
 @media (max-width: 767.98px) {
     .admin-payment-page .app-page-header { align-items: stretch; flex-direction: column; }
