@@ -115,10 +115,10 @@
                                             </div>
                                             <select class="form-select member-filter-select" id="bookAvailabilityFilter"
                                                 name="availability"
-                                                th:aria-label="#{librarian.inventory.filterAvailability}">
+                                                th:aria-label="#{librarian.inventory.filterStatus}">
                                                 <option value=""
                                                     th:selected="${param.availability == null || #strings.isEmpty(param.availability[0])}"
-                                                    th:text="#{librarian.inventory.allAvailability}">All availability
+                                                    th:text="#{librarian.inventory.allStatus}">All status
                                                 </option>
                                                 <option value="Active"
                                                     th:selected="${param.availability != null && param.availability[0] == 'Active'}"
@@ -1286,7 +1286,7 @@
                                         </table>
                                     </div>
                                     <nav class="copy-modal-pagination mt-3"
-                                        th:if="${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null and #lists.size(bookItemsByBookId[book.bookId]) > 8}"
+                                        th:if="${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null and #lists.size(bookItemsByBookId[book.bookId]) > 5}"
                                         th:data-book-id="${book.bookId}" aria-label="Copy list pagination">
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
                                             data-copy-page-prev th:text="#{common.previous}">Previous</button>
@@ -1422,14 +1422,15 @@
                                                 <div
                                                     class="d-flex align-items-start gap-3 flex-wrap edit-book-cover-control">
                                                     <div th:if="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl)}"
-                                                        class="flex-shrink-0">
+                                                        class="flex-shrink-0 edit-book-current-cover">
                                                         <div class="text-muted small mb-1"
                                                             th:text="#{librarian.inventory.currentImage}">Current Image:
                                                         </div>
-                                                        <img th:src="${book.coverImageUrl}"
-                                                            th:id="'editCoverCurrent' + ${book.bookId}"
-                                                            th:alt="#{librarian.inventory.currentImage}"
-                                                            class="u-height-100px-width-75px-object-fit-cover-border-radius-6px-border-1px-so-eeb48d2c">
+                                                        <div class="edit-book-cover-frame">
+                                                            <img th:src="${book.coverImageUrl}"
+                                                                th:id="'editCoverCurrent' + ${book.bookId}"
+                                                                th:alt="#{librarian.inventory.currentImage}">
+                                                        </div>
                                                     </div>
                                                     <div class="flex-grow-1">
                                                         <input type="file" name="coverImage"
@@ -1453,9 +1454,10 @@
                                                             th:id="'editBookCoverPreview' + ${book.bookId}">
                                                             <div class="text-muted small mb-1"
                                                                 th:text="#{librarian.inventory.preview}">Preview:</div>
-                                                            <img th:id="'editBookCoverImg' + ${book.bookId}" src="#"
-                                                                th:alt="#{librarian.inventory.coverPreview}"
-                                                                class="u-max-height-100px-max-width-100-border-radius-6px-border-1px-solid-ddd-ob-00913d30">
+                                                            <div class="edit-book-cover-frame">
+                                                                <img th:id="'editBookCoverImg' + ${book.bookId}" src="#"
+                                                                    th:alt="#{librarian.inventory.coverPreview}">
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1993,7 +1995,7 @@
                 if (categorySearch) categorySearch.addEventListener('input', filterCategories);
                 if (categorySearchButton) categorySearchButton.addEventListener('click', filterCategories);
 
-                const copyPageSize = 8;
+                const copyPageSize = 5;
                 document.querySelectorAll('[data-copy-table]').forEach(function (table) {
                     const bookId = table.dataset.bookId;
                     const rows = Array.from(table.querySelectorAll('tbody [data-copy-row]'));
