@@ -23,7 +23,7 @@
                     <section class="fine-payment-receipt-details">
                         <h6 th:text="#{librarian.fines.paymentDetails}">Charge details</h6>
                         <dl class="fine-payment-data-list">
-                            <div><dt th:text="#{librarian.returnPayment.borrowCode}">Loan code</dt><dd th:text="${T(com.lms.util.BorrowCodeFormatter).format(borrowId)}">BOR-1</dd></div>
+                            <div><dt th:text="#{librarian.returnPayment.borrowCode}">Loan code</dt><dd th:text="${@borrowCodeFormatter.format(borrowId)}">BOR-1</dd></div>
                             <div><dt th:text="#{librarian.fines.member}">Member</dt><dd><span th:text="${member.user != null ? member.user.fullName : #messages.msg('common.member')}">Member</span><small class="return-payment-member-email" th:if="${member.user != null}" th:text="${member.user.email}">member@example.com</small></dd></div>
                             <div class="return-payment-charge-row"><dt th:text="#{librarian.returnPayment.itemsHeading}">Charges</dt><dd>
                                 <span class="return-payment-charge" th:each="fine : ${fines}">

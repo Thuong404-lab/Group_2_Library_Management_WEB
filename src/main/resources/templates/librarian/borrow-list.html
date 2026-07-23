@@ -98,7 +98,7 @@
                         <td th:data-label="#{loan.code}">
                             <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}"
                                class="fw-bold text-classic text-decoration-none"
-                               th:text="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}">BOR-1</a>
+                               th:text="${@borrowCodeFormatter.format(borrow.borrowId)}">BOR-1</a>
                         </td>
 
                         <!-- Thông tin độc giả -->
@@ -125,24 +125,24 @@
 
                         <!-- Trạng thái phiếu (Đồng bộ class badge theo mẫu) -->
                         <td th:data-label="#{librarian.borrowList.status}">
-                                    <span class="status-badge" th:classappend="${
-                                        borrow.status == 'Active' ? 'status-active' :
-                                        borrow.status == 'Returned' ? 'status-returned' :
-                                        borrow.status == 'Overdue' ? 'status-blocked' :
-                                        borrow.status == 'Rejected' ? 'status-blocked' :
-                                        borrow.status == 'Return_Pending' ? 'status-return-pending' :
+                            <span class="status-badge" th:classappend="${
+                                        #strings.equalsIgnoreCase(borrow.status, 'Active') ? 'status-active' :
+                                        #strings.equalsIgnoreCase(borrow.status, 'Returned') ? 'status-returned' :
+                                        #strings.equalsIgnoreCase(borrow.status, 'Overdue') ? 'status-blocked' :
+                                        #strings.equalsIgnoreCase(borrow.status, 'Rejected') ? 'status-blocked' :
+                                        #strings.equalsIgnoreCase(borrow.status, 'Return_Pending') ? 'status-return-pending' :
                                         'status-inactive'
                                     }" th:text="${
-                                        borrow.status == 'Active' ? #messages.msg('loan.status.borrowed') :
-                                        (borrow.status == 'Waiting_Pickup' ? #messages.msg('librarian.borrowList.status.pickup') :
-                                        (borrow.status == 'Returned' ? #messages.msg('librarian.borrowMember.status.completed') :
-                                        (borrow.status == 'Overdue' ? #messages.msg('loan.status.overdue') :
-                                        (borrow.status == 'Pending' ? #messages.msg('librarian.borrowMember.status.pending') :
-                                        (borrow.status == 'Rejected' ? #messages.msg('librarian.borrowMember.status.rejected') :
-                                        (borrow.status == 'Return_Pending' ? #messages.msg('librarian.borrowMember.status.returnPending') : borrow.status))))))
+                                         #strings.equalsIgnoreCase(borrow.status, 'Active') ? #messages.msg('loan.status.borrowed') :
+                                         (#strings.equalsIgnoreCase(borrow.status, 'Waiting_Pickup') or #strings.equalsIgnoreCase(borrow.status, 'APPROVED') ? #messages.msg('librarian.borrowList.status.pickup') :
+                                         (#strings.equalsIgnoreCase(borrow.status, 'Returned') ? #messages.msg('librarian.borrowMember.status.completed') :
+                                         (#strings.equalsIgnoreCase(borrow.status, 'Overdue') ? #messages.msg('loan.status.overdue') :
+                                         (#strings.equalsIgnoreCase(borrow.status, 'Pending') ? #messages.msg('librarian.borrowMember.status.pending') :
+                                         (#strings.equalsIgnoreCase(borrow.status, 'Rejected') ? #messages.msg('librarian.borrowMember.status.rejected') :
+                                         (#strings.equalsIgnoreCase(borrow.status, 'Return_Pending') ? #messages.msg('librarian.borrowMember.status.returnPending') : borrow.status))))))
                                     }">
-                                        Currently borrowed
-                                    </span>
+                                Currently borrowed
+                            </span>
                         </td>
 
                         <!-- Cột hành động (Đồng bộ kiểu nút nhấn và form xác nhận) -->
@@ -153,12 +153,12 @@
                                    th:data-bs-title="#{common.details}" th:aria-label="#{common.details}">
                                     <i class="bi bi-eye" aria-hidden="true"></i>
                                 </a>
-                                <form th:if="${borrow.status == 'Waiting_Pickup'}"
+                                <form th:if="${borrow.status != null and (#strings.equalsIgnoreCase(borrow.status, 'Waiting_Pickup') or #strings.equalsIgnoreCase(borrow.status, 'APPROVED'))}"
                                       th:action="@{/librarian/borrow/pickup/{id}(id=${borrow.borrowId})}"
                                       method="post" class="d-inline app-confirm-form"
                                       th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
                                       th:data-confirm-subject-label="#{loan.code}"
-                                      th:data-confirm-subject="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}"
+                                      th:data-confirm-subject="${@borrowCodeFormatter.format(borrow.borrowId)}"
                                       th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
                                       th:data-confirm-action="#{librarian.borrowList.pickupAction}">
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

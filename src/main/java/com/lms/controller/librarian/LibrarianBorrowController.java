@@ -123,6 +123,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     // chia đôi màn hình
     @GetMapping("/librarian/borrow/create")
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
+            @RequestParam(value = "pickupId", required = false) Integer pickupId,
             @RequestParam(value = "renewId", required = false) Integer renewId,
             @RequestParam(value = "reservationId", required = false) Integer reservationId,
             Model model,
@@ -141,11 +142,9 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("borrowRequest", new BorrowRequest());
         model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
-        // Bước 1: Lấy danh sách thành viên gửi đơn mượn trực tuyến đang chờ phê duyệt
-        // (Hiện ở cột trái)
+        // Bước 1: Lấy danh sách hàng chờ xử lý
         model.addAttribute("pendingRequests", borrowService.getAllPendingRequests());
-
-        // Lấy danh sách yêu cầu gia hạn chờ duyệt
+        model.addAttribute("pendingPickups", borrowService.getWaitingPickupRequests());
         model.addAttribute("pendingRenewals", borrowService.getPendingRenewalRequests());
 
         // Đổi tên thuộc tính từ 'returnRequests' -> 'pendingReturnRequests' và bọc qua
@@ -165,6 +164,21 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                     model.addAttribute("selectedRequest", selectedBorrow);
                     model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
                     populateMemberStats(model, selectedBorrow.getMember(), usernameByMemberId);
+                }
+            } catch (ApplicationException e) {
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
+            }
+        }
+
+        if (pickupId != null) {
+            try {
+                Borrow selectedPickup = borrowService.getBorrowById(pickupId);
+                if (selectedPickup.getStatus() != null && ("Waiting_Pickup".equalsIgnoreCase(selectedPickup.getStatus())
+                        || "WAITING_PICKUP".equalsIgnoreCase(selectedPickup.getStatus())
+                        || "APPROVED".equalsIgnoreCase(selectedPickup.getStatus()))) {
+                    model.addAttribute("selectedPickup", selectedPickup);
+                    model.addAttribute("pickupDetails", borrowService.getBorrowDetailsByBorrowId(pickupId));
+                    populateMemberStats(model, selectedPickup.getMember(), usernameByMemberId);
                 }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
@@ -252,7 +266,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
         }
-        return "redirect:/librarian/borrow/list?status=Waiting_Pickup";
+        return "redirect:/librarian/borrow/create?tab=pickups&pickupId=" + borrowId;
     }
 
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
@@ -282,7 +296,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.failed", e));
         }
-        return "redirect:/librarian/borrow/list";
+        return "redirect:/librarian/borrow/create?tab=pickups";
     }
 
     // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH

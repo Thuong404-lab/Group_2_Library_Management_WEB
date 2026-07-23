@@ -40,6 +40,7 @@ public interface BorrowService {
     // CÃ¡c phÆ°Æ¡ng thá»©c truy váº¥n danh sÃ¡ch dá»¯ liá»‡u
     List<Borrow> getBorrowsByMemberAndStatus(String username, String status);
     List<Borrow> getAllPendingRequests();
+    List<Borrow> getWaitingPickupRequests();
     List<Borrow> getAllReturnRequests();
     List<Borrow> getAllActiveLoans();
     void updateStatus(Integer loanId, String status);

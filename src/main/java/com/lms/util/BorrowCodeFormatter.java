@@ -1,15 +1,18 @@
 package com.lms.util;
 
+import org.springframework.stereotype.Component;
+
 /** Formats the canonical, display-only code for a persisted borrow record. */
-public final class BorrowCodeFormatter {
+@Component("borrowCodeFormatter")
+public class BorrowCodeFormatter {
     private static final String PREFIX = "BOR-";
 
-    private BorrowCodeFormatter() {
+    public BorrowCodeFormatter() {
     }
 
     public static String format(Integer borrowId) {
         if (borrowId == null || borrowId < 1) {
-            throw new IllegalArgumentException("A positive borrow ID is required");
+            return "";
         }
         return PREFIX + borrowId;
     }

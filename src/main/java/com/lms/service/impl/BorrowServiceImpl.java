@@ -1077,6 +1077,16 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Borrow> getWaitingPickupRequests() {
+        return borrowRepository.findAll().stream()
+                .filter(b -> b.getStatus() != null && ("Waiting_Pickup".equalsIgnoreCase(b.getStatus())
+                        || "WAITING_PICKUP".equalsIgnoreCase(b.getStatus())
+                        || "APPROVED".equalsIgnoreCase(b.getStatus())))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Borrow> getAllReturnRequests() {
         return borrowRepository.findAll().stream()
                 .filter(b -> "Return_Pending".equalsIgnoreCase(b.getStatus()))
