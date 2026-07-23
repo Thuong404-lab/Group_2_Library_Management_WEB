@@ -20,7 +20,7 @@ public interface LibrarianDashboardService {
                                          String keyword, String bookCondition);
 
     Map<String, Object> getBookManagementData(int bookPage, int shelfPage, String keyword,
-                                               String bookCondition, String section, String subsection);
+                                              String bookCondition, String subsection, String tab);
 
     Map<String, Object> getStatisticsData();
 
