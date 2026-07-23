@@ -22,41 +22,6 @@
 
         <section id="section-books" class="lib-section" th:classappend="${currentSection == 'books'} ? ' active' : ''">
 
-            <div class="row g-3 mb-4 d-none">
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-8b5a2b-important-47d2a08d">
-                        <div class="text-muted small text-uppercase fw-bold mb-1"
-                            th:text="#{librarian.inventory.totalTitles}">Total Titles</div>
-                        <h4 class="fw-bold mb-0 text-classic app-stat-number"
-                            th:text="${@displayNumber.count(totalBookCount)}">0</h4>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-198754-important-8dcb64f6">
-                        <div class="text-muted small text-uppercase fw-bold mb-1"
-                            th:text="#{librarian.inventory.categories}">Categories</div>
-                        <h4 class="fw-bold mb-0 text-success app-stat-number"
-                            th:text="${@displayNumber.count(totalCategories)}">0</h4>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-0d6efd-important-64ac16c1">
-                        <div class="text-muted small text-uppercase fw-bold mb-1"
-                            th:text="#{librarian.inventory.genres}">Genres</div>
-                        <h4 class="fw-bold mb-0 u-color-0d6efd-7fee07de app-stat-number"
-                            th:text="${@displayNumber.count(totalGenres)}">0</h4>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-classic p-3 shadow-sm border-0 u-border-left-4px-solid-fd7e14-important-0fa630a5">
-                        <div class="text-muted small text-uppercase fw-bold mb-1" th:text="#{book.status.available}">
-                            Available</div>
-                        <h4 class="fw-bold mb-0 text-warning app-stat-number"
-                            th:text="${@displayNumber.count(inventoryStatusCounts['Available'])}">0</h4>
-                    </div>
-                </div>
-            </div>
-
             <!-- Sub-section selector cards: chỉ hiện khi chưa chọn subsection -->
             <div class="row g-4 mb-4" th:if="${currentSubSection == '' || currentSubSection == null}"
                 id="bookSubSectionCards">
@@ -112,6 +77,7 @@
                     <div id="bookInventoryPanel">
                         <div class="tab-content">
                             <div class="tab-pane fade" id="admin-books-pane" role="tabpanel"
+                                th:if="${param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit')}"
                                 th:classappend="${param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit')} ? ' show active'">
 
                                 <!-- Summary Chips -->
@@ -134,7 +100,7 @@
                                     </span>
                                     <span>
                                         <strong class="app-stat-number"
-                                            th:text="${@displayNumber.count((inventoryStatusCounts != null ? inventoryStatusCounts['Total'] : 0) - (inventoryStatusCounts != null ? inventoryStatusCounts['Available'] : 0))}">0</strong>
+                                            th:text="${@displayNumber.count(unavailableTitleCount != null ? unavailableTitleCount : 0)}">0</strong>
                                         <span th:text="#{book.status.unavailable}">Unavailable</span>
                                     </span>
                                 </div>
@@ -303,6 +269,7 @@
                             </div>
 
                             <div class="tab-pane fade" id="admin-categories-pane" role="tabpanel"
+                                th:if="${param.tab != null and param.tab[0] == 'categories'}"
                                 th:classappend="${param.tab != null and param.tab[0] == 'categories'} ? ' show active'">
                                 <header
                                     class="member-page-header inventory-page-header inventory-hero inventory-category-header">
@@ -672,6 +639,7 @@
                             </div>
 
                             <div class="tab-pane fade" id="admin-audit-pane" role="tabpanel"
+                                th:if="${param.tab != null and param.tab[0] == 'audit'}"
                                 th:classappend="${param.tab != null and param.tab[0] == 'audit'} ? ' show active'">
                                 <header
                                     class="member-page-header inventory-page-header inventory-hero inventory-copy-header">
@@ -835,6 +803,7 @@
                 </div>
 
                 <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel"
+                    th:if="${param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit')}"
                     aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg book-form-modal">
                         <div class="modal-content border-0 shadow"
@@ -994,7 +963,8 @@
                 </div>
 
                 <!-- Add Category Modal -->
-                <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+                <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true"
+                    th:if="${param.tab != null and param.tab[0] == 'categories'}">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -1031,7 +1001,8 @@
                 </div>
 
                 <!-- Add Genre Modal -->
-                <div class="modal fade" id="addGenreModal" tabindex="-1" aria-hidden="true">
+                <div class="modal fade" id="addGenreModal" tabindex="-1" aria-hidden="true"
+                    th:if="${param.tab != null and param.tab[0] == 'categories'}">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -1084,6 +1055,7 @@
 
                 <!-- Audit Modal -->
                 <div class="modal fade" id="auditModal" tabindex="-1" aria-labelledby="auditModalLabel"
+                    th:if="${param.tab != null and param.tab[0] == 'audit'}"
                     aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
@@ -1137,7 +1109,8 @@
                 </div>
 
                 <div th:each="book : ${books}">
-                    <div class="modal fade" th:id="${'addCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade" th:id="${'addCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true"
+                        th:if="${param.tab != null and param.tab[0] == 'audit'}">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header border-bottom border-color">
@@ -1205,7 +1178,8 @@
                         </div>
                     </div>
                     <!-- View Copies Modal -->
-                    <div class="modal fade" th:id="${'viewCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade" th:id="${'viewCopiesModal' + book.bookId}" tabindex="-1" aria-hidden="true"
+                        th:if="${param.tab != null and param.tab[0] == 'audit'}">
                         <div class="modal-dialog modal-dialog-centered modal-xl">
                             <div class="modal-content border-0 shadow">
                                 <div
@@ -1278,7 +1252,7 @@
                                                     </td>
                                                     <td th:data-label="#{common.status}">
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Waiting_Pickup'} ? ' status-pending' : ' status-inactive'))"
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Waiting_Pickup'} ? ' status-pending' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive')))"
                                                             th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions"
@@ -1326,6 +1300,7 @@
 
                     <div class="modal fade"
                         th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed'] : {}}"
+                        th:if="${param.tab != null and param.tab[0] == 'audit'}"
                         th:id="${'editCopyModalAdmin' + item.bookItemId}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
@@ -1366,6 +1341,7 @@
 
                     <!-- Edit Book Modal -->
                     <div class="modal fade" th:id="${'editBookModal' + book.bookId}" tabindex="-1"
+                        th:if="${param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit')}"
                         th:aria-labelledby="${'editBookModalLabel' + book.bookId}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-lg book-form-modal">
                             <div class="modal-content">
@@ -1431,7 +1407,7 @@
                                                         th:text="#{librarian.inventory.selectShelf}">Select Shelf
                                                     </option>
                                                     <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
-                                                        th:selected="${book.bookItems != null and not #lists.isEmpty(book.bookItems) and book.bookItems[0].shelf != null and book.bookItems[0].shelf.shelfId == shelf.shelfId}"
+                                                        th:selected="${bookShelves[book.bookId] != null and bookShelves[book.bookId] == shelf.shelfId}"
                                                         th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
                                                         Shelf</option>
                                                 </select>
@@ -1504,6 +1480,7 @@
 
                     <!-- Delete Book Modal -->
                     <div class="modal fade" th:id="${'deleteBookModal' + book.bookId}" tabindex="-1"
+                        th:if="${param.tab == null or (param.tab[0] != 'categories' and param.tab[0] != 'audit')}"
                         th:aria-labelledby="${'deleteBookModalLabel' + book.bookId}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
