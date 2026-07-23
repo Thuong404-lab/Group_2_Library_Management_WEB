@@ -98,7 +98,17 @@
             </div>
 
             <div class="payos-receipt-actions">
-                <a th:href="@{${payment.purpose == 'TOP_UP' ? '/librarian/members/topup' : ((payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') ? '/librarian/members/fines' : '/librarian/borrow/create')}}" class="payos-btn-secondary" th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.backTopup') : ((payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') ? #messages.msg('librarian.payos.backFines') : #messages.msg('librarian.payos.backBorrow'))}">Back</a>
+                <form th:if="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}"
+                      th:action="@{/librarian/payments/payos/{orderCode}/cancel(orderCode=${payment.orderCode})}"
+                      method="post"
+                      th:attr="onsubmit=|return confirm('${#messages.msg('librarian.payos.cancelConfirm')}');|">
+                    <button type="submit" class="payos-btn-secondary"
+                            th:text="#{librarian.payos.cancel}">Cancel payment</button>
+                </form>
+                <a th:unless="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}"
+                   th:href="@{${payment.purpose == 'TOP_UP' ? '/librarian/members/topup' : ((payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') ? '/librarian/members/fines' : '/librarian/borrow/create')}}"
+                   class="payos-btn-secondary"
+                   th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.backTopup') : ((payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') ? #messages.msg('librarian.payos.backFines') : #messages.msg('librarian.payos.backBorrow'))}">Back</a>
             </div>
         </div>
     </section>
