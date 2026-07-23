@@ -181,6 +181,12 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
     }
 
+    @GetMapping("/members/{id}/deletability")
+    @ResponseBody
+    public Map<String, Boolean> checkDeletability(@PathVariable Integer id) {
+        return Map.of("canDelete", memberService.checkMemberDeletability(id));
+    }
+
     @PostMapping("/members/status/{id}")
     public String changeMemberStatus(
             @PathVariable Integer id,
