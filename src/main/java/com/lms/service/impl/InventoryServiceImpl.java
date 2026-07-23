@@ -272,10 +272,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (shelfId == null) {
             throw new ValidationException(messages.get("backend.inventory.shelfRequired"));
         }
-        String normalizedCondition = bookCondition == null ? "" : bookCondition.trim();
-        if (!ALLOWED_BOOK_CONDITIONS.contains(normalizedCondition)) {
-            throw new ValidationException(messages.get("backend.inventory.bookConditionInvalid"));
-        }
+        // Newly acquired physical copies always enter inventory in New condition.
+        // Ignore client-provided condition so this rule cannot be bypassed by a crafted request.
+        String normalizedCondition = "New";
 
         Book book = bookRepository.findByIdForUpdate(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.inventory.bookNotFound", bookId)));

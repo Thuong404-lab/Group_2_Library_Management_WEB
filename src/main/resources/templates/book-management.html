@@ -1145,9 +1145,11 @@
                                                     class="text-danger">*</span></label>
                                             <select name="shelfId" class="form-select add-copy-control" required
                                                 onchange="this.setCustomValidity(''); this.classList.remove('is-invalid')">
-                                                <option value="" selected disabled
+                                                <option value="" disabled
+                                                    th:selected="${bookShelves[book.bookId] == null}"
                                                     th:text="#{librarian.inventory.selectShelf}">Select Shelf</option>
                                                 <option th:each="shelf : ${shelves}" th:value="${shelf.shelfId}"
+                                                    th:selected="${bookShelves[book.bookId] != null and bookShelves[book.bookId] == shelf.shelfId}"
                                                     th:text="${shelf.shelfName + (shelf.location != null and !shelf.location.isEmpty() ? ' - ' + shelf.location : '')}">
                                                     Shelf</option>
                                             </select>
@@ -1157,17 +1159,10 @@
                                         </div>
                                         <div>
                                             <label class="form-label fw-semibold"><span
-                                                    th:text="#{librarian.inventory.condition}">Condition</span> <span
-                                                    class="text-danger">*</span></label>
-                                            <select name="bookCondition" class="form-select add-copy-control" required>
-                                                <option value="New" th:text="#{book.condition.good}">New</option>
-                                                <option value="Minor damage" th:text="#{book.condition.minorDamage}">
-                                                    Minor damage</option>
-                                                <option value="Severely damaged"
-                                                    th:text="#{book.condition.severeDamage}">Severely damaged</option>
-                                                <option value="Lost book" th:text="#{book.condition.lost}">Lost book
-                                                </option>
-                                            </select>
+                                                    th:text="#{librarian.inventory.condition}">Condition</span></label>
+                                            <input type="text" class="form-control add-copy-control"
+                                                th:value="#{book.condition.good}" readonly>
+                                            <input type="hidden" name="bookCondition" value="New">
                                         </div>
                                     </div>
                                     <div class="modal-footer border-top-0"><button type="button"
