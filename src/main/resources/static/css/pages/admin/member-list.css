@@ -747,7 +747,7 @@
 }
 
 .member-management-page .member-table {
-    min-width: 1120px;
+    /* Removed min-width to allow fully responsive table */
 }
 
 .member-management-page .member-table > thead > tr > th,
@@ -1159,5 +1159,37 @@
 
     .accounts-page.admin-member-list-page .app-pagination {
         flex-wrap: nowrap;
+    }
+}
+
+/* Keep account totals compact, matching the original summary chips. */
+.accounts-page.admin-member-list-page:not(.admin-staff-list-page) .member-summary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.accounts-page.admin-member-list-page:not(.admin-staff-list-page) .member-summary-chips > span {
+    width: auto;
+    min-width: 110px;
+    min-height: 34px;
+    padding: 7px 14px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    .accounts-page.admin-member-list-page:not(.admin-staff-list-page) .member-summary-chips {
+        display: flex;
+        gap: 8px;
+    }
+
+    .accounts-page.admin-member-list-page:not(.admin-staff-list-page) .member-summary-chips > span {
+        width: auto;
+        min-width: 104px;
+        flex: 0 0 auto;
     }
 }

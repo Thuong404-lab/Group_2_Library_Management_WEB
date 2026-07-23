@@ -1,4 +1,4 @@
-package com.lms.domain;
+package com.lms.util;
 
 public final class ReviewPolicy {
 

@@ -139,6 +139,10 @@ public class LoanController extends LocalizedControllerSupport {
             map.put("borrowDetailId", detail.getBorrowDetailId());
             map.put("needsBarcode", detail.getBookItem() == null || detail.getBookItem().getBarcode() == null || detail.getBookItem().getBarcode().isBlank());
             map.put("barcode", detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "");
+            map.put("currentBookCondition", detail.getBookItem() != null
+                    && detail.getBookItem().getBookCondition() != null
+                    ? detail.getBookItem().getBookCondition()
+                    : "New");
             map.put("bookTitle", detail.getBook().getTitle());
             map.put("memberName", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getFullName() : "");
             map.put("memberEmail", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getEmail() : "");
@@ -162,7 +166,10 @@ public class LoanController extends LocalizedControllerSupport {
             BorrowDetail recovered = loanService.recoverMissingBookItem(borrowDetailId, barcode);
             return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
                     "message", message("librarian.returnDesk.recoverySuccess", recovered.getBookItem().getBarcode()),
-                    "barcode", recovered.getBookItem().getBarcode()));
+                    "barcode", recovered.getBookItem().getBarcode(),
+                    "currentBookCondition", recovered.getBookItem().getBookCondition() != null
+                            ? recovered.getBookItem().getBookCondition()
+                            : "New"));
         } catch (ApplicationException exception) {
             return org.springframework.http.ResponseEntity.badRequest()
                     .body(java.util.Map.of("message", exception.getMessage()));
