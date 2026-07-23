@@ -900,11 +900,30 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private boolean requiresDamageCompensation(String bookCondition) {
+        int threshold = 3;
+        Optional<SystemSetting> setting = systemSettingRepository.findBySettingKey("Damage_Compensation_Threshold");
+        if (setting.isPresent()) {
+            try {
+                threshold = Integer.parseInt(setting.get().getSettingValue());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        int conditionLevel = getConditionLevel(bookCondition);
+        return conditionLevel >= threshold;
+    }
+
+    private int getConditionLevel(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        return normalized.contains("hư hỏng nặng")
-                || normalized.contains("mất sách")
-                || normalized.contains("severe damage")
-                || normalized.contains("lost");
+        if (normalized.contains("mất sách") || normalized.contains("lost")) {
+            return 4;
+        }
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
+            return 3;
+        }
+        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage") || normalized.contains("hư hỏng")) {
+            return 2;
+        }
+        return 1;
     }
 
     private boolean isGoodCondition(String bookCondition) {
