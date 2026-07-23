@@ -156,12 +156,12 @@
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
                                     <span th:if="${item.status == 'Return_Pending' or item.status == 'Renew_Pending'}" class="text-muted fst-italic font-size-sm"><i class="bi bi-hourglass-split me-1"></i><span th:text="#{common.pendingApproval}">Awaiting approval...</span></span>
-                                    <form th:if="${item.status == 'Renew_Pending'}" th:action="@{/member/borrow/renew/{id}/cancel(id=${item.id})}" method="post" class="d-inline"
-                                          onsubmit="return confirm('Hủy yêu cầu gia hạn và hoàn lại phí đang giữ?')">
-                                        <button type="submit" class="member-ui-button member-ui-button--secondary member-ui-button--compact">
-                                            <i class="bi bi-x-circle me-1"></i><span th:text="#{loan.renew.cancel}">Hủy yêu cầu</span>
-                                        </button>
-                                    </form>
+                                    <form th:if="${item.status == 'Renew_Pending'}" th:id="'cancelRenewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}/cancel(id=${item.id})}" method="post" class="d-inline">
+                                         <button type="button" class="member-ui-button member-ui-button--secondary member-ui-button--compact btn-cancel-renew-action"
+                                                 th:attr="data-form-id='cancelRenewForm_' + ${item.id}">
+                                             <i class="bi bi-x-circle me-1"></i><span th:text="#{loan.renew.cancel}">Hủy yêu cầu</span>
+                                         </button>
+                                     </form>
 
                                     <form th:if="${item.status == 'Borrowed'}" th:id="'renewForm_' + ${item.id}" th:action="@{/member/borrow/renew/{id}(id=${item.id})}" method="post" class="d-inline">
                                         <input type="hidden" name="renewalDays" class="renewal-days-value">
@@ -381,7 +381,7 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="renewConfirmModalLabel"><i class="bi bi-question-circle me-2"></i><span th:text="#{loan.renew.confirmTitle}">Confirm Renewal</span></h5>
+                        <h5 class="modal-title" id="renewConfirmModalLabel"><i class="bi bi-question-circle me-2 "></i><span th:text="#{loan.renew.confirmTitle}">Confirm Renewal</span></h5>
                     </div>
                     <div class="modal-body text-center py-4">
                         <i class="bi bi-clock-history mb-3 fs-1 text-primary"></i>
@@ -407,6 +407,26 @@
                     <div class="modal-footer">
                         <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
                         <button type="button" class="member-ui-button member-ui-button--primary" id="confirmRenewBtn" th:text="#{loan.renew.confirm}">Confirm Renewal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Xác Nhận Hủy Gia Hạn (Vanilla JS) -->
+        <div class="modal fade member-standard-dialog" id="cancelRenewConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cancelRenewConfirmModalLabel"><i class="bi bi-question-circle me-2"></i><span th:text="#{loan.renew.cancelConfirmTitle}">Confirm Renewal Cancellation</span></h5>
+                    </div>
+                    <div class="modal-body text-center py-4">
+
+                        <p class="mb-1 mt-2 fw-semibold" th:text="#{loan.renew.cancelConfirmQuestion}">Are you sure you want to cancel the renewal request?</p>
+                        <p class="text-muted mb-0 small" th:text="#{loan.renew.cancelConfirmNotice}">The held fee will be refunded to your wallet.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                        <button type="button" class="member-ui-button member-ui-button--danger" id="confirmCancelRenewBtn" th:text="#{loan.renew.cancel}">Cancel Renewal</button>
                     </div>
                 </div>
             </div>
@@ -438,6 +458,7 @@
         <script th:inline="javascript">
             var currentRenewFormId = null;
             var currentReturnFormId = null;
+            var currentCancelRenewFormId = null;
             var processingMessage = /*[[#{common.processing}]]*/ 'Processing...';
             var renewalFeePerDay = /*[[${renewalFeePerDay}]]*/ 5000;
             var selectedRenewalDueDate = null;
@@ -519,6 +540,19 @@
                     return;
                 }
 
+                // Xử lý nút Hủy yêu cầu gia hạn
+                var cancelRenewBtn = e.target.closest('.btn-cancel-renew-action');
+                if (cancelRenewBtn && !cancelRenewBtn.disabled) {
+                    e.preventDefault();
+                    currentCancelRenewFormId = cancelRenewBtn.getAttribute('data-form-id');
+                    var modal = document.getElementById('cancelRenewConfirmModal');
+                    if (modal) {
+                        modal.style.display = 'block';
+                        setTimeout(function() { modal.classList.add('show'); }, 10);
+                    }
+                    return;
+                }
+
                 // Xử lý nút Trả sách
                 var returnBtn = e.target.closest('.btn-return-action');
                 if (returnBtn && !returnBtn.disabled) {
@@ -538,6 +572,14 @@
                     modal.classList.remove('show');
                     setTimeout(function() { modal.style.display = 'none'; }, 300);
                     currentRenewFormId = null;
+                }
+
+                // Xử lý nút Đóng Modal Hủy Gia hạn
+                if (e.target.closest('#cancelRenewConfirmModal [data-dismiss="modal"]') || e.target.closest('#cancelRenewConfirmModal .btn-light')) {
+                    var modal = document.getElementById('cancelRenewConfirmModal');
+                    modal.classList.remove('show');
+                    setTimeout(function() { modal.style.display = 'none'; }, 300);
+                    currentCancelRenewFormId = null;
                 }
 
                 // Xử lý nút Đóng Modal Trả sách
@@ -564,6 +606,17 @@
                             return;
                         }
                         form.querySelector('.renewal-days-value').value = daysInput.value;
+                        if (form) form.submit();
+                    }
+                }
+
+                // Xử lý nút Đồng ý Hủy Gia hạn
+                if (e.target.closest('#confirmCancelRenewBtn')) {
+                    if (currentCancelRenewFormId) {
+                        var btn = e.target.closest('#confirmCancelRenewBtn');
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + processingMessage;
+                        var form = document.getElementById(currentCancelRenewFormId);
                         if (form) form.submit();
                     }
                 }
