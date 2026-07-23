@@ -191,9 +191,9 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
         }
 
-        BigDecimal perBookPerDay = getBorrowFeePerBookPerDay();
         return details.stream()
-                .map(detail -> BigDecimal.valueOf(calculateBorrowDays(detail)).multiply(perBookPerDay))
+                .map(detail -> BigDecimal.valueOf(calculateBorrowDays(detail))
+                        .multiply(getBorrowFeeForCondition(detail.getBookItem())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -754,6 +754,33 @@ public class FinancialServiceImpl implements FinancialService {
                     .orElse(DEFAULT_BORROW_FEE_PER_BOOK);
         } catch (NumberFormatException ignored) {
             return DEFAULT_BORROW_FEE_PER_BOOK;
+        }
+    }
+
+    private BigDecimal getBorrowFeeForCondition(com.lms.entity.BookItem item) {
+        String condition = item == null || item.getBookCondition() == null
+                ? ""
+                : item.getBookCondition().trim().toLowerCase(java.util.Locale.ROOT);
+        if (condition.contains("severely")) {
+            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", BigDecimal.valueOf(3000));
+        }
+        if (condition.contains("minor")) {
+            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", BigDecimal.valueOf(4000));
+        }
+        return getBorrowFeePerBookPerDay();
+    }
+
+    private BigDecimal getMoneySetting(String key, BigDecimal defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(value -> value.signum() >= 0)
+                    .orElse(defaultValue);
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
         }
     }
 

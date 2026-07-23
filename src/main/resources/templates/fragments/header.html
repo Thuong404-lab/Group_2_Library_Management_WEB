@@ -183,9 +183,9 @@
 
               >
                 <div
+                  th:if="${#authentication.principal.user?.avatar == null or #strings.isEmpty(#authentication.principal.user?.avatar)}"
                   id="memberHeaderAvatarFallback"
                   class="rounded-circle d-flex align-items-center justify-content-center mr-2 font-weight-bold text-white header-div-width-height-background-13"
-                  th:classappend="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)} ? ' d-none'"
                   th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                 >
                   U
@@ -215,9 +215,9 @@
 
                 >
                   <div
+                    th:if="${#authentication.principal.user?.avatar == null or #strings.isEmpty(#authentication.principal.user?.avatar)}"
                     id="memberMenuAvatarFallback"
                     class="rounded-circle d-flex align-items-center justify-content-center font-weight-bold member-account-avatar"
-                    th:classappend="${#authentication.principal.user?.avatar != null and !#strings.isEmpty(#authentication.principal.user?.avatar)} ? ' d-none'"
                     th:text="${#strings.substring(#authentication.principal.name,0,1).toUpperCase()}"
                   >
                     U

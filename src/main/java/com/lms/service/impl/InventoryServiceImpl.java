@@ -35,9 +35,8 @@ import java.util.Set;
 public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_AVAILABLE = "Available";
     private static final String STATUS_BORROWED = "Borrowed";
-    private static final String STATUS_LOST = "Lost";
-    private static final String STATUS_DAMAGED = "Damaged";
-    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
+    private static final String STATUS_WAITING_PICKUP = "Waiting_Pickup";
+    private static final String STATUS_UNAVAILABLE = "Unavailable";
     private static final String STATUS_ACTIVE = "Active";
     private static final Set<String> ALLOWED_BOOK_CONDITIONS = Set.of(
             "New",
@@ -107,9 +106,8 @@ public class InventoryServiceImpl implements InventoryService {
         Map<String, Long> counts = new HashMap<>();
         counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
-        counts.put(STATUS_LOST, bookItemRepository.countByStatusIgnoreCase(STATUS_LOST));
-        counts.put(STATUS_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_DAMAGED));
-        counts.put(STATUS_MINOR_DAMAGED, bookItemRepository.countByStatusIgnoreCase(STATUS_MINOR_DAMAGED));
+        counts.put(STATUS_WAITING_PICKUP, bookItemRepository.countByStatusIgnoreCase(STATUS_WAITING_PICKUP));
+        counts.put(STATUS_UNAVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_UNAVAILABLE));
         return counts;
     }
 
@@ -190,10 +188,12 @@ public class InventoryServiceImpl implements InventoryService {
                             "BC%03d-%03d",
                             book.getBookId(),
                             i));
-            item.setStatus(STATUS_AVAILABLE);
             if (bookCondition != null && !bookCondition.trim().isEmpty()) {
                 item.setBookCondition(bookCondition.trim());
             }
+            item.setStatus(conditionRank(item.getBookCondition()) >= 3
+                    ? STATUS_UNAVAILABLE
+                    : STATUS_AVAILABLE);
 
             bookItemRepository.save(item);
         }
@@ -298,11 +298,15 @@ public class InventoryServiceImpl implements InventoryService {
             item.setBook(book);
             item.setShelf(shelf);
             item.setBarcode(barcode);
-            item.setStatus(STATUS_AVAILABLE);
             item.setBookCondition(normalizedCondition);
+            item.setStatus(conditionRank(normalizedCondition) >= 3
+                    ? STATUS_UNAVAILABLE
+                    : STATUS_AVAILABLE);
             bookItemRepository.save(item);
             existingBarcodes.add(barcode);
         }
+        book.setStatus(STATUS_ACTIVE);
+        bookRepository.save(book);
     }
 
     @Override
@@ -342,7 +346,8 @@ public class InventoryServiceImpl implements InventoryService {
         if (!item.getBook().getBookId().equals(bookId)) {
             throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
         }
-        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())) {
+        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())
+                || STATUS_WAITING_PICKUP.equalsIgnoreCase(item.getStatus())) {
             throw new ConflictException(messages.get("backend.inventory.copyConditionLocked"));
         }
         if (conditionRank(normalizedCondition) < conditionRank(item.getBookCondition())) {
@@ -351,8 +356,17 @@ public class InventoryServiceImpl implements InventoryService {
 
         item.setBookCondition(normalizedCondition);
         int rank = conditionRank(normalizedCondition);
-        item.setStatus(rank >= 3 ? STATUS_LOST : (rank >= 2 ? STATUS_DAMAGED : (rank == 1 ? STATUS_MINOR_DAMAGED : STATUS_AVAILABLE)));
+        item.setStatus(rank >= 3 ? STATUS_UNAVAILABLE : STATUS_AVAILABLE);
         bookItemRepository.save(item);
+        synchronizeBookStatus(item.getBook());
+    }
+
+    private void synchronizeBookStatus(Book book) {
+        List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
+        boolean hasLendableCopy = items.stream()
+                .anyMatch(item -> !STATUS_UNAVAILABLE.equalsIgnoreCase(item.getStatus()));
+        book.setStatus(hasLendableCopy ? STATUS_ACTIVE : "Inactive");
+        bookRepository.save(book);
     }
 
     private int conditionRank(String condition) {

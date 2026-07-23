@@ -373,6 +373,7 @@
                     if (!response.ok) throw new Error(data.message || recoverPlaceholder);
                     book.barcode = data.barcode;
                     book.needsBarcode = false;
+                    book.currentBookCondition = data.currentBookCondition || 'New';
                     showFeedback(data.message, true);
                     renderScannedBooks();
                 }).catch(error => { showFeedback(error.message); button.disabled = false; input?.focus(); });
@@ -489,6 +490,36 @@
             }
 
             const confirmReturnModal = document.getElementById('confirmReturnModal');
+
+            function conditionRank(condition) {
+                const value = (condition || '').toLocaleLowerCase('vi');
+                if (value.includes('lost') || value.includes('mất sách')) return 4;
+                if (value.includes('severe') || value.includes('hư hỏng nặng')) return 3;
+                if (value.includes('minor') || value.includes('hư hỏng nhẹ')) return 2;
+                return 1;
+            }
+
+            function restrictReturnConditionToCurrentState() {
+                if (!conditionNoteSelect) return;
+                const selectedBarcodes = Array.from(
+                    barcodeContainer.querySelectorAll('input[name="barcodes"]'),
+                    input => input.value.toLowerCase()
+                );
+                const minimumRank = scannedBooks
+                    .filter(book => selectedBarcodes.includes((book.barcode || '').toLowerCase()))
+                    .reduce((rank, book) => Math.max(rank, conditionRank(book.currentBookCondition)), 1);
+
+                Array.from(conditionNoteSelect.options).forEach(option => {
+                    option.disabled = conditionRank(option.value) < minimumRank;
+                });
+                if (conditionRank(conditionNoteSelect.value) < minimumRank) {
+                    const firstAllowed = Array.from(conditionNoteSelect.options)
+                        .find(option => !option.disabled);
+                    if (firstAllowed) conditionNoteSelect.value = firstAllowed.value;
+                }
+                toggleFineInput();
+            }
+
             if (confirmReturnModal) {
                 confirmReturnModal.addEventListener('show.bs.modal', function(event) {
                     barcodeContainer.innerHTML = '';
@@ -517,6 +548,7 @@
                             barcodeContainer.appendChild(input);
                         }
                     }
+                    restrictReturnConditionToCurrentState();
                     updateCompensationPreview();
                 });
             }
