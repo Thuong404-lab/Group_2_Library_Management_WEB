@@ -1236,8 +1236,11 @@
                                                         th:data-label="#{librarian.inventory.copyCode}"
                                                         th:text="${item.barcode != null ? item.barcode : '—'}">BC001-001
                                                     </td>
-                                                    <td th:data-label="#{librarian.inventory.condition}"
-                                                        th:text="${item.bookCondition}">Condition</td>
+                                                    <td th:data-label="#{librarian.inventory.condition}">
+                                                        <span class="book-condition-badge"
+                                                            th:classappend="${item.bookCondition == 'New'} ? ' condition-new' : (${item.bookCondition == 'Minor damage'} ? ' condition-minor' : (${item.bookCondition == 'Severely damaged'} ? ' condition-severe' : (${item.bookCondition == 'Lost book'} ? ' condition-lost' : '')))"
+                                                            th:text="${item.bookCondition}">Condition</span>
+                                                    </td>
                                                     <td class="app-date-time copy-date-time"
                                                         th:data-label="#{librarian.inventory.addedDate}">
                                                         <th:block th:if="${item.addedDate != null}">
