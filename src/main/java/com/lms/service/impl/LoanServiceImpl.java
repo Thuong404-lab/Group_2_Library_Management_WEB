@@ -948,14 +948,12 @@ public class LoanServiceImpl implements LoanService {
 
     private String resolveConditionCode(String bookCondition) {
         String itemStatus = resolveReturnedItemStatus(bookCondition);
-        if (STATUS_LOST.equals(itemStatus))
-            return "LOST";
-        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        if (STATUS_DAMAGED.equals(itemStatus)
-                || normalized.contains("minor damage")
-                || normalized.contains("h\u01b0 h\u1ecfng"))
-            return "DAMAGED";
-        return "GOOD";
+        return switch (itemStatus) {
+            case STATUS_LOST -> "LOST";
+            case STATUS_DAMAGED -> "DAMAGED";
+            case STATUS_MINOR_DAMAGED -> "MINOR_DAMAGE";
+            default -> "GOOD";
+        };
     }
 
     /**
