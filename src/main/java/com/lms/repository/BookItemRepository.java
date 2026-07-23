@@ -20,6 +20,8 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     long countByStatusIgnoreCase(String status);
 
+    long countByBookConditionIgnoreCase(String bookCondition);
+
     long countByBook_StatusIgnoreCase(String bookStatus);
 
     long countByBook_StatusIgnoreCaseAndStatusIgnoreCase(String bookStatus, String itemStatus);
@@ -37,6 +39,8 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
 
     List<BookItem> findByBook_BookId(Integer bookId);
+
+    List<BookItem> findByBook_BookIdIn(List<Integer> bookIds);
 
     List<BookItem> findByBook_BookIdOrderByBarcodeAsc(Integer bookId);
 

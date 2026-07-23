@@ -256,6 +256,102 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
 
     @Override
     @Transactional(readOnly = true)
+    public Map<String, Object> getBookManagementData(int bookPage, int shelfPage, String keyword,
+            String bookCondition, String section, String subsection) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        addCategoryManagementData(data);
+
+        if ("categories".equalsIgnoreCase(subsection)) {
+            return data;
+        }
+
+        data.put("shelves", storageService.getAllStorageLocations());
+        data.put("shelfPage", storageService.getStorageLocations(
+                PageRequest.of(Math.max(0, shelfPage), DASHBOARD_PAGE_SIZE)));
+
+        Map<Integer, Long> shelfBookCounts = new HashMap<>();
+        bookItemRepository.countBookItemsByShelf()
+                .forEach(row -> shelfBookCounts.put((Integer) row[0], (Long) row[1]));
+        data.put("shelfBookCounts", shelfBookCounts);
+
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        String normalizedBookCondition = BOOK_CONDITIONS.contains(bookCondition) ? bookCondition : "";
+        Page<Book> booksPage = bookRepository.searchBookItems(normalizedKeyword, normalizedBookCondition,
+                PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
+        booksPage.forEach(book -> {
+            if (book.getAuthors() != null) {
+                book.getAuthors().size();
+            }
+        });
+        data.put("books", booksPage);
+        data.put("bookCondition", normalizedBookCondition);
+
+        List<Integer> bookIds = booksPage.getContent().stream()
+                .map(Book::getBookId)
+                .toList();
+        List<BookItem> visibleItems = bookIds.isEmpty()
+                ? List.of()
+                : bookItemRepository.findByBook_BookIdIn(bookIds);
+
+        Map<Integer, List<BookItem>> bookItemsByBookId = new HashMap<>();
+        visibleItems.forEach(item -> bookItemsByBookId
+                .computeIfAbsent(item.getBook().getBookId(), ignored -> new java.util.ArrayList<>())
+                .add(item));
+
+        Map<Integer, Integer> bookShelves = new HashMap<>();
+        Map<Integer, Integer> bookTotalQuantities = new HashMap<>();
+        Map<Integer, Integer> bookBorrowedQuantities = new HashMap<>();
+        Map<Integer, Integer> bookAvailableQuantities = new HashMap<>();
+        for (Book book : booksPage.getContent()) {
+            List<BookItem> items = bookItemsByBookId.getOrDefault(book.getBookId(), List.of());
+            if (!items.isEmpty() && items.get(0).getShelf() != null) {
+                bookShelves.put(book.getBookId(), items.get(0).getShelf().getShelfId());
+            }
+            bookTotalQuantities.put(book.getBookId(), items.size());
+            bookBorrowedQuantities.put(book.getBookId(),
+                    (int) items.stream().filter(item -> "Borrowed".equalsIgnoreCase(item.getStatus())).count());
+            bookAvailableQuantities.put(book.getBookId(),
+                    (int) items.stream().filter(item -> "Available".equalsIgnoreCase(item.getStatus())).count());
+            bookItemsByBookId.putIfAbsent(book.getBookId(), List.of());
+        }
+        data.put("bookShelves", bookShelves);
+        data.put("bookTotalQuantities", bookTotalQuantities);
+        data.put("bookBorrowedQuantities", bookBorrowedQuantities);
+        data.put("bookAvailableQuantities", bookAvailableQuantities);
+        data.put("bookItemsByBookId", bookItemsByBookId);
+
+        Map<Integer, List<Book>> genreBooks = new HashMap<>();
+        for (Book book : bookRepository.findAll(Sort.by("title").ascending())) {
+            if (book.getGenre() != null) {
+                genreBooks.computeIfAbsent(book.getGenre().getGenreId(), ignored -> new java.util.ArrayList<>())
+                        .add(book);
+            }
+        }
+        Map<Integer, Long> allBookTotalQuantities = new HashMap<>();
+        for (Object[] row : bookItemRepository.countBookItemsByBook()) {
+            allBookTotalQuantities.put((Integer) row[0], (Long) row[1]);
+        }
+        data.put("genreBooks", genreBooks);
+        data.put("allBookTotalQuantities", allBookTotalQuantities);
+        data.put("totalBookCount", bookRepository.count());
+        data.put("inventoryStatusCounts", inventoryStatusCounts());
+        return data;
+    }
+
+    private void addCategoryManagementData(Map<String, Object> data) {
+        data.put("categories", categoryRepository.findAll());
+        data.put("genres", genreRepository.findAll());
+        Map<Integer, Long> genreTitleCounts = new HashMap<>();
+        for (Object[] row : bookRepository.countTitlesByGenre()) {
+            genreTitleCounts.put((Integer) row[0], (Long) row[1]);
+        }
+        data.put("genreTitleCounts", genreTitleCounts);
+        data.put("totalCategories", categoryRepository.count());
+        data.put("totalGenres", genreRepository.count());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getStatisticsData() {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
@@ -350,9 +446,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Total", bookItemRepository.count());
         counts.put("Available", bookItemRepository.countByStatusIgnoreCase("Available"));
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
-        counts.put("Lost", bookItemRepository.countByStatusIgnoreCase("Lost"));
-        counts.put("Damaged", bookItemRepository.countByStatusIgnoreCase("Damaged"));
-        counts.put("MinorDamaged", bookItemRepository.countByStatusIgnoreCase("MinorDamaged"));
+        counts.put("Waiting_Pickup", bookItemRepository.countByStatusIgnoreCase("Waiting_Pickup"));
+        counts.put("Unavailable", bookItemRepository.countByStatusIgnoreCase("Unavailable"));
         return counts;
     }
 }

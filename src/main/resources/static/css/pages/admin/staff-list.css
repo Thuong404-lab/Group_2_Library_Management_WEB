@@ -1,5 +1,19 @@
 /* Presentation owner for templates/admin/staff-list.html */
 
+.admin-staff-list-page .member-summary-chips {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.admin-staff-list-page .member-table .staff-type-badge,
+.admin-staff-list-page .member-table .status-badge {
+    min-width: 96px;
+    justify-content: center;
+}
+
+.admin-staff-list-page .member-empty-cell {
+    background: #fff !important;
+}
+
 .librarian-management-page .account-form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -171,7 +185,7 @@
 }
 
 .member-management-page .member-table {
-    min-width: 1120px;
+    /* Removed min-width to allow fully responsive table */
 }
 
 .member-management-page .member-table > thead > tr > th,
@@ -256,6 +270,10 @@
 
 @media (max-width: 767.98px) {
 
+    .admin-staff-list-page .member-summary-chips {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .member-management-page .member-search-group .member-filter-select,
     .member-management-page .member-search-button {
         flex: 1 1 100%;
@@ -269,5 +287,62 @@
 
     .member-management-page .member-summary-chips span {
         flex: 1 1 calc(50% - 8px);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .admin-staff-list-page .member-table tbody .member-empty-cell {
+        display: block;
+        padding: 32px 16px !important;
+        text-align: center !important;
+    }
+
+    .admin-staff-list-page .member-table tbody .member-empty-cell::before {
+        content: none;
+    }
+
+    .admin-staff-list-page .member-table tbody .member-empty-cell > * {
+        justify-self: center;
+    }
+}
+
+@media (max-width: 419.98px) {
+    .admin-staff-list-page .member-summary-chips {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Keep the compact legacy summary chips requested for the staff directory. */
+.accounts-page.admin-member-list-page.admin-staff-list-page .member-summary-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    grid-template-columns: none;
+    gap: 8px;
+}
+
+.accounts-page.admin-member-list-page.admin-staff-list-page .member-summary-chips > span {
+    width: auto;
+    min-width: 110px;
+    min-height: 34px;
+    padding: 7px 14px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    .accounts-page.admin-member-list-page.admin-staff-list-page .member-summary-chips {
+        display: flex;
+        grid-template-columns: none;
+    }
+
+    .accounts-page.admin-member-list-page.admin-staff-list-page .member-summary-chips > span {
+        width: auto;
+        min-width: 104px;
+        min-height: 34px;
+        padding: 7px 12px;
+        flex: 0 0 auto;
+        white-space: nowrap;
     }
 }

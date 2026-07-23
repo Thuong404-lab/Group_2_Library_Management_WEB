@@ -37,9 +37,7 @@ public class LoanServiceImpl implements LoanService {
 
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_AVAILABLE = "Available";
-    private static final String STATUS_DAMAGED = "Damaged";
-    private static final String STATUS_MINOR_DAMAGED = "MinorDamaged";
-    private static final String STATUS_LOST = "Lost";
+    private static final String STATUS_UNAVAILABLE = "Unavailable";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_RETURNED = "Returned";
     private static final String STATUS_OVERDUE = "Overdue";
@@ -395,6 +393,13 @@ public class LoanServiceImpl implements LoanService {
                 && returnDate.isBefore(detail.getBorrow().getBorrowDate())) {
             throw new ValidationException(localizedMessageService.get("backend.return.beforeBorrowDate"));
         }
+        BookItem item = detail.getBookItem();
+        if (item != null && getConditionLevel(bookCondition) < getConditionLevel(item.getBookCondition())) {
+            throw new ValidationException(localizedMessageService.get(
+                    "backend.return.conditionCannotImprove",
+                    item.getBookCondition(),
+                    bookCondition));
+        }
         if (damageFine != null && damageFine.compareTo(BigDecimal.ZERO) > 0
                 && "wallet".equals(resolvedPaymentMethod)) {
             Member member = detail.getBorrow() == null ? null : detail.getBorrow().getMember();
@@ -410,7 +415,6 @@ public class LoanServiceImpl implements LoanService {
         if ("Renew_Pending".equalsIgnoreCase(detail.getStatus())) {
             rejectRenewal(detail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
         }
-        BookItem item = detail.getBookItem();
         boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
         if (item != null) {
@@ -900,11 +904,30 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private boolean requiresDamageCompensation(String bookCondition) {
+        int threshold = 3;
+        Optional<SystemSetting> setting = systemSettingRepository.findBySettingKey("Damage_Compensation_Threshold");
+        if (setting.isPresent()) {
+            try {
+                threshold = Integer.parseInt(setting.get().getSettingValue());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        int conditionLevel = getConditionLevel(bookCondition);
+        return conditionLevel >= threshold;
+    }
+
+    private int getConditionLevel(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        return normalized.contains("hư hỏng nặng")
-                || normalized.contains("mất sách")
-                || normalized.contains("severe damage")
-                || normalized.contains("lost");
+        if (normalized.contains("mất sách") || normalized.contains("lost")) {
+            return 4;
+        }
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
+            return 3;
+        }
+        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage") || normalized.contains("hư hỏng")) {
+            return 2;
+        }
+        return 1;
     }
 
     private boolean isGoodCondition(String bookCondition) {
@@ -916,27 +939,18 @@ public class LoanServiceImpl implements LoanService {
     private String resolveReturnedItemStatus(String bookCondition) {
         String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
-            return STATUS_LOST;
-        }
-        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
-            return STATUS_DAMAGED;
-        }
-        if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage")) {
-            return STATUS_MINOR_DAMAGED;
+            return STATUS_UNAVAILABLE;
         }
         return STATUS_AVAILABLE;
     }
 
     private String resolveConditionCode(String bookCondition) {
-        String itemStatus = resolveReturnedItemStatus(bookCondition);
-        if (STATUS_LOST.equals(itemStatus))
-            return "LOST";
-        String normalized = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
-        if (STATUS_DAMAGED.equals(itemStatus)
-                || normalized.contains("minor damage")
-                || normalized.contains("h\u01b0 h\u1ecfng"))
-            return "DAMAGED";
-        return "GOOD";
+        return switch (getConditionLevel(bookCondition)) {
+            case 4 -> "LOST";
+            case 3 -> "DAMAGED";
+            case 2 -> "MINOR_DAMAGE";
+            default -> "GOOD";
+        };
     }
 
     /**

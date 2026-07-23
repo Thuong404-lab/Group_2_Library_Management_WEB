@@ -65,22 +65,25 @@
                 <div class="card-body text-center p-4">
                     <div class="avatar-container-classic mb-3">
                         <div id="avatarPlaceholder"
-                             class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100 profile-avatar-placeholder"
-                             th:classappend="${member?.avatar != null and !#strings.isEmpty(member?.avatar)} ? ' d-none'"
+                             class="profile-avatar-placeholder"
+                             th:hidden="${member?.avatar != null and !#strings.isEmpty(member?.avatar)}"
                              th:text="${member != null and member.fullName != null and !#strings.isEmpty(#strings.trim(member.fullName)) ? #strings.substring(#strings.trim(member.fullName), 0, 1).toUpperCase() : 'M'}">M</div>
                         <img id="avatarPreview"
                              th:src="${member?.avatar != null and !#strings.isEmpty(member?.avatar) ? member.avatar : ''}"
                              th:alt="#{member.profile.avatarAlt}"
-                             class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2"
-                             th:classappend="${member?.avatar == null or #strings.isEmpty(member?.avatar)} ? ' d-none'"
+                             class="profile-avatar-image"
+                             th:hidden="${member?.avatar == null or #strings.isEmpty(member?.avatar)}"
                              data-avatar-image
-                             data-avatar-fallback="avatarPlaceholder">
+                             data-avatar-fallback="avatarPlaceholder"
+                             data-profile-avatar-preview>
 
                         <label for="avatarUpload" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" th:title="#{member.profile.changeAvatar}">
                             <i class="bi bi-camera-fill"></i>
                         </label>
                     </div>
-                    <p th:if="${avatarError}" class="profile-field-error mb-3" th:text="${avatarError}">Invalid profile image.</p>
+                    <p id="avatarError" class="profile-field-error mb-3"
+                       th:classappend="${avatarError == null} ? ' d-none'"
+                       th:text="${avatarError != null ? avatarError : #messages.msg('validation.avatarType')}">Invalid profile image.</p>
                     <h4 class="fw-bold mb-1 profile-name" th:text="${member?.fullName}">Member Name</h4>
                     <p class="text-muted small mb-3" th:text="${member?.email}">email@example.com</p>
 
@@ -126,7 +129,10 @@
                 </div>
                 <div class="card-body p-4">
                     <form id="profileForm" th:action="@{/member/profile/update}" method="post" enctype="multipart/form-data" class="m-0 needs-validation" novalidate>
-                        <input type="file" id="avatarUpload" name="avatarFile" accept="image/jpeg,image/png,image/webp,image/gif" class="d-none">
+                        <input type="file" id="avatarUpload" name="avatarFile"
+                               accept="image/jpeg,image/png,image/webp,image/gif" class="d-none"
+                               th:data-size-error="#{validation.avatarMaxSize}"
+                               th:data-type-error="#{validation.avatarType}">
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label text-muted small fw-bold" th:text="#{member.profile.fullName}">Full Name</label>
@@ -206,26 +212,40 @@
 
 </div>
 
+<th:block layout:fragment="scripts">
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fileInput = document.getElementById('avatarUpload');
         const avatarPreview = document.getElementById('avatarPreview');
         const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+        const avatarError = document.getElementById('avatarError');
 
         if(fileInput) {
             fileInput.addEventListener('change', function(event) {
                 const file = event.target.files[0];
+                fileInput.setCustomValidity('');
+                if (avatarError) avatarError.classList.add('d-none');
                 if (file) {
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                    const validationMessage = file.size > 5 * 1024 * 1024
+                        ? fileInput.dataset.sizeError
+                        : (!allowedTypes.includes(file.type) ? fileInput.dataset.typeError : '');
+                    if (validationMessage) {
+                        fileInput.setCustomValidity(validationMessage);
+                        if (avatarError) {
+                            avatarError.textContent = validationMessage;
+                            avatarError.classList.remove('d-none');
+                        }
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         if(avatarPlaceholder) {
                             avatarPlaceholder.hidden = true;
-                            avatarPlaceholder.classList.add('d-none');
                         }
                         if(avatarPreview) {
                             avatarPreview.src = e.target.result;
                             avatarPreview.hidden = false;
-                            avatarPreview.classList.remove('d-none');
                         }
                     }
                     reader.readAsDataURL(file);
@@ -316,6 +336,7 @@
         }
     });
 </script>
+</th:block>
 
 </body>
 </html>

@@ -294,6 +294,17 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public String getStaffEmail(Integer accountId) {
+        StaffAccount account = staffAccountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.staffNotFound")));
+        if (account.getUser() == null || account.getUser().getEmail() == null
+                || account.getUser().getEmail().isBlank()) {
+            throw new ValidationException(messages.get("backend.account.staffResetEmailMissing"));
+        }
+        return account.getUser().getEmail().trim();
+    }
+
+    @Override
     public Map<String, String> validateMemberAccountCreate(AdminMemberAccountCreateRequest request) {
         Map<String, String> errors = validateCreateFields(
                 request.getFullName(), request.getEmail(), request.getPhone(),

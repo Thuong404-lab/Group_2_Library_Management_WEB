@@ -107,7 +107,9 @@
                 <tr th:each="transaction : ${transactions}">
                     <td class="ps-4" th:data-label="#{transaction.code}">
                         <div class="transaction-code" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</div>
-                        <div class="transaction-audit-value" th:text="${transaction.referenceCode != null ? transaction.referenceCode : #messages.msg('librarian.transactions.noReference')}">Reference</div>
+                        <div class="transaction-audit-value"
+                             th:if="${transaction.referenceCode != null and !#strings.isEmpty(transaction.referenceCode)}"
+                             th:text="${transaction.referenceCode}">Reference</div>
                     </td>
                     <td th:data-label="#{common.member}">
                         <div class="transaction-member-name"
@@ -118,14 +120,25 @@
                     <td class="transaction-date" th:data-label="#{common.dateTime}">
                         <div th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</div>
                         <div class="transaction-audit-value" th:if="${transaction.borrow != null}"
-                             th:text="|BOR-${transaction.borrow.borrowId}|">BOR-1</div>
+                             th:text="#{transaction.detail.borrow(${transaction.borrow.borrowId})}">Loan slip #1</div>
                     </td>
                     <td th:data-label="#{transaction.type}">
-                        <span class="badge transaction-type"
-                              th:classappend="${transactionTypeClasses != null and transactionTypeClasses.containsKey(transaction.transactionType) ? transactionTypeClasses[transaction.transactionType] : 'type-default'}"
-                              th:text="${transactionTypeLabels != null and transactionTypeLabels.containsKey(transaction.transactionType) ? transactionTypeLabels[transaction.transactionType] : #messages.msg('transaction.type.other')}">Transaction Type</span>
+                        <div class="transaction-content" th:switch="${transaction.transactionType}">
+                            <span th:case="'TOP_UP'" th:text="#{transaction.description.topUp}">Wallet top-up</span>
+                            <span th:case="'BORROW_FEE'" th:text="#{transaction.description.borrowFee}">Borrowing fee payment</span>
+                            <span th:case="'RENEWAL_FEE'" th:text="#{transaction.description.renewalFee}">Renewal fee payment</span>
+                            <span th:case="'DEPOSIT'" th:text="#{transaction.description.deposit}">Reservation deposit payment</span>
+                            <span th:case="'FINE'" th:text="#{transaction.description.fine}">Overdue fine payment</span>
+                            <span th:case="'OVERDUE_FINE'" th:text="#{transaction.description.fine}">Overdue fine payment</span>
+                            <span th:case="'DAMAGE_FEE'" th:text="#{transaction.description.damageFee}">Book compensation payment</span>
+                            <span th:case="'REFUND'" th:text="#{transaction.description.refund}">Wallet refund</span>
+                            <span th:case="'PAYMENT'" th:text="#{transaction.description.payment}">Library payment</span>
+                            <span th:case="'FEE'" th:text="#{transaction.description.payment}">Library payment</span>
+                            <span th:case="*" th:text="#{transaction.description.other}">Library financial transaction</span>
+                        </div>
                         <div class="transaction-audit-value"
-                             th:text="${transaction.channel != null and transactionChannelLabels != null and transactionChannelLabels.containsKey(transaction.channel) ? transactionChannelLabels[transaction.channel] : #messages.msg('librarian.transactions.noChannel')}">Channel</div>
+                             th:if="${transaction.channel != null and transactionChannelLabels != null and transactionChannelLabels.containsKey(transaction.channel)}"
+                             th:text="#{transaction.detail.channel(${transactionChannelLabels[transaction.channel]})}">Method</div>
                     </td>
                     <td class="transaction-amount" th:data-label="#{transaction.amount}"
                         th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
@@ -134,15 +147,14 @@
                         <span th:text="#{currency.vnd}">VND</span>
                         <div class="transaction-balance-audit" th:if="${transaction.balanceBefore != null and transaction.balanceAfter != null}"
                              th:text="#{librarian.transactions.balanceChange(${#numbers.formatDecimal(transaction.balanceBefore,0,'COMMA',0,'POINT')},${#numbers.formatDecimal(transaction.balanceAfter,0,'COMMA',0,'POINT')})}">Balance change</div>
-                        <div class="transaction-audit-value" th:unless="${transaction.balanceBefore != null and transaction.balanceAfter != null}"
-                             th:text="#{librarian.transactions.noBalanceAudit}">No balance audit</div>
                     </td>
                     <td th:data-label="#{common.status}">
                         <span class="status-badge"
                               th:classappend="${transactionStatusClasses != null and transactionStatusClasses.containsKey(transaction.status) ? transactionStatusClasses[transaction.status] : 'status-pending'}"
                               th:text="${transactionStatusLabels != null and transactionStatusLabels.containsKey(transaction.status) ? transactionStatusLabels[transaction.status] : #messages.msg('transaction.status.pending')}">Completed</span>
                         <div class="transaction-audit-value"
-                             th:text="${transaction.performedByStaff != null and transaction.performedByStaff.user != null ? transaction.performedByStaff.user.fullName : (transaction.channel == 'SYSTEM' ? #messages.msg('common.system') : ((transaction.channel == 'WALLET' or transaction.channel == 'PAYOS') ? #messages.msg('librarian.transactions.memberInitiated') : #messages.msg('common.unknown')))}">Actor</div>
+                             th:if="${(transaction.performedByStaff != null and transaction.performedByStaff.user != null) or transaction.channel == 'SYSTEM' or transaction.channel == 'WALLET' or transaction.channel == 'PAYOS'}"
+                             th:text="${transaction.performedByStaff != null and transaction.performedByStaff.user != null ? transaction.performedByStaff.user.fullName : (transaction.channel == 'SYSTEM' ? #messages.msg('common.system') : #messages.msg('librarian.transactions.memberInitiated'))}">Actor</div>
                     </td>
                 </tr>
                 </tbody>
