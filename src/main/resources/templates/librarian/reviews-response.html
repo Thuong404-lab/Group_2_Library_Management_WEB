@@ -5,7 +5,7 @@
 <head>
     <title th:text="#{librarian.reviews.heading}">Member Review Moderation</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/reviews.css(v='20260724-2')}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/reviews.css(v='20260724-3')}">
 </head>
 <body>
 <main layout:fragment="content"
@@ -130,6 +130,7 @@
                               th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reply'}"
                               method="post"
                               class="review-reply-box review-reply-form"
+                              th:id="${'reviewReplyForm-' + review.feedbackId}"
                               novalidate>
                             <input type="hidden" name="page" th:value="${reviews.number}">
                             <input type="hidden" name="status" th:value="${currentStatus}">
@@ -154,44 +155,31 @@
                                  aria-live="assertive"
                                  th:id="${'reviewResponseError-' + review.feedbackId}"
                                  th:text="${reviewReplyErrorId != null and reviewReplyErrorId == review.feedbackId and reviewReplyErrors != null ? reviewReplyErrors['response'] : ''}"></div>
-                            <div class="app-form-actions review-primary-actions">
-                                <button type="submit"
-                                        class="app-form-primary"
-                                        th:text="${review.librarianResponse != null and !review.librarianResponse.isBlank()} ? #{librarian.reviews.saveEdit} : #{librarian.reviews.respond}">
-                                    Respond
-                                </button>
-                            </div>
                         </form>
 
-                        <div class="app-form-actions review-primary-actions" th:if="${review.status == 'PENDING' or review.status == 'REJECTED'}">
-                            <form th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/approve'}" method="post">
+                        <div class="app-form-actions review-combined-actions">
+                            <button type="submit"
+                                    th:if="${review.status == 'APPROVED'}"
+                                    th:form="${'reviewReplyForm-' + review.feedbackId}"
+                                    class="app-form-primary review-combined-primary"
+                                    th:text="${review.librarianResponse != null and !review.librarianResponse.isBlank()} ? #{librarian.reviews.saveEdit} : #{librarian.reviews.respond}">
+                                Respond
+                            </button>
+
+                            <form th:if="${review.status == 'PENDING' or review.status == 'REJECTED'}"
+                                  class="review-approve-form"
+                                  th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/approve'}"
+                                  method="post">
                                 <input type="hidden" name="page" th:value="${reviews.number}">
                                 <input type="hidden" name="status" th:value="${currentStatus}">
                                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                <button type="submit" class="app-form-primary" th:text="#{librarian.reviews.approve}">Approve</button>
+                                <button type="submit"
+                                        class="app-form-primary review-combined-primary"
+                                        th:text="#{librarian.reviews.approve}">Approve</button>
                             </form>
-                            <button type="button"
-                                    th:if="${review.status == 'PENDING'}"
-                                    class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#librarianDeleteReviewModal"
-                                    th:data-reject-action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reject'}"
-                                    th:data-book-title="${review.bookTitle}"
-                                    th:data-member-name="${review.memberName}"
-                                    th:title="#{librarian.reviews.rejectAction}"
-                                    th:aria-label="#{librarian.reviews.rejectAction}">
-                                <i class="bi bi-x-lg" aria-hidden="true"></i>
-                            </button>
-                        </div>
 
-                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
-                             class="review-deleted-note"
-                             th:text="#{librarian.reviews.cannotRespond}">
-                            The member deleted this review, so it cannot be answered.
-                        </div>
-                        <div class="review-secondary-actions">
                             <button type="button"
-                                    th:if="${review.status == 'APPROVED'}"
+                                    th:if="${review.status == 'APPROVED' or review.status == 'PENDING'}"
                                     class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
                                     data-bs-toggle="modal"
                                     data-bs-target="#librarianDeleteReviewModal"
@@ -202,6 +190,7 @@
                                     th:aria-label="#{librarian.reviews.rejectAction}">
                                 <i class="bi bi-x-lg" aria-hidden="true"></i>
                             </button>
+
                             <form class="review-permanent-delete-form app-confirm-form"
                               th:action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/delete'}"
                               method="post"
@@ -221,6 +210,12 @@
                                 <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                             </form>
+                        </div>
+
+                        <div th:if="${review.status == 'DELETED_BY_MEMBER'}"
+                             class="review-deleted-note"
+                             th:text="#{librarian.reviews.cannotRespond}">
+                            The member deleted this review, so it cannot be answered.
                         </div>
                     </td>
                 </tr>
@@ -315,7 +310,8 @@
     </div>
 
     <script th:inline="javascript">
-        document.addEventListener("DOMContentLoaded", function () {
+        (function () {
+            function initializeReviewPage() {
             const validationMessages = {
                 required: /*[[#{backend.librarian.reviewReply.required}]]*/ "A response is required.",
                 minimum: /*[[#{backend.librarian.reviewReply.minimum}]]*/ "The response must contain at least 5 characters.",
@@ -328,12 +324,14 @@
                 const counter = form.querySelector(".review-response-count");
                 const error = form.querySelector(".review-validation-message");
                 if (!response || !counter || !error) return;
+                const maximumLength = response.maxLength > 0 ? response.maxLength : 1000;
 
                 function updateCounter() {
                     const length = response.value.length;
-                    counter.textContent = length + "/1000";
-                    counter.classList.toggle("is-near-limit", length >= 900 && length < 1000);
-                    counter.classList.toggle("is-limit-reached", length >= 1000);
+                    const nearLimit = Math.max(0, Math.floor(maximumLength * 0.9));
+                    counter.textContent = length + "/" + maximumLength;
+                    counter.classList.toggle("is-near-limit", length >= nearLimit && length < maximumLength);
+                    counter.classList.toggle("is-limit-reached", length >= maximumLength);
                 }
 
                 response.addEventListener("input", function () {
@@ -401,8 +399,18 @@
                     if (reasonInput) reasonInput.value = reason;
                 });
             }
-        });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", initializeReviewPage, { once: true });
+            } else {
+                initializeReviewPage();
+            }
+        })();
     </script>
 </main>
+<th:block layout:fragment="scripts">
+    <script th:src="@{/js/pages/librarian/reviews.js(v='20260724-1')}"></script>
+</th:block>
 </body>
 </html>
