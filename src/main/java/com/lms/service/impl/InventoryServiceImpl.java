@@ -357,7 +357,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (!item.getBook().getBookId().equals(bookId)) {
             throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
         }
-        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())
+        if (conditionRank(item.getBookCondition()) >= conditionRank("Severely damaged")
+                || STATUS_BORROWED.equalsIgnoreCase(item.getStatus())
+                || STATUS_PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
                 || STATUS_WAITING_PICKUP.equalsIgnoreCase(item.getStatus())) {
             throw new ConflictException(messages.get("backend.inventory.copyConditionLocked"));
         }
