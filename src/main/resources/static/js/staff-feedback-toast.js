@@ -74,7 +74,9 @@
             ".app-alert--success",
             ".app-alert--danger",
             ".finance-alert--success",
-            ".finance-alert--danger"
+            ".finance-alert--danger",
+            ".auth-alert.alert-warning",
+            ".auth-alert.alert-info"
         ].join(",")).forEach(function (element) {
             if (element.closest(".modal") != null) return;
             if (normalizeMessage(element.textContent) !== normalizedMessage) return;
@@ -84,17 +86,48 @@
     }
 
     function collectFeedback() {
-        var sources = Array.from(document.querySelectorAll("[data-app-feedback]"))
+        var sources = Array.from(document.querySelectorAll([
+            "[data-app-feedback]",
+            ".alert-success",
+            ".alert-danger",
+            ".app-alert--success",
+            ".app-alert--danger",
+            ".finance-alert--success",
+            ".finance-alert--danger",
+            ".auth-alert.alert-warning",
+            ".auth-alert.alert-info"
+        ].join(",")))
             .filter(function (source) {
-                return normalizeMessage(source.textContent).length > 0;
+                if (normalizeMessage(source.textContent).length === 0) return false;
+                if (source.hasAttribute("data-app-feedback")) return true;
+                return source.hidden !== true
+                    && !source.classList.contains("d-none")
+                    && source.getAttribute("aria-hidden") !== "true"
+                    && source.closest(".modal,[hidden]") === null;
             });
 
         if (sources.length === 0) return null;
         return sources.find(function (source) {
-            return source.dataset.appFeedback === "error";
+            return feedbackTone(source) === "error";
         }) || sources.find(function (source) {
-            return source.dataset.appFeedback === "warning";
+            return feedbackTone(source) === "warning";
         }) || sources[0];
+    }
+
+    function feedbackTone(source) {
+        if (source.dataset.appFeedback && icons[source.dataset.appFeedback]) {
+            return source.dataset.appFeedback;
+        }
+        if (source.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")) {
+            return "error";
+        }
+        if (source.matches(".alert-warning")) {
+            return "warning";
+        }
+        if (source.matches(".alert-info")) {
+            return "info";
+        }
+        return "success";
     }
 
     window.AppFeedback = {
@@ -113,7 +146,7 @@
         var selected = collectFeedback();
         if (!selected) return;
 
-        var tone = selected.dataset.appFeedback || "info";
+        var tone = feedbackTone(selected);
         var message = normalizeMessage(selected.textContent);
         hideMatchingLegacyFeedback(message);
         show(message, tone);

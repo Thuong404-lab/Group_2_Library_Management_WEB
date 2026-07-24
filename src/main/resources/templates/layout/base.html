@@ -28,6 +28,7 @@
   <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
   <link rel="stylesheet" th:href="@{/css/utilities.css}" />
   <th:block layout:fragment="styles"></th:block>
+  <link rel="stylesheet" th:href="@{/css/components/feedback-toast.css(v='20260724-1')}" />
 </head>
 
 <body class="bg-classic app-shell app-shell--public">
@@ -52,6 +53,17 @@
         <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     </div>
+  </div>
+
+  <div id="publicFeedbackSources" hidden aria-hidden="true">
+    <span th:if="${error != null}" data-app-feedback="error" th:text="${error}"></span>
+    <span th:if="${errorMessage != null}" data-app-feedback="error" th:text="${errorMessage}"></span>
+    <span th:if="${passwordError != null}" data-app-feedback="error" th:text="${passwordError}"></span>
+    <span th:if="${success != null}" data-app-feedback="success" th:text="${success}"></span>
+    <span th:if="${successMessage != null}" data-app-feedback="success" th:text="${successMessage}"></span>
+    <span th:if="${passwordSuccess != null}" data-app-feedback="success" th:text="${passwordSuccess}"></span>
+    <span th:if="${warning != null}" data-app-feedback="warning" th:text="${warning}"></span>
+    <span th:if="${info != null}" data-app-feedback="info" th:text="${info}"></span>
   </div>
 
   <script th:inline="javascript">
@@ -133,6 +145,7 @@
          * without changing controller flash attributes or form workflows.
          */
         var legacyFeedback = Array.from(document.querySelectorAll([
+          "[data-app-feedback]",
           ".alert-success",
           ".alert-danger",
           ".app-alert--success",
@@ -140,6 +153,9 @@
           ".finance-alert--success",
           ".finance-alert--danger"
         ].join(","))).filter(function (element) {
+          if (element.hasAttribute("data-app-feedback")) {
+            return element.textContent.trim().length > 0;
+          }
           var isHidden = element.hidden
             || element.classList.contains("d-none")
             || element.getAttribute("aria-hidden") === "true"
@@ -149,11 +165,15 @@
 
         if (legacyFeedback.length > 0) {
           var selected = legacyFeedback.find(function (element) {
-            return element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger");
+            return element.dataset.appFeedback === "error"
+              || element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger");
+          }) || legacyFeedback.find(function (element) {
+            return element.dataset.appFeedback === "warning";
           }) || legacyFeedback[0];
-          var tone = selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")
-            ? "error"
-            : "success";
+          var tone = selected.dataset.appFeedback
+            || (selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")
+              ? "error"
+              : "success");
           var message = selected.textContent.trim();
 
           legacyFeedback.forEach(function (element) {
