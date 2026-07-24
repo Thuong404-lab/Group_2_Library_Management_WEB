@@ -809,6 +809,7 @@
                                 th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/add} : @{/librarian/inventory/add}"
                                 method="post"
                                 enctype="multipart/form-data" novalidate onsubmit="validateBookForm(event, this)">
+                                <input type="hidden" name="bookPage" th:value="${books.number}">
                                 <div class="modal-body px-4 pt-4 pb-0">
                                     <div class="row g-3">
                                         <div class="col-md-6">
@@ -1057,6 +1058,7 @@
                             <form
                                 th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/audit} : @{/librarian/inventory/audit}"
                                 method="post">
+                                <input type="hidden" name="bookPage" th:value="${books.number}">
                                 <div class="modal-body">
                                     <div class="row g-3">
                                         <div class="col-12">
@@ -1110,6 +1112,7 @@
                                 <form class="add-copies-form"
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/add/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/add/{id}(id=${book.bookId})}"
                                     method="post" novalidate onsubmit="validateAddCopiesForm(event, this)">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body p-4">
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold"><span
@@ -1205,6 +1208,7 @@
                                             th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                             method="post" data-copy-delete-form
                                             th:data-confirm-message="#{librarian.inventory.deleteCopiesConfirm}">
+                                            <input type="hidden" name="bookPage" th:value="${books.number}">
                                             <button type="submit" class="btn btn-outline-danger text-nowrap"><span
                                                     th:text="#{librarian.inventory.deleteSelectedCopies}">Delete
                                                     Selected</span></button>
@@ -1289,6 +1293,8 @@
                                                             th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                                             method="post" data-copy-delete-form
                                                             th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}">
+                                                            <input type="hidden" name="bookPage"
+                                                                th:value="${books.number}">
                                                             <input type="hidden" name="itemIds"
                                                                 th:value="${item.bookItemId}"><button type="submit"
                                                                 class="member-icon-action member-icon-action-danger"
@@ -1338,6 +1344,7 @@
                                 <form
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})} : @{/librarian/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})}"
                                     method="post">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body p-4">
                                         <label class="form-label fw-semibold"
                                             th:text="#{librarian.inventory.condition}">Condition</label>
@@ -1381,6 +1388,7 @@
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/edit/{id}(id=${book.bookId})} : @{/librarian/inventory/edit/{id}(id=${book.bookId})}"
                                     method="post" enctype="multipart/form-data" novalidate
                                     onsubmit="validateBookForm(event, this)">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body">
                                         <div class="row g-3">
                                             <div class="col-md-6">
@@ -1524,6 +1532,7 @@
                                 <form
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/delete/{id}(id=${book.bookId})}"
                                     method="post">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body">
                                         <div class="alert alert-danger py-2 mb-3">
                                             <i class="bi bi-trash3-fill me-1"></i>
