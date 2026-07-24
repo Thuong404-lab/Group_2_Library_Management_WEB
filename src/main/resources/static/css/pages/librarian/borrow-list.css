@@ -484,11 +484,19 @@
 
 /* Canonical staff-management layout aligned with the current Admin list pages. */
 .staff-shell--librarian .borrow-list-page {
-    width: calc(100% - 32px);
+    --member-canvas: var(--member-color-canvas, #fff);
+    --member-surface-soft: var(--member-color-surface-soft, #fff);
+    --member-surface-card: var(--member-color-surface-card, #fff);
+    --member-ink: var(--member-color-ink, #141413);
+    --member-muted: var(--member-color-muted, #6c6a64);
+    --member-hairline: var(--member-color-hairline, #e6dfd8);
+    --member-primary: var(--member-color-primary, #8b5a2b);
+    --member-primary-hover: var(--member-color-primary-hover, #724922);
+    width: 100%;
     max-width: 1480px;
     margin-right: auto;
     margin-left: auto;
-    padding: 24px 0 56px;
+    padding: 0;
     color: #2d211a;
     font-family: var(--app-font-ui);
     font-size: 14px;
@@ -496,27 +504,27 @@
 }
 
 .staff-shell--librarian .borrow-list-page .member-page-header {
-    min-height: 190px;
+    min-height: 208px;
     margin-bottom: 28px;
-    padding: 30px 38px;
+    padding: 32px 40px;
     align-items: center;
     background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
     box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
 }
 
 .staff-shell--librarian .borrow-list-page .member-page-header::before {
-    top: -150px;
-    right: -70px;
-    width: 330px;
-    height: 330px;
-    box-shadow: 0 0 0 55px rgba(255, 255, 255, .045);
+    top: -145px;
+    right: -72px;
+    width: 340px;
+    height: 340px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
 }
 
 .staff-shell--librarian .borrow-list-page .member-page-header::after {
-    right: 270px;
-    bottom: -155px;
-    width: 235px;
-    height: 235px;
+    right: 214px;
+    bottom: -118px;
+    width: 220px;
+    height: 220px;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-hero-copy {
@@ -539,7 +547,7 @@
     margin: 0;
     color: #fff;
     font-family: var(--app-font-display);
-    font-size: clamp(34px, 4vw, 48px);
+    font-size: clamp(34px, 5vw, 50px);
     font-weight: 500;
     line-height: 1.15;
     letter-spacing: -.02em;
@@ -556,15 +564,61 @@
 
 .staff-shell--librarian .borrow-list-page .borrow-management-card {
     overflow: hidden;
-    border: 1px solid var(--app-color-hairline);
-    border-radius: 18px;
-    background: #fffdf9;
-    box-shadow: 0 10px 28px rgba(71, 45, 28, .07);
+    border: 1px solid #e6dfd8;
+    border-radius: 16px;
+    background: #faf9f5;
+    color: #3d3d3a;
+    box-shadow: none;
 }
 
 .staff-shell--librarian .borrow-list-page .member-data-card-body {
-    padding: 26px 28px;
-    background: #fffdf9;
+    padding: 24px;
+    background: #faf9f5;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs {
+    margin: 0 0 20px;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-pills {
+    width: fit-content;
+    gap: 6px;
+    margin: 0;
+    padding: 4px;
+    border: 1px solid var(--member-hairline);
+    border-radius: 12px;
+    background: var(--member-color-canvas);
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--member-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link:hover,
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link:focus-visible {
+    background: var(--member-surface-soft);
+    color: var(--member-ink);
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link:focus-visible,
+.staff-shell--librarian .borrow-list-page .borrow-clear-filter:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--member-focus-ring);
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link.active {
+    background: var(--member-surface-card);
+    color: var(--member-ink);
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-summary-chips {
@@ -572,32 +626,42 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin: 0 0 22px;
+    margin: 0 0 20px;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-summary-chips > span {
     display: inline-flex;
     width: auto;
-    min-width: 110px;
+    min-width: 120px;
     min-height: 34px;
     padding: 7px 14px;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--app-color-hairline);
+    gap: 6px;
+    border: 1px solid #e6dfd8;
     border-radius: 999px;
-    background: #f8f3ed;
+    background: #f5f0e8;
     color: #513215;
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
 }
 
+.staff-shell--librarian .borrow-list-page .borrow-summary-chips .app-stat-number {
+    min-width: 0;
+    color: #513215;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 700;
+    line-height: inherit;
+}
+
 .staff-shell--librarian .borrow-list-page .borrow-list-filter-card {
-    margin: 0 0 24px;
-    padding: 16px;
-    border: 1px solid var(--app-color-hairline);
-    border-radius: 14px;
-    background: #fff;
+    margin: 0 0 20px;
+    padding: 14px;
+    border: 1px solid var(--member-hairline);
+    border-radius: 12px;
+    background: var(--member-canvas);
 }
 
 .staff-shell--librarian .borrow-list-page .member-search-group {
@@ -606,6 +670,10 @@
     grid-template-columns: minmax(320px, 1fr) minmax(220px, 260px) auto;
     align-items: center;
     gap: 12px;
+}
+
+.staff-shell--librarian .borrow-list-page .member-search-group--history {
+    grid-template-columns: minmax(320px, 1fr) 120px 128px;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-keyword-control {
@@ -622,8 +690,10 @@
     min-height: 48px;
     height: 48px;
     margin: 0;
-    border-color: var(--app-color-hairline);
+    border-color: #e6dfd8;
     background: #fff;
+    color: #3d3d3a;
+    font-family: var(--member-font-ui);
     font-size: 14px;
 }
 
@@ -631,7 +701,7 @@
     width: 48px;
     border-right: 0;
     border-radius: 10px 0 0 10px;
-    color: var(--app-color-muted);
+    color: #6c6a64;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-keyword-control .form-control {
@@ -644,7 +714,7 @@
 .staff-shell--librarian .borrow-list-page .member-search-group .member-filter-select {
     max-width: none;
     flex: initial;
-    border-left: 1px solid var(--app-color-hairline);
+    border-left: 1px solid #e6dfd8;
     border-radius: 10px;
 }
 
@@ -652,38 +722,123 @@
     width: auto;
     min-width: 120px;
     padding: 0 18px;
-    border-color: var(--app-color-application-primary);
+    border-color: #8b5a2b;
     border-radius: 10px;
-    background: var(--app-color-application-primary);
+    background: #8b5a2b;
     color: #fff;
+    font-weight: 600;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-clear-filter {
+    display: inline-flex;
+    width: auto;
+    min-width: 112px;
+    height: 48px;
+    min-height: 48px;
+    margin: 0;
+    padding: 0 18px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--member-hairline);
+    border-radius: 10px;
+    background: var(--member-canvas);
+    color: var(--member-primary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-clear-filter:hover,
+.staff-shell--librarian .borrow-list-page .borrow-clear-filter:focus-visible {
+    border-color: var(--member-primary);
+    background: var(--member-surface-soft);
+    color: var(--member-primary-hover);
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-list-empty-state {
+    display: flex;
+    min-height: 220px;
+    padding: 40px 24px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: var(--member-muted);
+    text-align: center;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-list-empty-icon {
+    display: inline-flex;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--member-surface-soft);
+    color: var(--member-muted);
+    font-size: 23px;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-list-empty-state p {
+    margin: 0;
+    color: var(--member-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-empty-filter-reset {
+    margin-top: 18px;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-list-table-wrap {
     width: 100%;
     max-width: 100%;
     padding: 0;
-    overflow-x: auto;
-    border: 1px solid var(--app-color-hairline);
+    overflow-x: hidden;
+    border: 1px solid var(--member-hairline);
     border-radius: 14px;
-    background: #fff;
+    background: var(--member-canvas);
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 992px) {
     .staff-shell--librarian .borrow-list-page .borrow-list-table {
+        display: table;
         min-width: 960px;
         margin: 0;
         border-collapse: collapse;
         border-spacing: 0;
         table-layout: fixed;
+        background: var(--member-canvas);
+        color: #3d3d3a;
+        font-family: var(--member-font-ui);
+        font-size: 14px;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table colgroup {
+        display: table-column-group;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table thead {
+        display: table-header-group;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody {
+        display: table-row-group;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr {
+        display: table-row;
     }
 
     .staff-shell--librarian .borrow-list-page .borrow-list-table thead th {
         height: 54px;
-        padding: 12px 14px;
+        padding: 12px 16px;
         border: 0;
         border-bottom: 1px solid #eadbd1;
         background: #fbf1eb;
         color: #765a49;
+        font-family: var(--member-font-ui);
         font-size: 12px;
         font-weight: 700;
         letter-spacing: .06em;
@@ -692,58 +847,92 @@
     .staff-shell--librarian .borrow-list-page .borrow-list-table tbody td,
     .staff-shell--librarian .borrow-list-page .borrow-list-table tbody td:first-child,
     .staff-shell--librarian .borrow-list-page .borrow-list-table tbody td:last-child {
-        padding: 16px 14px;
+        display: table-cell;
+        height: 90px;
+        padding: 14px 16px;
         border: 0;
-        border-bottom: 1px solid var(--app-color-hairline-soft);
+        border-bottom: 1px solid var(--member-hairline);
         border-radius: 0;
-        background: #fff;
+        background: var(--member-color-canvas);
+        color: #3d3d3a;
+        font-size: 14px;
+        vertical-align: middle;
     }
 
-    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:nth-child(even) td {
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody td::before {
+        display: none;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr {
+        filter: none;
+        transform: none;
+        box-shadow: none;
+        transition: none;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:nth-child(even) > td {
         background: #fffdfb;
     }
 
-    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:last-child td {
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:last-child > td {
         border-bottom: 0;
     }
 
-    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:hover td {
-        border-color: var(--app-color-hairline-soft);
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:hover > td {
+        border-color: var(--member-hairline);
         background: #fbf5f0;
     }
 }
 
+.staff-shell--librarian .borrow-list-page .borrow-list-table .text-classic {
+    color: #8b5a2b !important;
+}
+
+.staff-shell--librarian .borrow-list-page .borrow-list-table .small,
+.staff-shell--librarian .borrow-list-page .borrow-list-table .text-muted {
+    margin-top: 3px;
+    color: #6c6a64 !important;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
 .staff-shell--librarian .borrow-list-page .status-badge {
     width: auto;
-    min-width: 0;
+    min-width: 92px;
     min-height: 30px;
-    padding: 6px 12px;
+    padding: 6px 11px;
+    font-family: var(--member-font-ui);
     font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-list-icon-action {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-color: rgba(139, 90, 43, .2);
+    border-radius: 50%;
     background: #fff;
+    color: #513215;
+    font-size: 16px;
 }
 
 .staff-shell--librarian .borrow-list-page .borrow-list-icon-action:hover,
 .staff-shell--librarian .borrow-list-page .borrow-list-icon-action:focus-visible {
-    border-color: #cda985;
-    background: #fff8f1;
-    color: var(--app-color-application-primary);
+    border-color: #c38040;
+    background: #fceee7;
+    color: #513215;
     box-shadow: 0 0 0 3px rgba(139, 90, 43, .12);
 }
 
 .staff-shell--librarian .borrow-list-page .app-pagination-region {
-    margin: 18px -28px -26px;
-    padding: 16px 28px;
+    margin: 18px -24px -24px;
+    padding: 16px 24px;
     border-top: 1px solid var(--app-color-hairline-soft);
-    background: #fffdfb;
+    background: var(--member-canvas);
 }
 
-@media (max-width: 1199.98px) {
+@media (max-width: 991.98px) {
     .staff-shell--librarian .borrow-list-page .borrow-list-table-wrap {
         padding: 12px;
         overflow: visible;
@@ -757,21 +946,37 @@
 
     .staff-shell--librarian .borrow-list-page .borrow-keyword-control,
     .staff-shell--librarian .borrow-list-page .member-search-group .member-filter-select,
-    .staff-shell--librarian .borrow-list-page .member-search-button {
+    .staff-shell--librarian .borrow-list-page .member-search-button,
+    .staff-shell--librarian .borrow-list-page .borrow-clear-filter {
         width: 100%;
         grid-column: auto;
     }
 
     .staff-shell--librarian .borrow-list-page .member-search-group .member-filter-select,
-    .staff-shell--librarian .borrow-list-page .member-search-button {
+    .staff-shell--librarian .borrow-list-page .member-search-button,
+    .staff-shell--librarian .borrow-list-page .borrow-clear-filter {
         margin-top: 0;
     }
 }
 
 @media (max-width: 767.98px) {
     .staff-shell--librarian .borrow-list-page {
-        width: calc(100% - 24px);
-        padding: 16px 0 40px;
+        width: 100%;
+        padding: 0;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-pills {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-item,
+    .staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link {
+        width: 100%;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-page-tabs .nav-link {
+        justify-content: flex-start;
     }
 
     .staff-shell--librarian .borrow-list-page .member-page-header {
@@ -794,8 +999,8 @@
 
 @media (max-width: 575.98px) {
     .staff-shell--librarian .borrow-list-page {
-        width: calc(100% - 20px);
-        padding-top: 10px;
+        width: 100%;
+        padding-top: 0;
     }
 
     .staff-shell--librarian .borrow-list-page .member-page-header {
@@ -805,5 +1010,15 @@
 
     .staff-shell--librarian .borrow-list-page .member-page-title {
         font-size: clamp(30px, 10vw, 38px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr {
+        transition: none;
+    }
+
+    .staff-shell--librarian .borrow-list-page .borrow-list-table tbody tr:hover {
+        transform: none;
     }
 }

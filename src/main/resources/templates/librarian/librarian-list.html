@@ -5,29 +5,26 @@
 <head>
     <title th:text="#{librarian.staff.title}">Librarians</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css(v='20260724-staff-directory-ui-v5')}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='librarians'"
-        class="member-management-page librarian-management-page">
-        <header class="member-page-header librarian-list-hero">
-            <div class="librarian-list-hero-copy">
+        class="member-management-page member-list-page librarian-management-page librarian-directory-page canonical-management-page">
+        <header class="member-page-header member-list-hero librarian-list-hero">
+            <div class="member-list-hero-copy librarian-list-hero-copy">
                 <div class="member-page-eyebrow" th:text="#{librarian.staff.title}">STAFF DIRECTORY</div>
                 <h1 class="member-page-title" th:text="#{librarian.staff.heading}">Librarians</h1>
                 <p class="member-page-description" th:text="#{librarian.staff.description}">View librarian profiles,
                     roles, and account statuses.</p>
             </div>
-            <div class="librarian-list-hero-decoration" aria-hidden="true">
-                <i class="bi bi-person-badge"></i>
-            </div>
         </header>
 
-        <section class="member-data-card librarian-list-card">
+        <section class="member-data-card member-list-card librarian-list-card">
             <div class="member-data-card-body">
-                <div class="member-summary-chips librarian-list-summary" th:aria-label="#{librarian.staff.summary}"
-                    th:title="#{librarian.staff.summaryScope}">
+                <div class="member-summary-chips member-list-summary librarian-list-summary"
+                    th:aria-label="#{librarian.staff.summary}" th:title="#{librarian.staff.summaryScope}">
                     <span><strong th:text="${librarianSummary != null ? librarianSummary['total'] : 0}">0</strong> <span
                             th:text="#{librarian.staff.totalLabel}">librarians</span></span>
                     <span><strong th:text="${librarianSummary != null ? librarianSummary['active'] : 0}">0</strong>
@@ -43,13 +40,15 @@
                     <!-- Search & Filter -->
                     <form class="member-search-form" method="get" th:action="@{/librarian/librarians}"
                         data-auto-filter-form data-focus-key="librarianStaffFilterFocus">
-                        <div class="input-group member-search-group librarian-filter-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input class="form-control border-start-0 ps-0" type="search" name="keyword" data-auto-search
-                                maxlength="100" autocomplete="off" th:value="${keyword}"
-                                th:placeholder="#{librarian.staff.searchPlaceholder}">
+                        <div class="member-search-group member-list-filter-group librarian-filter-group">
+                            <div class="input-group member-keyword-control librarian-keyword-control">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input class="form-control border-start-0 ps-0" type="search" name="keyword"
+                                    data-auto-search maxlength="100" autocomplete="off" th:value="${keyword}"
+                                    th:placeholder="#{librarian.staff.searchPlaceholder}">
+                            </div>
                             <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{librarian.staff.statusFilter}">
                                 <option value="" th:selected="${#strings.isEmpty(selectedStatus)}"
@@ -62,7 +61,6 @@
                                     th:text="#{status.blocked}">Blocked</option>
                             </select>
                             <a class="btn member-search-button text-nowrap" th:href="@{/librarian/librarians}">
-                                <i class="bi bi-arrow-clockwise me-1"></i>
                                 <span th:text="#{common.clearFilter}">Clear filter</span>
                             </a>
                         </div>
@@ -70,8 +68,9 @@
                 </div>
 
                 <!-- Table -->
-                <div class="table-responsive member-table-wrap librarian-list-table-wrap">
-                    <table class="table table-hover align-middle stable-table-layout member-table librarian-list-table">
+                <div class="table-responsive member-table-wrap member-list-table-wrap librarian-list-table-wrap">
+                    <table
+                        class="table table-hover align-middle stable-table-layout member-table member-list-table librarian-list-table">
                         <colgroup>
                             <col class="librarian-col-index">
                             <col class="librarian-col-username">
@@ -92,7 +91,8 @@
                         </thead>
 
                         <tbody>
-                            <tr class="librarian-data-row" th:each="staff, iterStat : ${staffPage.content}">
+                            <tr class="member-data-row librarian-data-row"
+                                th:each="staff, iterStat : ${staffPage.content}">
                                 <td class="ps-3 fw-bold" th:data-label="#{common.number}"
                                     th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">
                                     1

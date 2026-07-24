@@ -1026,3 +1026,580 @@
         flex: 1;
     }
 }
+
+/*
+ * Canonical librarian notification composition surface.
+ * Mirrors the dimensions, palette and information density of book management
+ * while remaining isolated from the notification widget on the dashboard.
+ */
+.staff-shell--librarian .notification-compose-page {
+    --notification-canvas: #fff;
+    --notification-surface: #faf9f5;
+    --notification-surface-soft: #fbf1eb;
+    --notification-ink: #2d211a;
+    --notification-muted: #6c6a64;
+    --notification-line: #e6dfd8;
+    --notification-primary: #8b5a2b;
+    --notification-primary-hover: #724922;
+    --notification-focus: rgba(139, 90, 43, .2);
+    width: calc(100% - 32px);
+    max-width: 1480px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 24px 0 56px;
+    color: var(--notification-ink);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-page-hero,
+.staff-shell--librarian .notification-compose-page .dashboard-page-header {
+    position: relative;
+    min-height: 190px;
+    margin: 0 0 28px !important;
+    padding: 30px 38px !important;
+    overflow: hidden;
+    align-items: center;
+    border: 0 !important;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-page-hero::before {
+    top: -150px;
+    right: -70px;
+    width: 330px;
+    height: 330px;
+    border-color: rgba(255, 255, 255, .15);
+    box-shadow: 0 0 0 55px rgba(255, 255, 255, .045);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-page-hero::after {
+    right: 270px;
+    bottom: -155px;
+    width: 235px;
+    height: 235px;
+    border-color: rgba(255, 255, 255, .15);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-hero-copy {
+    width: 100%;
+    max-width: 760px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-page-hero .app-page-eyebrow {
+    display: block;
+    margin: 0 0 9px;
+    color: rgba(255, 255, 255, .82) !important;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    opacity: 1;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-page-hero .app-page-title {
+    margin: 0;
+    color: #fff !important;
+    font-family: var(--app-font-display);
+    font-size: clamp(34px, 4vw, 48px);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-page-hero .app-page-description {
+    max-width: 720px;
+    margin: 10px 0 0;
+    color: rgba(255, 255, 255, .82) !important;
+    font-family: var(--app-font-ui);
+    font-size: 15px;
+    line-height: 1.55;
+    opacity: 1;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-hero-decoration {
+    display: flex;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    margin: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .32);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+    font-size: 28px;
+    backdrop-filter: blur(3px);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-compose-card,
+.staff-shell--librarian .notification-compose-page .notification-history-card {
+    overflow: hidden;
+    border: 1px solid var(--notification-line);
+    border-radius: 18px;
+    background: #fffdf9;
+    box-shadow: 0 10px 28px rgba(71, 45, 28, .07);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-compose-body {
+    padding: 28px;
+    background: #fffdf9;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-form-grid {
+    display: grid;
+    grid-template-columns: minmax(340px, .9fr) minmax(0, 1.1fr);
+    align-items: start;
+    gap: 36px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-recipient-column,
+.staff-shell--librarian .notification-compose-page .notification-message-column {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-recipient-column {
+    padding-right: 36px;
+    border-right: 1px solid var(--notification-line);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-message-column {
+    gap: 18px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-form-label {
+    margin: 0 0 8px;
+    color: var(--notification-ink);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-choice-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-choice,
+.staff-shell--librarian .notification-compose-page .notification-choice + .notification-choice {
+    min-width: 0;
+    min-height: 48px;
+    margin: 0;
+    padding: 11px 14px;
+    border: 1px solid var(--notification-line);
+    border-radius: 10px;
+    background: var(--notification-canvas);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-choice:hover {
+    border-color: #cdb9a6;
+    background: #fffaf6;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-choice:has(.form-check-input:checked) {
+    border-color: var(--notification-primary);
+    background: #fff8f3;
+    box-shadow: 0 0 0 3px var(--notification-focus);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-choice .form-check-label {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    color: var(--notification-ink);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-member-section {
+    margin-top: 20px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-control,
+.staff-shell--librarian .notification-compose-page .notification-textarea {
+    border-color: var(--notification-line);
+    border-radius: 10px;
+    background: var(--notification-canvas);
+    color: var(--notification-ink);
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-control {
+    height: 48px;
+    padding: 0 14px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-textarea {
+    min-height: 200px;
+    padding: 13px 14px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-control:focus,
+.staff-shell--librarian .notification-compose-page .notification-textarea:focus {
+    border-color: var(--notification-primary);
+    box-shadow: 0 0 0 3px var(--notification-focus);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-control[readonly] {
+    border-color: var(--notification-line);
+    background: #f5f0e8;
+    color: var(--notification-muted);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-language-note {
+    min-height: 48px;
+    padding: 12px 14px;
+    align-items: center;
+    border-color: #ead9ca;
+    border-radius: 10px;
+    background: #fff8f3;
+    color: var(--notification-ink);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-helper-text {
+    margin-top: 7px;
+    color: var(--notification-muted);
+    font-size: 13px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-selected-summary {
+    margin-top: 14px;
+    color: var(--notification-muted);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-member-list {
+    max-height: 300px;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--notification-line);
+    border-radius: 10px;
+    background: var(--notification-surface);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-member-item,
+.staff-shell--librarian .notification-compose-page .notification-member-item + .notification-member-item {
+    min-height: 56px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--notification-line);
+    border-radius: 10px;
+    background: var(--notification-canvas);
+    box-shadow: 0 1px 2px rgba(71, 45, 28, .03);
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-member-item:hover {
+    border-color: #cdb9a6;
+    box-shadow: 0 5px 14px rgba(71, 45, 28, .08);
+    transform: translateY(-1px);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-member-item:has(.member-checkbox:checked) {
+    border-color: var(--notification-primary);
+    background: #fff8f3;
+    box-shadow: 0 0 0 3px var(--notification-focus);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-character-count {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #f5f0e8;
+    color: var(--notification-muted);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-form-actions {
+    padding-top: 2px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-submit {
+    min-width: 180px;
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 10px;
+    background: var(--notification-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-submit:hover,
+.staff-shell--librarian .notification-compose-page .notification-submit:focus-visible {
+    background: var(--notification-primary-hover);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-card {
+    margin-top: 24px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-title {
+    margin: 0;
+    color: var(--notification-ink);
+    font-family: var(--app-font-display);
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-table-wrap {
+    width: 100%;
+    margin-top: 18px;
+    overflow-x: auto;
+    border: 1px solid var(--notification-line);
+    border-radius: 14px;
+    background: var(--notification-canvas);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-table {
+    width: 100%;
+    min-width: 900px;
+    margin: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    vertical-align: middle;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-table th {
+    height: 54px;
+    padding: 12px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--notification-line);
+    background: var(--notification-surface-soft);
+    color: #765a49;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-table td {
+    height: 64px;
+    padding: 14px 16px;
+    border: 0;
+    border-bottom: 1px solid var(--notification-line);
+    background: var(--notification-canvas);
+    color: #3d3d3a;
+    font-size: 14px;
+    line-height: 1.45;
+    vertical-align: middle;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-history-table tbody tr:hover td {
+    background: #fffaf6;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-empty-state {
+    min-height: 144px;
+    margin-top: 18px;
+    padding: 24px;
+    border: 1px dashed #d8c8b8;
+    border-radius: 12px;
+    background: var(--notification-canvas);
+    color: var(--notification-muted);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-dialog {
+    width: min(560px, calc(100vw - 32px));
+    border-color: var(--notification-line);
+    border-radius: 12px;
+    background: var(--notification-canvas);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-header {
+    padding: 24px;
+    border-color: var(--notification-line);
+    background: var(--notification-surface-soft);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-header .app-page-eyebrow {
+    color: var(--notification-primary);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-header h2 {
+    margin: 4px 0 8px;
+    color: var(--notification-ink);
+    font-size: 28px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-preview {
+    gap: 14px;
+    padding: 24px;
+}
+
+.staff-shell--librarian .notification-compose-page #notificationConfirmContent {
+    border: 1px solid var(--notification-line);
+    border-radius: 10px;
+    background: var(--notification-surface);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-actions {
+    gap: 12px;
+    padding: 16px 24px;
+    border-color: var(--notification-line);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-cancel,
+.staff-shell--librarian .notification-compose-page .notification-confirm-submit {
+    min-width: 120px;
+    min-height: 44px;
+    border-radius: 8px;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-cancel {
+    border-color: var(--notification-line);
+    background: var(--notification-canvas);
+    color: var(--notification-primary);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-cancel:hover,
+.staff-shell--librarian .notification-compose-page .notification-confirm-cancel:focus-visible {
+    border-color: #cdb9a6;
+    background: #fffaf6;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-submit {
+    background: var(--notification-primary);
+    color: #fff;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-confirm-submit:hover,
+.staff-shell--librarian .notification-compose-page .notification-confirm-submit:focus-visible {
+    background: var(--notification-primary-hover);
+    color: #fff;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-choice:focus-within,
+.staff-shell--librarian .notification-compose-page .notification-member-item:focus-within,
+.staff-shell--librarian .notification-compose-page .notification-confirm-cancel:focus-visible,
+.staff-shell--librarian .notification-compose-page .notification-confirm-submit:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--notification-focus);
+}
+
+@media (max-width: 991.98px) {
+    .staff-shell--librarian .notification-compose-page .notification-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-recipient-column {
+        padding-right: 0;
+        padding-bottom: 28px;
+        border-right: 0;
+        border-bottom: 1px solid var(--notification-line);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .staff-shell--librarian .notification-compose-page {
+        width: calc(100% - 24px);
+        padding: 16px 0 40px;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-page-hero,
+    .staff-shell--librarian .notification-compose-page .dashboard-page-header {
+        min-height: 0;
+        padding: 26px 22px !important;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-page-hero .app-page-title {
+        font-size: 34px;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-hero-decoration {
+        display: none;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-compose-body {
+        padding: 20px;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-recipient-column,
+    .staff-shell--librarian .notification-compose-page .notification-message-column {
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-choice-group {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-history-table-wrap {
+        overflow: visible;
+        border: 0;
+        background: transparent;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-history-table {
+        min-width: 0;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-history-table tbody tr {
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        border: 1px solid var(--notification-line);
+        border-left: 1px solid var(--notification-line);
+        border-radius: 12px;
+        background: var(--notification-canvas);
+        box-shadow: 0 3px 10px rgba(71, 45, 28, .05);
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-history-table tbody td {
+        height: auto;
+        background: transparent;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-confirm-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .staff-shell--librarian .notification-compose-page {
+        width: calc(100% - 20px);
+        padding-top: 10px;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-page-hero,
+    .staff-shell--librarian .notification-compose-page .dashboard-page-header {
+        padding: 24px 18px !important;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-page-hero .app-page-title {
+        font-size: clamp(30px, 10vw, 38px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .staff-shell--librarian .notification-compose-page .notification-member-item {
+        transition: none;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-member-item:hover {
+        transform: none;
+    }
+}
