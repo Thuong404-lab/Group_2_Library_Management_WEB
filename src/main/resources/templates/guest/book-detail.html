@@ -26,8 +26,8 @@
                      class="book-detail-cover" th:alt="${book.title}"
                      onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                 <span class="book-detail-status member-reference-pill"
-                      th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
-                      th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
+                      th:classappend="${book.status == 'Active' and availableCount > 0} ? ' is-available' : ' is-unavailable'"
+                      th:text="${book.status == 'Active' and availableCount > 0 ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
             </div>
 
             <div class="book-detail-main">
