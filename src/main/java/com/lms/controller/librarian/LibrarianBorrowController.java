@@ -80,10 +80,36 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tab", defaultValue = "all") String tab,
             Model model) {
 
         page = Math.max(0, page);
         size = Math.max(1, Math.min(size, 100));
+
+        if ("members".equalsIgnoreCase(tab)) {
+            String displayKeyword = keyword == null ? "" : keyword.trim();
+            String searchKeyword = displayKeyword;
+            if (searchKeyword.regionMatches(true, 0, "MEM-", 0, 4)) {
+                searchKeyword = searchKeyword.substring(4).trim();
+            }
+
+            Page<com.lms.entity.MemberAccount> accountPage = searchKeyword.isBlank()
+                    ? memberAccountRepository.findAll(PageRequest.of(page, 20, Sort.by("member.memberId").ascending()))
+                    : memberAccountRepository.searchMemberAccounts(
+                            searchKeyword, PageRequest.of(page, 20, Sort.by("member.memberId").ascending()));
+
+            model.addAttribute("accounts", accountPage.getContent());
+            model.addAttribute("accountPage", accountPage);
+            model.addAttribute("currentPage", page);
+            model.addAttribute("pageSize", 20);
+            model.addAttribute("totalPages", accountPage.getTotalPages());
+            model.addAttribute("totalItems", accountPage.getTotalElements());
+            model.addAttribute("keyword", displayKeyword);
+            model.addAttribute("activeTab", "members");
+            model.addAttribute("activeMenu", "borrow-list");
+            return "librarian/borrow-list";
+        }
+
         java.util.Set<String> allowedStatuses = java.util.Set.of("Active", "Waiting_Pickup", "Returned",
                 "Overdue", "Pending", "Rejected", "Return_Pending", "Canceled", "Cancelled",
                 "Payment_Pending", "Payment_Expired");
@@ -114,6 +140,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("activeTab", "all");
         model.addAttribute("activeMenu", "borrow-list");
 
         return "librarian/borrow-list";
@@ -123,6 +150,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
     // chia đôi màn hình
     @GetMapping("/librarian/borrow/create")
     public String showCreateBorrowForm(@RequestParam(value = "requestId", required = false) Integer requestId,
+            @RequestParam(value = "pickupId", required = false) Integer pickupId,
             @RequestParam(value = "renewId", required = false) Integer renewId,
             @RequestParam(value = "reservationId", required = false) Integer reservationId,
             Model model,
@@ -141,11 +169,9 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("borrowRequest", new BorrowRequest());
         model.addAttribute("maxBorrowDays", borrowService.getMaxBorrowDays());
 
-        // Bước 1: Lấy danh sách thành viên gửi đơn mượn trực tuyến đang chờ phê duyệt
-        // (Hiện ở cột trái)
+        // Bước 1: Lấy danh sách hàng chờ xử lý
         model.addAttribute("pendingRequests", borrowService.getAllPendingRequests());
-
-        // Lấy danh sách yêu cầu gia hạn chờ duyệt
+        model.addAttribute("pendingPickups", borrowService.getWaitingPickupRequests());
         model.addAttribute("pendingRenewals", borrowService.getPendingRenewalRequests());
 
         // Đổi tên thuộc tính từ 'returnRequests' -> 'pendingReturnRequests' và bọc qua
@@ -165,6 +191,21 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                     model.addAttribute("selectedRequest", selectedBorrow);
                     model.addAttribute("requestDetails", borrowService.getBorrowDetailsByBorrowId(requestId));
                     populateMemberStats(model, selectedBorrow.getMember(), usernameByMemberId);
+                }
+            } catch (ApplicationException e) {
+                model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
+            }
+        }
+
+        if (pickupId != null) {
+            try {
+                Borrow selectedPickup = borrowService.getBorrowById(pickupId);
+                if (selectedPickup.getStatus() != null && ("Waiting_Pickup".equalsIgnoreCase(selectedPickup.getStatus())
+                        || "WAITING_PICKUP".equalsIgnoreCase(selectedPickup.getStatus())
+                        || "APPROVED".equalsIgnoreCase(selectedPickup.getStatus()))) {
+                    model.addAttribute("selectedPickup", selectedPickup);
+                    model.addAttribute("pickupDetails", borrowService.getBorrowDetailsByBorrowId(pickupId));
+                    populateMemberStats(model, selectedPickup.getMember(), usernameByMemberId);
                 }
             } catch (ApplicationException e) {
                 model.addAttribute("errorMessage", messageWithDetail("backend.borrow.detailsFailed", e));
@@ -198,7 +239,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             try {
                 Reservation selectedReservation = borrowService.getReservationById(reservationId);
                 if ("Pending".equalsIgnoreCase(selectedReservation.getStatus())
-                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())) {
+                        || "Deposit_Paid".equalsIgnoreCase(selectedReservation.getStatus())
+                        || "Ready".equalsIgnoreCase(selectedReservation.getStatus())) {
                     model.addAttribute("selectedReservation", selectedReservation);
                     populateMemberStats(model, selectedReservation.getMember(), usernameByMemberId);
                 }
@@ -252,7 +294,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.approveFailed", e));
         }
-        return "redirect:/librarian/borrow/list?status=Waiting_Pickup";
+        return "redirect:/librarian/borrow/create?tab=pickups&pickupId=" + borrowId;
     }
 
     // CHỨC NĂNG TỪ CHỐI DUYỆT ĐƠN MƯỢN ONLINE
@@ -282,7 +324,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.action.failed", e));
         }
-        return "redirect:/librarian/borrow/list";
+        return "redirect:/librarian/borrow/create?tab=pickups";
     }
 
     // CHỨC NĂNG TỪ CHỐI ĐƠN ĐẶT TRƯỚC SÁCH
@@ -396,20 +438,13 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             }
 
             // Tính phí mượn sách
-            BigDecimal baseFee = new BigDecimal("5000"); // Giá mặc định nếu không tìm thấy setting
-            try {
-                java.util.Optional<SystemSetting> setting = systemSettingRepository
-                        .findBySettingKeyIgnoreCase("BORROW_FEE_PER_BOOK");
-                if (setting.isPresent()) {
-                    baseFee = new BigDecimal(setting.get().getSettingValue().trim());
-                }
-            } catch (NumberFormatException ignored) {
-                // Keep the documented default when the optional setting is malformed.
-            }
-
             int days = (numberOfDays != null ? numberOfDays : 14);
-            int books = validItems.size();
-            BigDecimal totalBaseFee = baseFee.multiply(new BigDecimal(days)).multiply(new BigDecimal(books));
+            List<BigDecimal> itemDailyFees = validItems.stream()
+                    .map(this::borrowFeeForCondition)
+                    .toList();
+            BigDecimal dailyFeeTotal = itemDailyFees.stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalBaseFee = dailyFeeTotal.multiply(BigDecimal.valueOf(days));
 
             BigDecimal discount = BigDecimal.ZERO;
             if (member.getTier() != null && member.getTier().getDiscountPercent() != null) {
@@ -426,7 +461,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             model.addAttribute("billRawBarcodes", rawBarcodes);
             model.addAttribute("billMemberIdentifier", memberIdentifier);
             model.addAttribute("billPaymentMethod", paymentMethod);
-            model.addAttribute("billFeePerBookPerDay", baseFee);
+            model.addAttribute("billItemDailyFees", itemDailyFees);
+            model.addAttribute("billDailyFeeTotal", dailyFeeTotal);
             model.addAttribute("billBaseFee", totalBaseFee);
             model.addAttribute("billDiscount", discount);
             model.addAttribute("billFinalFee", finalFee);
@@ -436,6 +472,33 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage", messageWithDetail("backend.validation.failed", e));
             return "redirect:/librarian/borrow/create";
+        }
+    }
+
+    private BigDecimal borrowFeeForCondition(com.lms.entity.BookItem item) {
+        String condition = item == null || item.getBookCondition() == null
+                ? ""
+                : item.getBookCondition().trim().toLowerCase(java.util.Locale.ROOT);
+        if (condition.contains("severely")) {
+            return moneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
+        }
+        if (condition.contains("minor")) {
+            return moneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
+        }
+        return moneySetting("BORROW_FEE_PER_BOOK", 5000);
+    }
+
+    private BigDecimal moneySetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(value -> value.signum() >= 0)
+                    .orElse(BigDecimal.valueOf(defaultValue));
+        } catch (NumberFormatException ignored) {
+            return BigDecimal.valueOf(defaultValue);
         }
     }
 

@@ -164,11 +164,34 @@ public class AccountController extends LocalizedControllerSupport {
         return redirectBySource(source);
     }
 
-    @PostMapping("/{id}/send-password-reset")
-    public String sendPasswordReset(@PathVariable Integer id,
+    @PostMapping("/deactivate/{id}")
+    public String deactivateAccount(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
         try {
-            String email = accountService.getMemberEmail(id);
+            accountService.deactivateAccount(id, source, accountIdOf(currentUser));
+            redirectAttributes.addFlashAttribute("success", message("backend.account.deactivated"));
+        } catch (AccountFormValidationException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return redirectBySource(source);
+    }
+
+    @GetMapping("/{id}/deletability")
+    @ResponseBody
+    public Map<String, Boolean> checkDeletability(@PathVariable Integer id) {
+        return Map.of("canDelete", accountService.checkMemberDeletability(id));
+    }
+
+    @PostMapping("/{id}/send-password-reset")
+    public String sendPasswordReset(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "members") String source,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String email = "staff".equalsIgnoreCase(source)
+                    ? accountService.getStaffEmail(id)
+                    : accountService.getMemberEmail(id);
             authService.requestPasswordReset(email);
             redirectAttributes.addFlashAttribute("success", message("backend.account.resetSent", email));
         } catch (ApplicationException e) {
@@ -177,7 +200,7 @@ public class AccountController extends LocalizedControllerSupport {
                             ? message("backend.account.resetFailed")
                             : e.getMessage());
         }
-        return "redirect:/admin/member-list";
+        return redirectBySource(source);
     }
 
     private Map<String, Object> createFormValues(AdminMemberAccountCreateRequest request) {

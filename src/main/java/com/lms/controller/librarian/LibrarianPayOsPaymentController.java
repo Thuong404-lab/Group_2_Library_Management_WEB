@@ -105,6 +105,20 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
         return "librarian/payos-topup";
     }
 
+    @PostMapping("/{orderCode}/cancel")
+    public String cancelPayment(@PathVariable Long orderCode,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+        try {
+            paymentService.cancelBorrowFeeForStaff(orderCode, requireStaff(userDetails));
+            redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelSuccess"));
+            return "redirect:/librarian/borrow/create";
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", readableMessage(exception));
+            return "redirect:/librarian/payments/payos/" + orderCode;
+        }
+    }
+
     @GetMapping("/{orderCode}/status")
     @ResponseBody
     public Map<String, Object> paymentStatus(@PathVariable Long orderCode) {

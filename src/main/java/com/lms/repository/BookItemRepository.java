@@ -20,6 +20,8 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     long countByStatusIgnoreCase(String status);
 
+    long countByBookConditionIgnoreCase(String bookCondition);
+
     long countByBook_StatusIgnoreCase(String bookStatus);
 
     long countByBook_StatusIgnoreCaseAndStatusIgnoreCase(String bookStatus, String itemStatus);
@@ -38,7 +40,20 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
 
     List<BookItem> findByBook_BookId(Integer bookId);
 
+    List<BookItem> findByBook_BookIdIn(List<Integer> bookIds);
+
     List<BookItem> findByBook_BookIdOrderByBarcodeAsc(Integer bookId);
+
+    List<BookItem> findByBook_BookIdOrderByBookItemIdAsc(Integer bookId);
+
+    @Query("""
+            select item
+            from BookItem item
+            left join fetch item.shelf
+            where item.book.bookId in :bookIds
+            order by item.book.bookId asc, item.barcode asc
+            """)
+    List<BookItem> findByBookIdsWithShelf(@Param("bookIds") List<Integer> bookIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

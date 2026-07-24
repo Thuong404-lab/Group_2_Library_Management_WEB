@@ -280,7 +280,7 @@ class BorrowBankPaymentLifecycleTest {
         book.setTitle("Clean Code");
         BookItem item = new BookItem();
         item.setBook(book);
-        item.setStatus("Payment_Pending");
+        item.setStatus("Waiting_Pickup");
         BorrowDetail detail = new BorrowDetail();
         detail.setBorrow(borrow);
         detail.setBook(book);
@@ -313,7 +313,7 @@ class BorrowBankPaymentLifecycleTest {
         borrow.setBorrowId(42);
         borrow.setStatus("Payment_Pending");
         BookItem item = new BookItem();
-        item.setStatus("Payment_Pending");
+        item.setStatus("Waiting_Pickup");
         BorrowDetail detail = new BorrowDetail();
         detail.setBorrow(borrow);
         detail.setBookItem(item);

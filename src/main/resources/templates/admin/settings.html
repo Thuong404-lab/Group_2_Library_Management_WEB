@@ -10,8 +10,9 @@
 <body>
     <div layout:fragment="content" th:with="activeMenu='settings'" class="settings-page">
 
-        <div class="settings-header">
-            <div>
+        <header class="settings-header settings-hero">
+            <div class="settings-hero-copy">
+                <span class="settings-eyebrow" th:text="#{admin.settings.eyebrow}">SYSTEM CONFIGURATION</span>
                 <h2 class="settings-title">
                     <span th:text="#{admin.settings.heading}">System Settings</span>
                 </h2>
@@ -19,7 +20,7 @@
                     <span th:text="#{admin.settings.description}">Configure borrowing, return, and fine policies</span>
                 </div>
             </div>
-        </div>
+        </header>
 
         <div class="alert alert-success" th:if="${success}">
             <i class="bi bi-check-circle me-2"></i>
@@ -31,8 +32,8 @@
             <span th:text="${error}">An error occurred.</span>
         </div>
 
-        <div class="card-classic">
-            <div class="card-header">
+        <div class="card-classic settings-policy-card">
+            <div class="card-header settings-card-header">
                 <h5 class="settings-card-title">
                     <i class="bi bi-sliders me-2 text-classic"></i>
                     <span th:text="#{admin.settings.policyConfiguration}">Borrowing and Return Policy
@@ -40,14 +41,14 @@
                 </h5>
             </div>
 
-            <div class="card-body p-4">
+            <div class="card-body settings-card-body">
                 <form th:action="@{/admin/settings/policies}" method="post" class="row g-4 settings-form"
                     id="policySettingsForm">
 
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                         th:value="${_csrf.token}">
 
-                    <div class="col-12 settings-section-title">
+                    <div class="col-12 settings-section-title settings-section-title--first">
                         <h6 class="fw-bold text-classic mb-0">
                             <i class="bi bi-book me-1"></i>
                             <span th:text="#{admin.settings.borrowPolicy}">Borrowing Policy</span>
@@ -95,7 +96,7 @@
                         </h6>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4 setting-field">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.standardBorrowFee}">Standard Borrowing Fee</span>
                         </label>
@@ -105,7 +106,25 @@
                         <div class="form-text" th:text="#{admin.settings.vndPerBookDay}">VND / book / day</div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4 setting-field">
+                        <label class="form-label fw-bold small text-muted text-uppercase"
+                            th:text="#{admin.settings.minorDamageBorrowFee}">Minor-damage Borrowing Fee</label>
+                        <input name="minorDamageBorrowFee" type="text" inputmode="numeric"
+                            class="form-control money-input" required
+                            th:value="${settingMap['Minor_Damage_Borrow_Fee'] != null ? settingMap['Minor_Damage_Borrow_Fee'] : 4000}">
+                        <div class="form-text" th:text="#{admin.settings.conditionBorrowFeeHint}">At least 1,000 VND below the preceding condition</div>
+                    </div>
+
+                    <div class="col-md-4 setting-field">
+                        <label class="form-label fw-bold small text-muted text-uppercase"
+                            th:text="#{admin.settings.severeDamageBorrowFee}">Severe-damage Borrowing Fee</label>
+                        <input name="severeDamageBorrowFee" type="text" inputmode="numeric"
+                            class="form-control money-input" required
+                            th:value="${settingMap['Severe_Damage_Borrow_Fee'] != null ? settingMap['Severe_Damage_Borrow_Fee'] : 3000}">
+                        <div class="form-text" th:text="#{admin.settings.conditionBorrowFeeHint}">At least 1,000 VND below the preceding condition</div>
+                    </div>
+
+                    <div class="col-md-4 setting-field">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.overdueFine}">Overdue Fine</span>
                         </label>
@@ -116,7 +135,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4 setting-field">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.reservationDeposit}">Reservation Deposit</span>
                         </label>
@@ -126,7 +145,7 @@
                         <div class="form-text" th:text="#{admin.settings.vndPerBook}">VND / book</div>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4 setting-field">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageCompensation}">Book Damage Compensation Fee</span>
                         </label>
@@ -137,16 +156,16 @@
                             severely damaged</div>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4 setting-field">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageThreshold}">Damage Compensation Threshold</span>
                         </label>
-                        <div class="input-group">
-                            <input name="damageCompensationThreshold" type="number" class="form-control" min="0"
-                                max="100" step="1" required
-                                th:value="${settingMap['Damage_Compensation_Threshold'] != null ? settingMap['Damage_Compensation_Threshold'] : 50}">
-                            <span class="input-group-text">%</span>
-                        </div>
+                        <select name="damageCompensationThreshold" class="form-select" required>
+                            <option th:each="option : ${damageThresholdOptions}" th:value="${option.key}"
+                                th:selected="${settingMap['Damage_Compensation_Threshold'] == option.key}"
+                                th:text="${option.value}">
+                            </option>
+                        </select>
                         <div class="form-text" th:text="#{admin.settings.damageThresholdHint}">Compensation is charged
                             when damage exceeds this value</div>
                     </div>
@@ -167,13 +186,12 @@
                             th:value="${settingMap['Overdue_Violation_Lock_Limit'] != null ? settingMap['Overdue_Violation_Lock_Limit'] : 3}">
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-12 settings-action-divider">
                         <hr class="settings-divider">
                     </div>
 
-                    <div class="col-12 d-flex justify-content-end">
-                        <button type="submit" class="btn btn-classic px-4">
-                            <i class="bi bi-check-circle me-1"></i>
+                    <div class="col-12 settings-form-actions">
+                        <button type="submit" class="btn btn-classic settings-save-button">
                             <span th:text="#{admin.settings.save}">Save Settings</span>
                         </button>
                     </div>

@@ -1,4 +1,4 @@
-package com.lms.domain;
+package com.lms.util;
 
 import java.util.Locale;
 

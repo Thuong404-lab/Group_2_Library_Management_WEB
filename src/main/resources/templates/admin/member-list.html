@@ -11,7 +11,8 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='accounts'" class="member-management-page accounts-page admin-member-list-page">
+    <div layout:fragment="content" th:with="activeMenu='accounts'"
+        class="member-management-page accounts-page admin-member-list-page">
         <header class="member-page-header admin-member-list-hero">
             <div>
                 <span class="member-page-eyebrow" th:text="#{admin.accounts.eyebrow}">MEMBER MANAGEMENT</span>
@@ -81,8 +82,8 @@
                 </div>
                 <!-- Search & Filter -->
                 <div class="member-toolbar">
-                    <form class="member-search-form" method="get" th:action="@{/admin/member-list}" data-auto-filter-form
-                        data-focus-key="adminAccountFilterFocus">
+                    <form class="member-search-form" method="get" th:action="@{/admin/member-list}"
+                        data-auto-filter-form data-focus-key="adminAccountFilterFocus">
                         <div class="member-search-group">
                             <div class="member-keyword-control">
                                 <span class="input-group-text">
@@ -124,7 +125,7 @@
                 </div>
 
                 <div class="table-responsive member-table-wrap">
-                    <table class="table table-hover align-middle stable-table-layout member-table">
+                    <table class="table table-hover align-middle member-table">
                         <colgroup>
                             <col class="account-col-index">
                             <col class="account-col-username">
@@ -172,7 +173,7 @@
                                     </div>
                                 </td>
 
-                                <td th:data-label="#{member.profile.tier}" th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
+                                <td th:data-label="#{member.profile.tier}" th:with="member=${account.member}">
                                     <span class="badge rounded-pill px-3 py-2 text-white"
                                         th:if="${member != null && member.tier != null}"
                                         th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
@@ -357,7 +358,8 @@
                                                                     </option>
                                                                     <option value="Inactive"
                                                                         th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
-                                                                        th:text="#{member.account.status.restricted}">Restricted
+                                                                        th:text="#{member.account.status.restricted}">
+                                                                        Restricted
                                                                     </option>
                                                                     <option value="Blocked"
                                                                         th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
@@ -373,7 +375,8 @@
                                                                 <div class="member-status-help"
                                                                     th:text="#{librarian.members.statusHelp}">
                                                                     Active members have full access; restricted members
-                                                                    can only view and settle obligations; blocked members
+                                                                    can only view and settle obligations; blocked
+                                                                    members
                                                                     cannot sign in.
                                                                 </div>
                                                             </div>
@@ -483,15 +486,57 @@
                                         </div>
                                     </div>
 
-                                    <button type="button"
-                                        class="member-icon-action member-icon-action-danger account-action-tooltip"
-                                        data-bs-toggle="modal"
-                                        th:data-bs-target="${'#deleteMemberModal' + account.accountId}"
+                                    <button type="button" class="member-icon-action account-action-tooltip"
+                                        th:onclick="|checkMemberDeletability(${account.accountId}, 'admin/member-list')|"
                                         th:data-bs-title="#{admin.accounts.delete}"
                                         data-bs-custom-class="delete-account-tooltip"
                                         th:aria-label="#{admin.accounts.delete}">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    <!-- Deactivate Modal -->
+                                    <div class="modal fade text-start account-standard-modal"
+                                        th:id="${'deactivateMemberModal' + account.accountId}" tabindex="-1"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form method="post"
+                                                    th:action="@{/admin/member-list/deactivate/{id}(id=${account.accountId})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <input type="hidden" name="source" value="members">
+
+                                                    <div class="modal-header member-modal-header">
+                                                        <h5 class="modal-title member-modal-title-accent text-warning">
+                                                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                                            <span
+                                                                th:text="#{admin.accounts.confirmDeactivateTitle}">Confirm
+                                                                Account Deactivation</span>
+                                                        </h5>
+                                                    </div>
+
+                                                    <div class="modal-body member-modal-body">
+                                                        <p class="mb-3">
+                                                            <span th:text="#{admin.accounts.confirmDeactivateBody}">This
+                                                                member has active business operations. They cannot be
+                                                                hard-deleted. Do you want to deactivate their account
+                                                                instead?</span>
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="modal-footer member-modal-footer">
+                                                        <button type="button" class="btn member-modal-secondary"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn btn-warning text-dark"
+                                                            th:text="#{admin.accounts.deactivateBtn}">
+                                                            Deactivate Account
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Delete Modal -->
                                     <div class="modal fade text-start account-standard-modal"
                                         th:id="${'deleteMemberModal' + account.accountId}" tabindex="-1"
@@ -605,7 +650,7 @@
                                                             data-bs-dismiss="modal"
                                                             th:text="#{common.cancel}">Cancel</button>
                                                         <button type="submit" class="btn app-danger-action"
-                                                            th:text="#{admin.accounts.confirmDeactivate}">Deactivate
+                                                            th:text="#{admin.accounts.confirmDelete}">Delete
                                                             Account</button>
                                                     </div>
                                                 </form>
@@ -888,6 +933,31 @@
                     });
                 });
             });
+        </script>
+        <script>
+            function checkMemberDeletability(accountId, baseUrl) {
+                let cleanUrl = baseUrl.startsWith('/') ? baseUrl : '/' + baseUrl;
+                fetch(`${cleanUrl}/${accountId}/deletability`, { credentials: 'same-origin' })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Server error response');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.canDelete) {
+                            let deleteModal = new bootstrap.Modal(document.getElementById('deleteMemberModal' + accountId));
+                            deleteModal.show();
+                        } else {
+                            let deactivateModal = new bootstrap.Modal(document.getElementById('deactivateMemberModal' + accountId));
+                            deactivateModal.show();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking deletability:', error);
+                        alert('Could not verify account status. Please try again.');
+                    });
+            }
         </script>
     </div>
 </body>

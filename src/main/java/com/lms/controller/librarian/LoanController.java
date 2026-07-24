@@ -139,6 +139,10 @@ public class LoanController extends LocalizedControllerSupport {
             map.put("borrowDetailId", detail.getBorrowDetailId());
             map.put("needsBarcode", detail.getBookItem() == null || detail.getBookItem().getBarcode() == null || detail.getBookItem().getBarcode().isBlank());
             map.put("barcode", detail.getBookItem() != null ? detail.getBookItem().getBarcode() : "");
+            map.put("currentBookCondition", detail.getBookItem() != null
+                    && detail.getBookItem().getBookCondition() != null
+                    ? detail.getBookItem().getBookCondition()
+                    : "New");
             map.put("bookTitle", detail.getBook().getTitle());
             map.put("memberName", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getFullName() : "");
             map.put("memberEmail", detail.getBorrow().getMember() != null && detail.getBorrow().getMember().getUser() != null ? detail.getBorrow().getMember().getUser().getEmail() : "");
@@ -162,7 +166,10 @@ public class LoanController extends LocalizedControllerSupport {
             BorrowDetail recovered = loanService.recoverMissingBookItem(borrowDetailId, barcode);
             return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
                     "message", message("librarian.returnDesk.recoverySuccess", recovered.getBookItem().getBarcode()),
-                    "barcode", recovered.getBookItem().getBarcode()));
+                    "barcode", recovered.getBookItem().getBarcode(),
+                    "currentBookCondition", recovered.getBookItem().getBookCondition() != null
+                            ? recovered.getBookItem().getBookCondition()
+                            : "New"));
         } catch (ApplicationException exception) {
             return org.springframework.http.ResponseEntity.badRequest()
                     .body(java.util.Map.of("message", exception.getMessage()));
@@ -282,25 +289,11 @@ public class LoanController extends LocalizedControllerSupport {
      */
     @GetMapping("/borrow-schedule")
     public String showBorrowSchedule(@RequestParam(value = "keyword", required = false) String keyword,
-                                     @RequestParam(value = "page", defaultValue = "0") int page,
-                                     Model model) {
-        int safePage = Math.max(0, page);
-        String displayKeyword = keyword == null ? "" : keyword.trim();
-        String searchKeyword = displayKeyword;
-        if (searchKeyword.regionMatches(true, 0, "MEM-", 0, 4)) {
-            searchKeyword = searchKeyword.substring(4).trim();
+                                     @RequestParam(value = "page", defaultValue = "0") int page) {
+        if (keyword != null && !keyword.isBlank()) {
+            return "redirect:/librarian/borrow/list?tab=members&keyword=" + java.net.URLEncoder.encode(keyword, java.nio.charset.StandardCharsets.UTF_8) + "&page=" + page;
         }
-
-        Page<com.lms.entity.MemberAccount> accountPage = searchKeyword.isBlank()
-                ? memberAccountRepository.findAll(PageRequest.of(safePage, 20, Sort.by("member.memberId").ascending()))
-                : memberAccountRepository.searchMemberAccounts(
-                        searchKeyword, PageRequest.of(safePage, 20, Sort.by("member.memberId").ascending()));
-
-        model.addAttribute("accounts", accountPage.getContent());
-        model.addAttribute("accountPage", accountPage);
-        model.addAttribute("keyword", displayKeyword);
-        model.addAttribute("activeMenu", "borrow-schedule");
-        return "librarian/borrow-schedule";
+        return "redirect:/librarian/borrow/list?tab=members&page=" + page;
     }
 
     /**

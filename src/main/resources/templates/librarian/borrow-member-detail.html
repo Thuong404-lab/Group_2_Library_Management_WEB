@@ -4,14 +4,17 @@
       layout:decorate="~{layout/librarian_base}">
 <head>
     <title th:text="#{librarian.borrowMember.title}">Chi tiết giao dịch thành viên</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-member-detail.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-member-detail.css(v='20260724-2')}">
 </head>
 <body>
-<div layout:fragment="content" class="borrow-management-page borrow-member-history-page">
+<div layout:fragment="content"
+     th:with="activeMenu='borrow-list'"
+     class="member-palette-page member-management-page borrow-management-page borrow-member-history-page">
 
     <!-- Page Header -->
     <header class="borrow-page-header">
         <div class="borrow-history-hero-copy">
+            <span class="borrow-page-eyebrow" th:text="#{librarian.borrowList.eyebrow}">LOAN MANAGEMENT</span>
             <h1 class="borrow-page-title" th:text="#{librarian.borrowMember.heading}">Chi tiết Lịch sử &amp; Giao dịch Độc giả</h1>
             <div class="text-muted small" th:text="#{librarian.borrowMember.description}">Thông tin cá nhân, toàn bộ lịch sử mượn trả và nhật ký tài chính của độc giả từ khi đăng ký.</div>
         </div>
@@ -209,7 +212,7 @@
     <div th:each="borrow : ${borrows}" class="receipt-card">
         <div class="receipt-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center gap-3">
-                <span class="fw-bold text-classic font-monospace fs-5" th:text="${T(com.lms.util.BorrowCodeFormatter).format(borrow.borrowId)}">BOR-1</span>
+                <span class="fw-bold text-classic font-monospace fs-5" th:text="${@borrowCodeFormatter.format(borrow.borrowId)}">BOR-1</span>
                 <span class="text-muted small">
                     <i class="bi bi-calendar3 me-1"></i>
                     <span th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">12/07/2026</span>
@@ -245,8 +248,12 @@
         </div>
 
         <div class="receipt-body">
-            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-book me-2 text-classic"></i><span th:text="#{librarian.borrowMember.books}">Books in this loan</span></h6>
-            <div class="table-responsive book-history-table-wrap">
+            <section class="receipt-subsection receipt-books-section">
+                <h6 class="receipt-subsection-title">
+                    <i class="bi bi-book text-classic" aria-hidden="true"></i>
+                    <span th:text="#{librarian.borrowMember.books}">Books in this loan</span>
+                </h6>
+                <div class="table-responsive book-history-table-wrap">
                 <table class="table align-middle books-table mb-0 book-history-table">
                     <thead>
                     <tr>
@@ -310,11 +317,13 @@
                     </tr>
                     </tbody>
                 </table>
-            </div>
+                </div>
+            </section>
 
-            <div class="transaction-section">
-                <h6 class="fw-bold text-dark mb-3">
-                    <i class="bi bi-wallet2 me-2 text-classic"></i><span th:text="#{librarian.borrowMember.financialLog}">Related Financial Transactions</span>
+            <section class="receipt-subsection transaction-section">
+                <h6 class="receipt-subsection-title">
+                    <i class="bi bi-wallet2 text-classic" aria-hidden="true"></i>
+                    <span th:text="#{librarian.borrowMember.financialLog}">Related Financial Transactions</span>
                 </h6>
                 <div th:if="${#maps.isEmpty(transactionsByBorrowId) or #lists.isEmpty(transactionsByBorrowId[borrow.borrowId])}"
                      class="small text-muted fst-italic" th:text="#{librarian.borrowMember.noTransactions}">
@@ -375,7 +384,7 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 

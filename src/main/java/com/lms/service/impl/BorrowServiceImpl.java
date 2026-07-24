@@ -184,17 +184,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         // Tính toán số tiền
 
-        BigDecimal feePerBookPerDay = BigDecimal.valueOf(5000);
-        SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
-        if (feeSetting != null) {
-            try {
-                feePerBookPerDay = new BigDecimal(feeSetting.getSettingValue());
-            } catch (NumberFormatException ignored) {
-                // Keep the documented default when the optional setting is malformed.
-            }
-        }
-        BigDecimal baseFee = feePerBookPerDay
-                .multiply(BigDecimal.valueOf(bookItemsToBorrow.size()))
+        BigDecimal baseFee = bookItemsToBorrow.stream()
+                .map(this::getBorrowFeeForCondition)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .multiply(BigDecimal.valueOf(borrowDays));
         BigDecimal discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
                 ? member.getTier().getDiscountPercent() : BigDecimal.ZERO;
@@ -296,7 +288,8 @@ public class BorrowServiceImpl implements BorrowService {
                 throw new ConflictException(localizedMessageService.get("backend.borrow.detailNotAwaitingPayment"));
             }
             BookItem item = detail.getBookItem();
-            if (item == null || !PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())) {
+            if (item == null || (!PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
+                    && !"Waiting_Pickup".equalsIgnoreCase(item.getStatus()))) {
                 throw new ConflictException(localizedMessageService.get("backend.borrow.copyNoLongerReserved"));
             }
 
@@ -328,7 +321,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         for (BorrowDetail detail : borrowDetailRepository.findByBorrowId(borrowId)) {
             BookItem item = detail.getBookItem();
-            if (item != null && PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())) {
+            if (item != null && (PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
+                    || "Waiting_Pickup".equalsIgnoreCase(item.getStatus()))
+                    && PAYMENT_PENDING.equalsIgnoreCase(detail.getStatus())) {
                 item.setStatus("Available");
 
                 bookItemRepository.save(item);
@@ -549,15 +544,6 @@ public class BorrowServiceImpl implements BorrowService {
 
         // â”€â”€ 2. TÃ­nh phÃ­ mÆ°á»£n
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        BigDecimal feePerBookPerDay = BigDecimal.valueOf(5000);
-        SystemSetting feeSetting = systemSettingRepository.findBySettingKey("BORROW_FEE_PER_BOOK").orElse(null);
-        if (feeSetting != null) {
-            try {
-                feePerBookPerDay = new BigDecimal(feeSetting.getSettingValue());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
         int borrowDays = normalizeBorrowDays(null);
         if (details.get(0).getDueDate() != null && borrow.getBorrowDate() != null) {
             long computed = ChronoUnit.DAYS.between(borrow.getBorrowDate(), details.get(0).getDueDate());
@@ -567,7 +553,9 @@ public class BorrowServiceImpl implements BorrowService {
 
         BigDecimal discount = member.getTier() != null && member.getTier().getDiscountPercent() != null
                 ? member.getTier().getDiscountPercent() : BigDecimal.ZERO;
-        BigDecimal baseFee = feePerBookPerDay.multiply(BigDecimal.valueOf(details.size()))
+        BigDecimal baseFee = matchedItems.stream()
+                .map(this::getBorrowFeeForCondition)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .multiply(BigDecimal.valueOf(borrowDays));
         BigDecimal finalFee = baseFee.multiply(BigDecimal.ONE.subtract(
                 discount.divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP)))
@@ -802,13 +790,8 @@ public class BorrowServiceImpl implements BorrowService {
         BookItem item = bookItemRepository.findByBarcode(barcode)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.loan.barcodeNotFound", barcode)));
-        BorrowDetail activeDetail = borrowDetailRepository.findAll().stream()
-                .filter(d -> d.getBookItem() != null && d.getBookItem().getBookItemId().equals(item.getBookItemId())
-                        && ("Borrowed".equalsIgnoreCase(d.getStatus())
-                                || "Overdue".equalsIgnoreCase(d.getStatus())
-                                || "Return_Pending".equalsIgnoreCase(d.getStatus())
-                                || "Renew_Pending".equalsIgnoreCase(d.getStatus())))
-                .findFirst()
+        BorrowDetail activeDetail = borrowDetailRepository.findFirstByBookItem_BookItemIdAndStatusInIgnoreCase(
+                        item.getBookItemId(), List.of("Borrowed", "Overdue", "Return_Pending", "Renew_Pending"))
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.loan.activeHistoryNotFound")));
 
@@ -817,8 +800,8 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         item.setStatus("Available");
-
         bookItemRepository.save(item);
+
         activeDetail.setReturnDate(LocalDateTime.now());
         activeDetail.setStatus("Returned");
         borrowDetailRepository.save(activeDetail);
@@ -828,6 +811,27 @@ public class BorrowServiceImpl implements BorrowService {
         if (sideDetails.stream().allMatch(d -> "Returned".equalsIgnoreCase(d.getStatus()))) {
             parent.setStatus("Returned");
             borrowRepository.save(parent);
+        }
+
+        // Tự động phân gán cho độc giả đứng đầu hàng đợi Đặt trước (FIFO) nếu bản sao ở trạng thái Available
+        if (item != null && "Available".equalsIgnoreCase(item.getStatus()) && activeDetail.getBook() != null && activeDetail.getBook().getBookId() != null) {
+            Integer bookId = activeDetail.getBook().getBookId();
+            List<Reservation> waitingReservations = reservationRepository
+                    .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
+            if (!waitingReservations.isEmpty()) {
+                Reservation nextReservation = waitingReservations.get(0);
+                nextReservation.setStatus("Ready");
+                reservationRepository.save(nextReservation);
+
+                item.setStatus("Waiting_Pickup");
+                bookItemRepository.save(item);
+
+                sendInternalNotification(nextReservation.getMember(),
+                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.SYSTEM,
+                        "systemNotification.reservation.ready.title",
+                        "systemNotification.reservation.ready.content",
+                        nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
+            }
         }
     }
 
@@ -875,12 +879,44 @@ public class BorrowServiceImpl implements BorrowService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.borrow.reservationNotFound")));
-        if (!"Deposit_Paid".equalsIgnoreCase(reservation.getStatus())) {
+        String status = reservation.getStatus();
+        if (!"Deposit_Paid".equalsIgnoreCase(status) && !"Ready".equalsIgnoreCase(status)) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.reservationDepositRequired"));
         }
 
+        // 1. Tìm bản sao sách đang ở trạng thái Waiting_Pickup hoặc Available
+        BookItem itemToHandover = bookItemRepository.findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(
+                reservation.getBook().getBookId(), "Waiting_Pickup")
+                .orElseGet(() -> bookItemRepository.findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(
+                        reservation.getBook().getBookId(), "Available")
+                        .orElseThrow(() -> new ConflictException(localizedMessageService.get("backend.borrow.noCopiesAvailableToApprove"))));
+
+        // 2. Cập nhật trạng thái bản sao sách thành Borrowed (Đã mượn)
+        itemToHandover.setStatus("Borrowed");
+        bookItemRepository.save(itemToHandover);
+
+        // 3. Tạo phiếu mượn (Borrow) mới cho độc giả
+        Borrow borrow = new Borrow();
+        borrow.setMember(reservation.getMember());
+        borrow.setBorrowDate(LocalDateTime.now());
+        borrow.setStatus("Active");
+        borrow = borrowRepository.save(borrow);
+
+        // 4. Tạo chi tiết phiếu mượn (BorrowDetail)
+        BorrowDetail detail = new BorrowDetail();
+        detail.setBorrow(borrow);
+        detail.setBook(reservation.getBook());
+        detail.setBookItem(itemToHandover);
+        int borrowDays = getMaxBorrowDays();
+        detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
+        detail.setStatus("Borrowed");
+        detail.setRenewCount(0);
+        borrowDetailRepository.save(detail);
+
+        // 5. Cập nhật trạng thái phiếu Đặt trước thành Active
         reservation.setStatus("Active");
         reservationRepository.save(reservation);
+
         sendInternalNotification(reservation.getMember(),
                 NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.LIBRARIAN,
                 "systemNotification.reservation.approved.title",
@@ -981,7 +1017,42 @@ public class BorrowServiceImpl implements BorrowService {
             throw new ForbiddenException(
                     localizedMessageService.get("backend.borrow.cancelOthersReservationForbidden"));
         }
-        reservation.setStatus("Canceled");
+
+        String status = reservation.getStatus();
+        boolean isDepositPaid = "Deposit_Paid".equalsIgnoreCase(status)
+                || "Ready".equalsIgnoreCase(status)
+                || "Refund_Pending".equalsIgnoreCase(status);
+
+        if (isDepositPaid) {
+            Member member = reservation.getMember();
+            Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            localizedMessageService.get("backend.financial.walletNotFound")));
+            BigDecimal refundAmount = financialService.getReservationDepositAmount();
+            if (refundAmount != null && refundAmount.signum() > 0) {
+                wallet.setBalance(wallet.getBalance().add(refundAmount));
+                walletRepository.save(wallet);
+
+                Transaction tx = new Transaction();
+                tx.setWallet(wallet);
+                tx.setTransactionType("REFUND");
+                tx.setAmount(refundAmount);
+                tx.setStatus("Completed");
+                tx.setTransactionDate(LocalDateTime.now());
+                transactionRepository.save(tx);
+
+                sendInternalNotification(member,
+                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_REFUNDED,
+                        NotificationSource.SYSTEM,
+                        "systemNotification.reservation.refund.title",
+                        "systemNotification.reservation.refund.content",
+                        refundAmount, reservation.getBook() != null ? reservation.getBook().getTitle() : "");
+            }
+            reservation.setStatus("Refunded");
+        } else {
+            reservation.setStatus("Canceled");
+        }
+
         reservationRepository.save(reservation);
     }
 
@@ -1008,7 +1079,7 @@ public class BorrowServiceImpl implements BorrowService {
     @Transactional(readOnly = true)
     public List<Reservation> getAllPendingReservations() {
         return reservationRepository.findByStatusInOrderByReservationDateAsc(
-                List.of("Pending", "Deposit_Paid"));
+                List.of("Pending", "Deposit_Paid", "Ready"));
     }
 
     @Override
@@ -1049,7 +1120,8 @@ public class BorrowServiceImpl implements BorrowService {
                             queuePosition,
                             email,
                             phone,
-                            username);
+                            username,
+                            r.getStatus());
                 })
                 .filter(dto -> pendingReservationIds.contains(dto.getId()))
                 .toList();
@@ -1069,17 +1141,19 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getAllPendingRequests() {
-        return borrowRepository.findAll().stream()
-                .filter(b -> "Pending".equalsIgnoreCase(b.getStatus()))
-                .toList();
+        return borrowRepository.findByStatusIgnoreCase("Pending");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Borrow> getWaitingPickupRequests() {
+        return borrowRepository.findByStatusInIgnoreCase(List.of("Waiting_Pickup", "WAITING_PICKUP", "APPROVED"));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Borrow> getAllReturnRequests() {
-        return borrowRepository.findAll().stream()
-                .filter(b -> "Return_Pending".equalsIgnoreCase(b.getStatus()))
-                .toList();
+        return borrowRepository.findByStatusIgnoreCase("Return_Pending");
     }
 
     @Override
@@ -1268,6 +1342,9 @@ public class BorrowServiceImpl implements BorrowService {
                 .orElse(null);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.lms.service.EmailService emailService;
+
     private void sendInternalNotification(Member member,
             NotificationType type,
             NotificationEventType eventType,
@@ -1293,6 +1370,17 @@ public class BorrowServiceImpl implements BorrowService {
         mn.setNotification(saved);
         mn.setIsRead(false);
         memberNotificationRepository.save(mn);
+
+        if (emailService != null) {
+            String recipientEmail = (member.getUser() != null) ? member.getUser().getEmail() : null;
+            if (recipientEmail != null && !recipientEmail.trim().isEmpty()) {
+                try {
+                    emailService.sendEmail(recipientEmail.trim(), notif.getTitle(), notif.getContent());
+                } catch (Exception ignored) {
+                    // Safe fallback if SMTP email server is unconfigured or unavailable
+                }
+            }
+        }
     }
 
     private void sendSuccessfulBorrowNotification(Borrow borrow, List<BorrowDetail> details) {
@@ -1381,6 +1469,36 @@ public class BorrowServiceImpl implements BorrowService {
         }
     }
 
+    private BigDecimal getBorrowFeeForCondition(BookItem item) {
+        String condition = item == null || item.getBookCondition() == null
+                ? ""
+                : item.getBookCondition().trim().toLowerCase(java.util.Locale.ROOT);
+        if (condition.contains("lost")) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.lostCopyUnavailable"));
+        }
+        if (condition.contains("severely")) {
+            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
+        }
+        if (condition.contains("minor")) {
+            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
+        }
+        return getMoneySetting("BORROW_FEE_PER_BOOK", 5000);
+    }
+
+    private BigDecimal getMoneySetting(String key, int defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(value -> value.signum() >= 0)
+                    .orElse(BigDecimal.valueOf(defaultValue));
+        } catch (NumberFormatException ignored) {
+            return BigDecimal.valueOf(defaultValue);
+        }
+    }
+
     private Staff resolveStaff(String username) {
         if (username == null || username.isBlank()) {
             throw new ResourceNotFoundException(localizedMessageService.get("backend.account.staffNotFound"));
@@ -1463,15 +1581,25 @@ public class BorrowServiceImpl implements BorrowService {
                         localizedMessageService.get("backend.member.currentNotFound")));
 
         int borrowDays = normalizeBorrowDays(numberOfDays);
-        java.math.BigDecimal feePerBookPerDay = java.math.BigDecimal
-                .valueOf(getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000));
+        java.util.Map<Integer, java.util.ArrayDeque<BookItem>> previewItems = new java.util.HashMap<>();
+        java.math.BigDecimal dailyFee = java.math.BigDecimal.ZERO;
+        for (Integer bookId : normalizedBookIds) {
+            java.util.ArrayDeque<BookItem> items = previewItems.computeIfAbsent(bookId, id ->
+                    new java.util.ArrayDeque<>(bookItemRepository.findByBook_BookIdOrderByBookItemIdAsc(id).stream()
+                            .filter(item -> "Available".equalsIgnoreCase(item.getStatus()))
+                            .toList()));
+            BookItem item = items.pollFirst();
+            if (item == null) {
+                throw new ConflictException(localizedMessageService.get("backend.borrow.noAvailableCopy", bookId));
+            }
+            dailyFee = dailyFee.add(getBorrowFeeForCondition(item));
+        }
         java.math.BigDecimal discountPercent = (member.getTier() != null && member.getTier().getDiscountPercent() != null)
                 ? member.getTier().getDiscountPercent() : java.math.BigDecimal.ZERO;
         java.math.BigDecimal discountFactor = java.math.BigDecimal.ONE.subtract(
                 discountPercent.divide(java.math.BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP));
 
-        return feePerBookPerDay
-                .multiply(java.math.BigDecimal.valueOf(normalizedBookIds.size()))
+        return dailyFee
                 .multiply(java.math.BigDecimal.valueOf(borrowDays))
                 .multiply(discountFactor)
                 .setScale(2, java.math.RoundingMode.HALF_UP);
@@ -1615,7 +1743,7 @@ public class BorrowServiceImpl implements BorrowService {
                 throw new ConflictException(
                         localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
             }
-            reservedItem.setStatus(BorrowServiceImpl.PAYMENT_PENDING);
+            reservedItem.setStatus(PAYMENT_PENDING);
             bookItemRepository.save(reservedItem);
 
             BorrowDetail detail = new BorrowDetail();

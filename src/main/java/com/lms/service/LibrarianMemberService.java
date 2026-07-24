@@ -25,4 +25,6 @@ public interface LibrarianMemberService {
     void deleteMember(Integer accountId);
 
     void changeMemberStatus(Integer accountId, String status);
+
+    boolean checkMemberDeletability(Integer accountId);
 }

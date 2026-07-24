@@ -136,8 +136,15 @@
                                 <input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.acquisition.yearPlaceholder}">
                                 <div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div>
                             </div>
+
+                            <!-- 6. Liên kết tham khảo -->
+                            <div class="member-form-field member-form-field--reference">
+                                <label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label>
+                                <input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://...">
+                                <div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div>
+                            </div>
                             
-                            <!-- 6. Lý do đề xuất * -->
+                            <!-- 7. Lý do đề xuất * -->
                             <div class="member-form-field member-form-field--full">
                                 <label for="requestReason"><span th:text="#{member.acquisition.reason}">Request Reason</span> <span class="required-star">*</span></label>
                                 <textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" th:placeholder="#{validation.charactersRange(10,1000)}"></textarea>
@@ -145,13 +152,6 @@
                                     <span id="requestReasonCount" aria-live="polite">0/1000</span>
                                 </div>
                                 <div id="requestReasonFeedback" class="member-field-error" th:text="${#fields.hasErrors('requestReason') ? #fields.errors('requestReason')[0] : ''}"></div>
-                            </div>
-                            
-                            <!-- 7. Liên kết tham khảo -->
-                            <div class="member-form-field member-form-field--full">
-                                <label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label>
-                                <input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://...">
-                                <div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div>
                             </div>
                         </div>
                     </div>
