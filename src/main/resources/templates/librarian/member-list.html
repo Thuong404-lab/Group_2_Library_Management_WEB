@@ -4,7 +4,7 @@
 
 <head>
     <title th:text="#{librarian.members.title}">Member List</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css(v='20260724-user-management-ui-v2')}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
     <style>
         input[type="password"]::-ms-reveal,
@@ -15,7 +15,8 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='members'" class="member-management-page member-list-page">
+    <div layout:fragment="content" th:with="activeMenu='members'"
+        class="member-management-page member-list-page canonical-management-page">
         <header class="member-page-header member-list-hero">
             <div class="member-list-hero-copy">
                 <div class="member-page-eyebrow" th:text="#{librarian.members.title}">MEMBER MANAGEMENT</div>
@@ -252,12 +253,15 @@
                     <!-- Search & Filter -->
                     <form class="member-search-form" method="get" th:action="@{/librarian/members}"
                         data-auto-filter-form data-focus-key="librarianMemberFilterFocus">
-                        <div class="input-group member-search-group member-list-filter-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
-                                th:value="${keyword}" th:placeholder="#{librarian.members.searchPlaceholder}">
+                        <div class="member-search-group member-list-filter-group">
+                            <div class="input-group member-keyword-control">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                                    data-auto-search th:value="${keyword}"
+                                    th:placeholder="#{librarian.members.searchPlaceholder}">
+                            </div>
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 th:aria-label="#{librarian.members.filterTier}">
@@ -282,7 +286,6 @@
                             </select>
 
                             <a class="btn member-search-button text-nowrap" th:href="@{/librarian/members}">
-                                <i class="bi bi-arrow-clockwise me-1"></i>
                                 <span th:text="#{common.clearFilter}">Clear filter</span>
                             </a>
                         </div>
