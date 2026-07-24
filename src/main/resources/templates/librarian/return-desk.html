@@ -260,7 +260,7 @@
                 if (!returnCondition || !compensationPreview) return;
                 const condition = (returnCondition.value || '').toLocaleLowerCase('vi');
                 const requiresCompensation = condition.includes('hư hỏng nặng') || condition.includes('mất sách')
-                    || condition.includes('severe damage') || condition.includes('lost');
+                    || condition.includes('severe') || condition.includes('lost');
                 compensationPreview.hidden = !requiresCompensation;
                 if (!requiresCompensation) return;
 
@@ -582,7 +582,7 @@
                             const value = (conditionNoteSelect.value || '').toLocaleLowerCase('vi');
                             if (value.includes('hư hỏng nhẹ') || value.includes('minor damage')) {
                                 const fineVal = parseFloat(damageFineInput.value) || 0;
-                                if (fineVal <= 0) {
+                                if (fineVal < 0) {
                                     e.preventDefault();
                                     const fineError = document.getElementById('fineError');
                                     if (fineError) {
@@ -602,7 +602,7 @@
                 damageFineInput.addEventListener('input', function() {
                     const fineVal = parseFloat(this.value) || 0;
                     const fineError = document.getElementById('fineError');
-                    if (fineVal > 0) {
+                    if (fineVal >= 0) {
                         this.classList.remove('is-invalid');
                         if (fineError) fineError.style.display = 'none';
                     }

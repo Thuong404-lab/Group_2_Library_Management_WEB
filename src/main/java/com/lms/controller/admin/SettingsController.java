@@ -29,12 +29,6 @@ public class SettingsController extends LocalizedControllerSupport {
     @GetMapping
     public String showSettings(Model model) {
         model.addAttribute("settingMap", systemService.getSettingMap());
-        
-        java.util.Map<String, String> damageThresholdOptions = new java.util.LinkedHashMap<>();
-        damageThresholdOptions.put("2", message("admin.settings.damageLevel.minor"));
-        damageThresholdOptions.put("3", message("admin.settings.damageLevel.severe"));
-        damageThresholdOptions.put("4", message("admin.settings.damageLevel.lost"));
-        model.addAttribute("damageThresholdOptions", damageThresholdOptions);
 
         return "admin/settings";
     }
@@ -48,7 +42,6 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam BigDecimal borrowFeePerBook,
             @RequestParam BigDecimal minorDamageBorrowFee,
             @RequestParam BigDecimal damageCompensationAmount,
-            @RequestParam Integer damageCompensationThreshold,
             @RequestParam Integer overdueViolationLockLimit,
             @RequestParam BigDecimal depositAmount,
             RedirectAttributes redirectAttributes) {
@@ -62,7 +55,6 @@ public class SettingsController extends LocalizedControllerSupport {
                     borrowFeePerBook,
                     minorDamageBorrowFee,
                     damageCompensationAmount,
-                    damageCompensationThreshold,
                     overdueViolationLockLimit,
                     depositAmount);
 

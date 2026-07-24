@@ -1,0 +1,2 @@
+DELETE FROM dbo.SystemSettings
+WHERE UPPER(setting_key) = 'DAMAGE_COMPENSATION_THRESHOLD';
