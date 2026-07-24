@@ -480,7 +480,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 ? ""
                 : item.getBookCondition().trim().toLowerCase(java.util.Locale.ROOT);
         if (condition.contains("severely")) {
-            return moneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
+            return BigDecimal.ZERO;
         }
         if (condition.contains("minor")) {
             return moneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
