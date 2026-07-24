@@ -28,6 +28,7 @@
     <th:block layout:fragment="styles"></th:block>
     <!-- The Admin design system is authoritative over legacy page styles. -->
     <link rel="stylesheet" th:href="@{/css/layouts/admin-base.css}" />
+    <link rel="stylesheet" th:href="@{/css/components/feedback-toast.css(v='20260724-1')}" />
 </head>
 
 <body class="app-shell app-shell--staff staff-shell staff-shell--admin">
@@ -241,6 +242,17 @@
         </div>
     </div>
 
+    <div id="staffFeedbackSources" hidden aria-hidden="true">
+        <span th:if="${error != null}" data-app-feedback="error" th:text="${error}"></span>
+        <span th:if="${errorMessage != null}" data-app-feedback="error" th:text="${errorMessage}"></span>
+        <span th:if="${passwordError != null}" data-app-feedback="error" th:text="${passwordError}"></span>
+        <span th:if="${success != null}" data-app-feedback="success" th:text="${success}"></span>
+        <span th:if="${successMessage != null}" data-app-feedback="success" th:text="${successMessage}"></span>
+        <span th:if="${passwordSuccess != null}" data-app-feedback="success" th:text="${passwordSuccess}"></span>
+        <span th:if="${warning != null}" data-app-feedback="warning" th:text="${warning}"></span>
+        <span th:if="${info != null}" data-app-feedback="info" th:text="${info}"></span>
+    </div>
+
     <!-- Scripts -->
     <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
     <script th:replace="~{fragments/language-switcher :: script}"></script>
@@ -339,7 +351,7 @@
     <script th:src="@{/js/dynamic-presentation.js}"></script>
     <script th:src="@{/js/confirmation-dialog.js}"></script>
     <script th:src="@{/js/form-loading.js}"></script>
-    <script th:src="@{/js/staff-feedback-toast.js}"></script>
+    <script th:src="@{/js/staff-feedback-toast.js(v='20260724-2')}"></script>
 </body>
 
 </html>
