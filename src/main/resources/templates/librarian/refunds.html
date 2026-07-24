@@ -26,7 +26,7 @@
     <div th:if="${error != null}" class="finance-alert finance-alert--danger" role="alert" th:text="${error}"></div>
 
     <div th:if="${pendingRefundRequests == null or #lists.isEmpty(pendingRefundRequests)}"
-         class="card-classic finance-card refund-empty">
+         class="card-classic finance-card finance-management-card refund-empty">
         <div>
                 <span class="refund-empty-icon" aria-hidden="true"><i class="bi bi-check2-circle"></i></span>
                 <h5 th:text="#{librarian.refunds.empty}">No Pending Requests</h5>
@@ -35,7 +35,7 @@
     </div>
 
     <div th:unless="${pendingRefundRequests == null or #lists.isEmpty(pendingRefundRequests)}"
-         class="card-classic finance-card refund-list">
+         class="card-classic finance-card finance-management-card refund-list">
         <article class="refund-row" th:each="reservation : ${pendingRefundRequests}">
             <span class="refund-row-icon" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
             <div class="refund-member">

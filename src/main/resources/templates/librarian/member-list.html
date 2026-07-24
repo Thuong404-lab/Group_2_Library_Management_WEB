@@ -4,7 +4,7 @@
 
 <head>
     <title th:text="#{librarian.members.title}">Member List</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css(v='20260724-user-management-ui-v2')}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
     <style>
         input[type="password"]::-ms-reveal,
@@ -15,7 +15,8 @@
 </head>
 
 <body>
-    <div layout:fragment="content" th:with="activeMenu='members'" class="member-management-page member-list-page">
+    <div layout:fragment="content" th:with="activeMenu='members'"
+        class="member-management-page member-list-page canonical-management-page">
         <header class="member-page-header member-list-hero">
             <div class="member-list-hero-copy">
                 <div class="member-page-eyebrow" th:text="#{librarian.members.title}">MEMBER MANAGEMENT</div>
@@ -252,12 +253,15 @@
                     <!-- Search & Filter -->
                     <form class="member-search-form" method="get" th:action="@{/librarian/members}"
                         data-auto-filter-form data-focus-key="librarianMemberFilterFocus">
-                        <div class="input-group member-search-group member-list-filter-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
-                                th:value="${keyword}" th:placeholder="#{librarian.members.searchPlaceholder}">
+                        <div class="member-search-group member-list-filter-group">
+                            <div class="input-group member-keyword-control">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input class="form-control border-start-0 ps-0" type="text" name="keyword"
+                                    data-auto-search th:value="${keyword}"
+                                    th:placeholder="#{librarian.members.searchPlaceholder}">
+                            </div>
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
                                 th:aria-label="#{librarian.members.filterTier}">
@@ -282,7 +286,6 @@
                             </select>
 
                             <a class="btn member-search-button text-nowrap" th:href="@{/librarian/members}">
-                                <i class="bi bi-arrow-clockwise me-1"></i>
                                 <span th:text="#{common.clearFilter}">Clear filter</span>
                             </a>
                         </div>
@@ -340,8 +343,8 @@
                                     th:with="member=${account.member.user != null ? memberByUserId[account.member.user.id] : null}">
                                     <span class="membership-tier-badge"
                                         th:if="${member != null && member.tier != null}"
-                                        th:text="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : member.tier.tierName}"
-                                        th:classappend="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
+                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
+                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                         Standard
                                     </span>
 
@@ -356,7 +359,7 @@
               account.status == 'Active' ? 'status-active' :
               account.status == 'Blocked' ? 'status-blocked' :
               'status-inactive'
-          }" th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('member.account.status.restricted') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
+          }" th:text="${account.status == 'Active' ? #messages.msg('account.status.active') : (account.status == 'Inactive' ? #messages.msg('account.status.inactive') : (account.status == 'Blocked' ? #messages.msg('account.status.blocked') : account.status))}">
                                         Active
                                     </span>
                                 </td>
@@ -377,7 +380,7 @@
                                     <!-- Update -->
                                     <button type="button" class="member-icon-action account-action-tooltip"
                                         data-bs-toggle="modal" th:data-bs-target="${'#updateMemberModal' + account.id}"
-                                        th:data-bs-title="#{librarian.members.updateAccount}"
+                                        th:data-bs-title="#{admin.accounts.update}"
                                         data-bs-custom-class="update-account-tooltip" th:aria-label="#{common.update}">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
@@ -502,7 +505,7 @@
                                                                 </label>
                                                                 <div class="member-readonly-field" role="textbox"
                                                                     aria-readonly="true"
-                                                                    th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : member.tier.tierName)}">
+                                                                    th:text="${member == null || member.tier == null ? #messages.msg('librarian.members.unranked') : (member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName))))}">
                                                                     Regular
                                                                 </div>
                                                             </div>
@@ -558,13 +561,55 @@
                                     </div>
 
                                     <!-- Delete -->
-                                    <button type="button"
-                                        class="member-icon-action member-icon-action-danger account-action-tooltip"
-                                        data-bs-toggle="modal" th:data-bs-target="${'#deleteMemberModal' + account.id}"
-                                        th:data-bs-title="#{librarian.members.deleteAccount}"
+                                    <button type="button" class="member-icon-action member-icon-action-danger account-action-tooltip"
+                                        th:onclick="|checkMemberDeletability(${account.id}, 'librarian/members')|"
+                                        th:data-bs-title="#{admin.accounts.delete}"
                                         data-bs-custom-class="delete-account-tooltip" th:aria-label="#{common.delete}">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    <!-- Deactivate Modal -->
+                                    <div class="modal fade text-start account-standard-modal"
+                                        th:id="${'deactivateMemberModal' + account.id}" tabindex="-1"
+                                        aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form method="post"
+                                                    th:action="@{/librarian/members/status/{id}(id=${account.id})}">
+                                                    <input type="hidden" th:if="${_csrf != null}"
+                                                        th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                    <input type="hidden" name="status" value="Inactive">
+                                                    <input type="hidden" name="page" th:value="${accounts.number}">
+                                                    <input type="hidden" name="keyword" th:value="${keyword}">
+                                                    <input type="hidden" name="filterStatus" th:value="${selectedStatus}">
+                                                    <input type="hidden" name="filterTier" th:value="${selectedTier}">
+
+                                                    <div class="modal-header member-modal-header">
+                                                        <h5 class="modal-title member-modal-title-accent text-warning">
+                                                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                                            <span th:text="#{admin.accounts.confirmDeactivateTitle}">Confirm Account Deactivation</span>
+                                                        </h5>
+                                                    </div>
+
+                                                    <div class="modal-body member-modal-body">
+                                                        <p class="mb-3">
+                                                            <span th:text="#{admin.accounts.confirmDeactivateBody}">This member has active business operations (e.g. active borrows, pending reservations, or unpaid fines). They cannot be hard-deleted. Do you want to deactivate their account instead?</span>
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="modal-footer member-modal-footer">
+                                                        <button type="button" class="btn member-modal-secondary"
+                                                            data-bs-dismiss="modal"
+                                                            th:text="#{common.cancel}">Cancel</button>
+                                                        <button type="submit" class="btn btn-warning text-dark"
+                                                            th:text="#{admin.accounts.deactivateBtn}">
+                                                            Deactivate Account
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Delete Modal -->
                                     <div class="modal fade text-start member-delete-modal"
                                         th:id="${'deleteMemberModal' + account.id}" tabindex="-1" aria-hidden="true">
@@ -585,14 +630,14 @@
                                                             <h5 class="modal-title member-modal-title-accent"><i
                                                                     class="bi bi-exclamation-triangle-fill me-2"
                                                                     aria-hidden="true"></i><span
-                                                                    th:text="#{librarian.members.deleteTitle}">Delete
+                                                                    th:text="#{admin.accounts.deleteConfirmTitle}">Delete
                                                                     Member Account</span></h5>
                                                         </div>
                                                     </div>
 
                                                     <div class="modal-body member-modal-body">
                                                         <p class="mb-3">
-                                                            <span th:text="#{librarian.members.deleteWarning}">Are you
+                                                            <span th:text="#{admin.accounts.deleteConfirmMessage}">Are you
                                                                 sure you want to delete this account? This action cannot
                                                                 be undone.</span>
                                                         </p>
@@ -659,8 +704,8 @@
                                                                     <span
                                                                         class="badge rounded-pill px-3 py-2 text-white"
                                                                         th:if="${member != null && member.tier != null}"
-                                                                        th:text="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : member.tier.tierName}"
-                                                                        th:classappend="${member.tier.tierName == 'Member' or member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
+                                                                        th:text="${member.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (member.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (member.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (member.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : member.tier.tierName)))}"
+                                                                        th:classappend="${member.tier.tierName == 'Regular' ? 'membership-tier-badge--regular' : (member.tier.tierName == 'Silver' ? 'membership-tier-badge--silver' : (member.tier.tierName == 'Gold' ? 'membership-tier-badge--gold' : (member.tier.tierName == 'Diamond' ? 'membership-tier-badge--diamond' : 'membership-tier-badge--default')))}">
                                                                         Standard
                                                                     </span>
 
@@ -680,7 +725,7 @@
                                                             data-bs-dismiss="modal"
                                                             th:text="#{common.cancel}">Cancel</button>
                                                         <button type="submit" class="btn member-modal-danger"
-                                                            th:text="#{librarian.members.deleteAccount}">Delete
+                                                            th:text="#{admin.accounts.confirmDelete}">Delete
                                                             Account</button>
                                                     </div>
                                                 </form>
@@ -941,6 +986,45 @@
             });
         </script>
     </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Move all modals directly to body on page load so they are never trapped in overflow/table cells
+            document.querySelectorAll(".member-management-page .modal").forEach(function (modalEl) {
+                document.body.appendChild(modalEl);
+            });
+        });
+
+        function checkMemberDeletability(accountId, baseUrl) {
+            let cleanUrl = baseUrl.startsWith('/') ? baseUrl : '/' + baseUrl;
+            fetch(`${cleanUrl}/${accountId}/deletability`, {credentials: 'same-origin'})
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Server error response');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let canDelete = (data.canDelete !== undefined) ? data.canDelete : data.deletable;
+                    let modalId = canDelete ? ('deleteMemberModal' + accountId) : ('deactivateMemberModal' + accountId);
+                    let modalEl = document.getElementById(modalId);
+                    if (modalEl) {
+                        let instance = (window.bootstrap && bootstrap.Modal) ? (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)) : null;
+                        if (instance) {
+                            instance.show();
+                        } else if (typeof $ !== 'undefined') {
+                            $(modalEl).modal('show');
+                        }
+                    } else {
+                        console.error('Modal element not found for ID:', modalId);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking deletability:', error);
+                    alert('Could not verify account status. Please try again.');
+                });
+        }
+    </script>
 </body>
 
 </html>
