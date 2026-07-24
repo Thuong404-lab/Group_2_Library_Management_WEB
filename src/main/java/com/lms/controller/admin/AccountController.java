@@ -164,6 +164,26 @@ public class AccountController extends LocalizedControllerSupport {
         return redirectBySource(source);
     }
 
+    @PostMapping("/deactivate/{id}")
+    public String deactivateAccount(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes) {
+        try {
+            accountService.deactivateAccount(id, source, accountIdOf(currentUser));
+            redirectAttributes.addFlashAttribute("success", message("backend.account.deactivated"));
+        } catch (AccountFormValidationException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return redirectBySource(source);
+    }
+
+    @GetMapping("/{id}/deletability")
+    @ResponseBody
+    public Map<String, Boolean> checkDeletability(@PathVariable Integer id) {
+        return Map.of("canDelete", accountService.checkMemberDeletability(id));
+    }
+
     @PostMapping("/{id}/send-password-reset")
     public String sendPasswordReset(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "members") String source,

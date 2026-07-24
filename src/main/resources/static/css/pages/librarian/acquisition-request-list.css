@@ -42,7 +42,7 @@
 .acquisition-requests-page .acquisition-search-control input,
 .acquisition-requests-page .acquisition-filter-field select {
     width: 100%;
-    height: 44px;
+    height: 48px;
     box-sizing: border-box;
     border: 1px solid var(--app-color-hairline);
     border-radius: var(--app-radius-md);
@@ -92,7 +92,7 @@
     justify-content: center;
     gap: 7px;
     min-width: 104px;
-    height: 44px;
+    height: 48px;
     padding: 0 17px;
     box-sizing: border-box;
     border-radius: var(--app-radius-md);
@@ -276,9 +276,10 @@
 
 /* Member-aligned acquisition request refresh. */
 .acquisition-requests-page {
-    width: 100%;
+    width: calc(100% - 32px);
     max-width: 1480px;
     margin: 0 auto;
+    padding: 24px 0 56px;
 }
 
 .acquisition-requests-page .acquisition-page-hero {
@@ -289,7 +290,7 @@
     justify-content: space-between;
     overflow: hidden;
     margin-bottom: 28px;
-    padding: 30px 40px;
+    padding: 30px 38px;
     border: 0;
     border-radius: 18px;
     background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
@@ -306,18 +307,18 @@
 }
 
 .acquisition-requests-page .acquisition-page-hero::before {
-    top: -145px;
-    right: -72px;
-    width: 340px;
-    height: 340px;
-    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+    top: -150px;
+    right: -70px;
+    width: 330px;
+    height: 330px;
+    box-shadow: 0 0 0 55px rgba(255, 255, 255, .045);
 }
 
 .acquisition-requests-page .acquisition-page-hero::after {
-    right: 214px;
-    bottom: -118px;
-    width: 220px;
-    height: 220px;
+    right: 270px;
+    bottom: -155px;
+    width: 235px;
+    height: 235px;
 }
 
 .acquisition-requests-page .acquisition-hero-copy,
@@ -341,44 +342,51 @@
 }
 
 .acquisition-requests-page .acquisition-page-hero .app-page-title {
-    font-size: clamp(32px, 3.5vw, 46px);
+    font-size: clamp(34px, 4vw, 48px);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -.02em;
 }
 
 .acquisition-requests-page .acquisition-page-hero .app-page-description {
-    max-width: 700px;
+    max-width: 720px;
+    margin-top: 10px;
     font-family: var(--app-font-ui);
-    opacity: .9;
+    font-size: 15px;
+    line-height: 1.55;
+    opacity: .82;
 }
 
 .acquisition-requests-page .acquisition-hero-decoration {
     display: flex;
-    width: 88px;
-    height: 88px;
-    flex: 0 0 88px;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
     align-items: center;
     justify-content: center;
-    margin-right: 46px;
+    margin-right: 0;
     border: 1px solid rgba(255, 255, 255, .24);
-    border-radius: 50%;
+    border-radius: 16px;
     background: rgba(255, 255, 255, .09);
     color: #fff;
-    font-size: 34px;
+    font-size: 28px;
     backdrop-filter: blur(3px);
 }
 
 .acquisition-requests-page .acquisition-requests-card {
     overflow: hidden;
-    border: 0;
-    border-radius: 16px;
-    background: var(--app-color-surface-soft);
-    box-shadow: 0 8px 26px rgba(74, 59, 50, .08);
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 18px;
+    background: #fffdf9;
+    box-shadow: 0 10px 28px rgba(71, 45, 28, .07);
 }
 
 .acquisition-requests-page .acquisition-requests-header {
     min-height: 104px;
     align-items: center;
     padding: 22px 26px;
-    background: var(--app-color-canvas);
+    border-bottom: 1px solid var(--app-color-hairline-soft);
+    background: #fffdf9;
 }
 
 .acquisition-requests-page .acquisition-requests-header .app-section-title {
@@ -393,20 +401,29 @@
 }
 
 .acquisition-requests-page .acquisition-filter-toolbar {
-    background: #faf6f1;
+    margin: 20px 24px;
+    padding: 14px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 12px;
+    background: var(--app-color-canvas);
 }
 
 .acquisition-requests-page .acquisition-table-wrap {
-    width: 100%;
-    max-width: 100%;
-    padding: 0 18px 8px;
-    overflow-x: hidden;
-    background: var(--app-color-surface-soft);
+    width: calc(100% - 48px);
+    max-width: calc(100% - 48px);
+    min-width: 0;
+    margin: 0 24px 24px;
+    padding: 0;
+    overflow-x: auto;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 14px;
+    background: var(--app-color-canvas);
     box-sizing: border-box;
 }
 
 .acquisition-requests-page .acquisition-requests-table {
     width: 100%;
+    max-width: 100%;
     min-width: 0;
     table-layout: fixed;
     border-collapse: separate;
@@ -468,6 +485,101 @@
 
 .acquisition-requests-page .acquisition-decision-note {
     overflow-wrap: anywhere;
+}
+
+.acquisition-requests-page .app-pagination-nav {
+    padding: 0 24px 24px;
+    border-top: 0;
+    background: #fffdf9;
+}
+
+.acquisition-requests-page .acquisition-reject-modal .modal-content {
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 12px;
+    background: var(--app-color-canvas);
+    box-shadow: var(--app-color-overlay-shadow);
+}
+
+.acquisition-requests-page .acquisition-reject-modal .modal-header,
+.acquisition-requests-page .acquisition-reject-modal .modal-footer {
+    padding: 16px 24px;
+    border-color: var(--app-color-hairline);
+    background: var(--app-color-surface-soft);
+}
+
+.acquisition-requests-page .acquisition-reject-modal .modal-header {
+    padding-top: 24px;
+    padding-bottom: 20px;
+}
+
+.acquisition-requests-page .acquisition-reject-modal .modal-body {
+    padding: 24px;
+    background: var(--app-color-canvas);
+}
+
+.acquisition-requests-page .acquisition-reject-modal .modal-title {
+    font-family: var(--app-font-display);
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.acquisition-requests-page .acquisition-reject-modal textarea {
+    min-height: 120px;
+    border-radius: 10px;
+}
+
+.acquisition-requests-page .acquisition-modal-cancel,
+.acquisition-requests-page .acquisition-modal-reject,
+.acquisition-requests-page .acquisition-reject-modal .modal-footer .acquisition-approve-action {
+    width: auto;
+    min-width: 118px;
+    min-height: 44px;
+    margin: 0;
+    border-radius: 8px;
+}
+
+@media (min-width: 1100px) {
+    .acquisition-requests-page .acquisition-requests-table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        background: var(--app-color-canvas);
+    }
+
+    .acquisition-requests-page .acquisition-requests-table thead th {
+        height: 54px;
+        padding: 12px 16px;
+        border: 0;
+        border-bottom: 1px solid #eadbd1;
+        background: #fbf1eb;
+        color: #765a49;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .08em;
+    }
+
+    .acquisition-requests-page .acquisition-requests-table tbody td,
+    .acquisition-requests-page .acquisition-requests-table tbody td:first-child,
+    .acquisition-requests-page .acquisition-requests-table tbody td:last-child {
+        padding: 14px 16px;
+        border: 0;
+        border-bottom: 1px solid var(--app-color-hairline);
+        border-radius: 0;
+        background: var(--app-color-canvas);
+    }
+
+    .acquisition-requests-page .acquisition-requests-table tbody tr:nth-child(even) > td {
+        background: #fffdfb;
+    }
+
+    .acquisition-requests-page .acquisition-requests-table tbody:last-child tr:last-child td,
+    .acquisition-requests-page .acquisition-requests-table tbody:nth-last-child(2) tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .acquisition-requests-page .acquisition-requests-table tbody tr:hover > td {
+        border-color: var(--app-color-hairline);
+        background: #fbf5f0;
+    }
 }
 
 @media (max-width: 1099.98px) {
@@ -544,9 +656,14 @@
 }
 
 @media (max-width: 767.98px) {
+    .acquisition-requests-page {
+        width: calc(100% - 24px);
+        padding: 16px 0 40px;
+    }
+
     .acquisition-requests-page .acquisition-page-hero {
-        min-height: 166px;
-        padding: 24px;
+        min-height: 0;
+        padding: 26px 22px;
     }
 
     .acquisition-requests-page .acquisition-hero-decoration {
@@ -562,11 +679,31 @@
     }
 
     .acquisition-requests-page .acquisition-table-wrap {
+        width: calc(100% - 32px);
+        max-width: calc(100% - 32px);
+        margin: 0 16px 20px;
         padding: 10px 12px 4px;
+        overflow: visible;
+        border: 0;
+        background: transparent;
     }
 }
 
 @media (max-width: 575.98px) {
+    .acquisition-requests-page {
+        width: calc(100% - 20px);
+        padding-top: 10px;
+    }
+
+    .acquisition-requests-page .acquisition-page-hero {
+        padding: 24px 18px;
+        border-radius: 16px;
+    }
+
+    .acquisition-requests-page .acquisition-page-hero .app-page-title {
+        font-size: clamp(30px, 10vw, 38px);
+    }
+
     .acquisition-requests-page .acquisition-requests-table tbody tr {
         grid-template-columns: minmax(0, 1fr);
     }
