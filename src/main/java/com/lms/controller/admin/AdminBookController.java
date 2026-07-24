@@ -48,13 +48,15 @@ public class AdminBookController extends LocalizedControllerSupport {
             @RequestParam(defaultValue = "0") int shelfPage,
             @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String bookItemStatus,
             @RequestParam(required = false, defaultValue = "") String tab,
             @RequestParam(required = false, defaultValue = "inventory") String subsection,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         model.addAllAttributes(dashboardService.getBookManagementData(
                 Math.max(0, bookPage), Math.max(0, shelfPage), keyword,
-                "audit".equalsIgnoreCase(tab) ? bookCondition : "", subsection, tab));
+                "audit".equalsIgnoreCase(tab) ? bookCondition : "",
+                "audit".equalsIgnoreCase(tab) ? bookItemStatus : "", subsection, tab));
         model.addAttribute("staffPrefix", "/admin");
         model.addAttribute("keyword", keyword);
         if (userDetails != null && userDetails.getUser() != null) {

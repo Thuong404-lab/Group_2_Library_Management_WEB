@@ -54,6 +54,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             List.of("BORROWED", "OVERDUE", "RETURN_PENDING", "RENEW_PENDING", "RETURNED");
     private static final List<String> BOOK_CONDITIONS =
             List.of("New", "Minor damage", "Severely damaged", "Lost book");
+    private static final List<String> BOOK_ITEM_STATUSES =
+            List.of("Available", "Borrowed", "Payment_Pending", "Waiting_Pickup", "Unavailable");
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -190,7 +192,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("shelfBookCounts", shelfBookCounts);
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
         String normalizedBookCondition = BOOK_CONDITIONS.contains(bookCondition) ? bookCondition : "";
-        Page<Book> booksPage = bookRepository.searchBookItems(normalizedKeyword, normalizedBookCondition,
+        Page<Book> booksPage = bookRepository.searchBookItems(normalizedKeyword, normalizedBookCondition, "",
                 PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE, Sort.by("bookId").ascending()));
         booksPage.forEach(book -> {
             if (book.getAuthors() != null) {
@@ -259,7 +261,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getBookManagementData(int bookPage, int shelfPage, String keyword,
-            String bookCondition, String subsection, String tab) {
+            String bookCondition, String bookItemStatus, String subsection, String tab) {
         Map<String, Object> data = new LinkedHashMap<>();
         String activeSubsection = "storage".equalsIgnoreCase(subsection) ? "storage" : "inventory";
         String activeTab = "categories".equalsIgnoreCase(tab) ? "categories"
@@ -304,9 +306,11 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("shelves", storageService.getAllStorageLocations());
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
         String normalizedBookCondition = BOOK_CONDITIONS.contains(bookCondition) ? bookCondition : "";
+        String normalizedBookItemStatus = BOOK_ITEM_STATUSES.contains(bookItemStatus) ? bookItemStatus : "";
         Page<Book> booksPage = bookRepository.searchBookItems(
                 normalizedKeyword,
                 normalizedBookCondition,
+                normalizedBookItemStatus,
                 PageRequest.of(Math.max(0, bookPage), DASHBOARD_PAGE_SIZE,
                         Sort.by("bookId").ascending()));
         booksPage.forEach(book -> {
@@ -316,6 +320,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         });
         data.put("books", booksPage);
         data.put("bookCondition", normalizedBookCondition);
+        data.put("bookItemStatus", normalizedBookItemStatus);
 
         Map<Integer, Integer> bookShelves = new HashMap<>();
         Map<Integer, Integer> bookTotalQuantities = new HashMap<>();

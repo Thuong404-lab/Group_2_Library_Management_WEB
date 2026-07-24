@@ -676,7 +676,7 @@
                                         <input type="hidden" name="subsection" value="inventory">
                                         <input type="hidden" name="tab" value="audit">
                                         <div
-                                            class="member-search-group inventory-filter-grid inventory-filter-grid--search-only">
+                                            class="member-search-group inventory-filter-grid inventory-filter-grid--with-select">
                                             <div class="member-keyword-control">
                                                 <span class="input-group-text"><i class="bi bi-search"
                                                         aria-hidden="true"></i></span>
@@ -684,6 +684,21 @@
                                                     th:value="${keyword}"
                                                     th:placeholder="#{librarian.inventory.searchPlaceholder}">
                                             </div>
+                                            <select class="form-select member-filter-select" name="bookItemStatus"
+                                                aria-label="Filter by copy status">
+                                                <option value="" th:selected="${bookItemStatus == null or bookItemStatus == ''}"
+                                                    th:text="#{common.allStatuses}">All statuses</option>
+                                                <option value="Available" th:selected="${bookItemStatus == 'Available'}"
+                                                    th:text="#{book.status.available}">Available</option>
+                                                <option value="Borrowed" th:selected="${bookItemStatus == 'Borrowed'}"
+                                                    th:text="#{loan.status.borrowed}">Borrowing</option>
+                                                <option value="Payment_Pending" th:selected="${bookItemStatus == 'Payment_Pending'}"
+                                                    th:text="#{book.status.paymentPending}">Awaiting payment</option>
+                                                <option value="Waiting_Pickup" th:selected="${bookItemStatus == 'Waiting_Pickup'}"
+                                                    th:text="#{loan.status.waitingPickup}">Awaiting physical copy pickup</option>
+                                                <option value="Unavailable" th:selected="${bookItemStatus == 'Unavailable'}"
+                                                    th:text="#{book.status.unavailable}">Unavailable</option>
+                                            </select>
                                             <button type="submit" class="btn member-search-button text-nowrap"
                                                 th:text="#{common.search}">Search</button>
                                         </div>
@@ -763,24 +778,24 @@
                                     <ul class="pagination justify-content-center mb-0">
                                         <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"
                                                 th:text="#{common.first}">First</a></li>
                                         <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})}"><i
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"><i
                                                     class="bi bi-chevron-left"></i></a></li>
                                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}"
                                             th:classappend="${i == books.number ? 'active' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"
                                                 th:text="${i + 1}">1</a></li>
                                         <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})}"><i
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"><i
                                                     class="bi bi-chevron-right"></i></a></li>
                                         <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"
                                                 th:text="#{common.last}">Last</a></li>
                                     </ul>
                                 </nav>
