@@ -24,7 +24,7 @@ public class BookAcquisitionRequest {
     @Column(name = "created_date")
     private LocalDateTime createdDate;
 
-    @Column(length = 255)
+    @Column(nullable = false, length = 255)
     private String author;
 
     @Column(length = 20)
@@ -36,14 +36,14 @@ public class BookAcquisitionRequest {
     @Column(name = "publication_year")
     private Integer publicationYear;
 
-    // Kept nullable at database level so Hibernate can add the column to
-    // installations that already contain legacy acquisition requests.
-    // New submissions still require this field through DTO validation.
-    @Column(name = "request_reason", length = 1000)
+    @Column(name = "request_reason", nullable = false, length = 1000)
     private String requestReason;
 
     @Column(name = "reference_url", length = 500)
     private String referenceUrl;
+
+    @Column(name = "dedup_key", nullable = false, length = 600)
+    private String dedupKey;
 
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'PENDING'")
@@ -55,6 +55,14 @@ public class BookAcquisitionRequest {
 
     @Column(name = "processed_date")
     private LocalDateTime processedDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processed_by_staff_id")
+    private Staff processedBy;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     public BookAcquisitionRequest() {
     }
@@ -119,16 +127,14 @@ public class BookAcquisitionRequest {
     public void setReferenceUrl(String referenceUrl) { this.referenceUrl = referenceUrl; }
     public AcquisitionRequestStatus getStatus() { return status; }
     public void setStatus(AcquisitionRequestStatus status) { this.status = status; }
-    public String getDecisionNote() {
-        // Repair the known legacy value that was already damaged while the SQL
-        // Server column was VARCHAR. The database migration changes the column
-        // to NVARCHAR so newly entered Vietnamese text remains intact.
-        if ("Chua có nhà cung c?p phù h?p.".equals(decisionNote)) {
-            return "Chưa có nhà cung cấp phù hợp.";
-        }
-        return decisionNote;
-    }
+    public String getDecisionNote() { return decisionNote; }
     public void setDecisionNote(String decisionNote) { this.decisionNote = decisionNote; }
     public LocalDateTime getProcessedDate() { return processedDate; }
     public void setProcessedDate(LocalDateTime processedDate) { this.processedDate = processedDate; }
+    public String getDedupKey() { return dedupKey; }
+    public void setDedupKey(String dedupKey) { this.dedupKey = dedupKey; }
+    public Staff getProcessedBy() { return processedBy; }
+    public void setProcessedBy(Staff processedBy) { this.processedBy = processedBy; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

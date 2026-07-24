@@ -1,0 +1,1264 @@
+/* Librarian book inventory, visually aligned with the member-facing design system. */
+.book-inventory-page {
+    width: 100%;
+    max-width: 1480px;
+    min-width: 0;
+    margin: 0 auto;
+}
+
+.book-inventory-page .book-inventory-hero {
+    position: relative;
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 28px;
+    padding: 30px 40px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.book-inventory-page .book-inventory-hero::before,
+.book-inventory-page .book-inventory-hero::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.book-inventory-page .book-inventory-hero::before {
+    top: -150px;
+    right: -68px;
+    width: 345px;
+    height: 345px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+}
+
+.book-inventory-page .book-inventory-hero::after {
+    right: 220px;
+    bottom: -145px;
+    width: 240px;
+    height: 240px;
+}
+
+.book-inventory-page .book-inventory-hero-copy,
+.book-inventory-page .book-inventory-hero .member-primary-action {
+    position: relative;
+    z-index: 1;
+}
+
+.book-inventory-page .book-inventory-hero-copy {
+    min-width: 0;
+    max-width: 780px;
+}
+
+.book-inventory-page .book-inventory-hero :is(.member-page-eyebrow, .member-page-title, .member-page-description) {
+    color: #fff;
+}
+
+.book-inventory-page .book-inventory-hero .member-page-eyebrow {
+    margin-bottom: 8px;
+    opacity: .84;
+}
+
+.book-inventory-page .book-inventory-hero .member-page-title {
+    font-size: clamp(32px, 3.5vw, 46px);
+    font-weight: 500;
+}
+
+.book-inventory-page .book-inventory-hero .member-page-description {
+    max-width: 680px;
+    font-size: 14px;
+    opacity: .88;
+}
+
+.book-inventory-page .book-inventory-hero .member-primary-action {
+    min-width: 156px;
+    height: 44px;
+    border-color: #fff;
+    border-radius: 10px;
+    background: #fff;
+    color: #513215;
+    box-shadow: 0 5px 14px rgba(46, 26, 8, .16);
+}
+
+.book-inventory-page .book-inventory-hero .member-primary-action:hover,
+.book-inventory-page .book-inventory-hero .member-primary-action:focus-visible {
+    border-color: #fceee7;
+    background: #fceee7;
+    color: #2e1a08;
+}
+
+.book-inventory-page .member-data-card {
+    overflow: hidden;
+    border-color: rgba(114, 73, 34, .18);
+    border-radius: 16px;
+    background: #faf6f1;
+    box-shadow: 0 8px 26px rgba(74, 59, 50, .08);
+}
+
+.book-inventory-page .member-data-card-body {
+    padding: 24px;
+}
+
+.book-inventory-page #adminInventoryTabs {
+    gap: 8px !important;
+    margin-bottom: 22px !important;
+    padding: 5px;
+    border: 1px solid var(--member-hairline);
+    border-radius: 11px;
+    background: #fff;
+}
+
+.book-inventory-page #adminInventoryTabs .nav-link {
+    min-height: 38px;
+    border-radius: 8px;
+}
+
+.book-inventory-page .member-summary-chips {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.book-inventory-page .member-summary-chips > span {
+    min-width: 0;
+    min-height: 62px;
+    padding: 12px 15px;
+    border-color: rgba(139, 90, 43, .18);
+    border-radius: 11px;
+    background: #fff;
+    color: var(--member-muted);
+    box-shadow: 0 2px 8px rgba(74, 59, 50, .035);
+}
+
+.book-inventory-page .member-summary-chips strong {
+    color: #724922;
+    font-size: 18px;
+}
+
+.book-inventory-page .member-toolbar {
+    margin-bottom: 18px;
+    padding: 14px;
+    border: 1px solid var(--member-hairline);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.book-inventory-page .member-search-group :is(.input-group-text, .form-control, .member-filter-select, .member-search-button) {
+    height: 44px;
+}
+
+.book-inventory-page .member-search-group .input-group-text,
+.book-inventory-page .member-search-group .form-control,
+.book-inventory-page .member-search-group .member-filter-select {
+    background: #fff;
+}
+
+.book-inventory-page .member-search-button {
+    min-width: 112px;
+    border-color: #8b5a2b;
+    background: #8b5a2b;
+    color: #fff;
+}
+
+.book-inventory-page .member-table-wrap {
+    max-width: 100%;
+    overflow-x: hidden;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.book-inventory-page #admin-books-pane .member-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+.book-inventory-page #admin-books-pane .member-table thead th {
+    padding: 11px 10px;
+    border: 0;
+    background: transparent;
+    font-size: 10px;
+    letter-spacing: .06em;
+}
+
+.book-inventory-page #admin-books-pane .member-table tbody td {
+    padding: 13px 10px;
+    border-top: 1px solid var(--member-hairline);
+    border-bottom: 1px solid var(--member-hairline);
+    background: #fff;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.book-inventory-page #admin-books-pane .member-table tbody td:first-child {
+    border-left: 4px solid #8b5a2b;
+    border-radius: 11px 0 0 11px;
+}
+
+.book-inventory-page #admin-books-pane .member-table tbody td:last-child {
+    border-right: 1px solid var(--member-hairline);
+    border-radius: 0 11px 11px 0;
+}
+
+.book-inventory-page #admin-books-pane .member-table tbody tr:hover > * {
+    border-color: rgba(139, 90, 43, .34);
+    background: #fffdfb;
+}
+
+.book-inventory-page .inventory-cover-frame {
+    width: 46px;
+    height: 64px;
+    border-radius: 7px;
+}
+
+.book-inventory-page .status-badge {
+    min-width: 92px;
+    min-height: 30px;
+    padding: 6px 11px;
+    font-size: 12px;
+}
+
+.book-inventory-page .member-actions .member-icon-action {
+    width: 40px;
+    height: 40px;
+    margin-left: 6px;
+    border-color: rgba(139, 90, 43, .2);
+    background: #fff;
+    color: #513215;
+}
+
+.book-inventory-page .book-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.book-inventory-page .book-row-actions .member-icon-action {
+    margin-left: 0;
+}
+
+.book-inventory-page .member-actions .member-icon-action:hover,
+.book-inventory-page .member-actions .member-icon-action:focus-visible {
+    border-color: #c38040;
+    background: #fceee7;
+    color: #513215;
+}
+
+.book-inventory-page .member-actions .member-icon-action-danger {
+    border-color: rgba(146, 59, 54, .24);
+    color: var(--app-color-danger-ink);
+}
+
+.book-inventory-page .member-actions .member-icon-action-danger:hover,
+.book-inventory-page .member-actions .member-icon-action-danger:focus-visible {
+    border-color: var(--app-color-danger-ink);
+    background: var(--app-color-danger-soft);
+    color: var(--app-color-danger-ink);
+}
+
+@media (max-width: 1099.98px) {
+    .book-inventory-page #admin-books-pane .member-table,
+    .book-inventory-page #admin-books-pane .member-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table colgroup,
+    .book-inventory-page #admin-books-pane .member-table thead {
+        display: none;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table tbody tr.book-data-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 22px;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border: 1px solid var(--member-hairline);
+        border-left: 4px solid #8b5a2b;
+        border-radius: 11px;
+        background: #fff;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table tbody tr.book-data-row > td,
+    .book-inventory-page #admin-books-pane .member-table tbody tr.book-data-row > td:first-child,
+    .book-inventory-page #admin-books-pane .member-table tbody tr.book-data-row > td:last-child {
+        display: grid;
+        width: 100%;
+        grid-template-columns: minmax(98px, 120px) minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        padding: 9px 0;
+        border: 0;
+        border-bottom: 1px solid var(--member-hairline);
+        border-radius: 0;
+        background: transparent;
+        text-align: left !important;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table tbody tr.book-data-row > td::before {
+        color: var(--member-muted);
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .055em;
+        text-transform: uppercase;
+    }
+
+    .book-inventory-page #admin-books-pane .member-actions .book-row-actions {
+        justify-content: flex-start;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table tbody tr:not(.book-data-row) {
+        display: block;
+        width: 100%;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table tbody tr:not(.book-data-row) > td {
+        display: block;
+        width: 100%;
+        padding: 28px 14px;
+        border: 1px solid var(--member-hairline);
+        border-radius: 11px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .book-inventory-page .book-inventory-hero {
+        min-height: 0;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 24px;
+    }
+
+    .book-inventory-page .book-inventory-hero .member-page-title {
+        font-size: 32px;
+    }
+
+    .book-inventory-page .book-inventory-hero .member-primary-action {
+        align-self: flex-start;
+        margin-top: 18px;
+    }
+
+    .book-inventory-page .member-data-card-body {
+        padding: 14px;
+    }
+
+    .book-inventory-page .member-summary-chips {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .book-inventory-page .member-search-group {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 10px 0;
+    }
+
+    .book-inventory-page .member-search-group .member-filter-select,
+    .book-inventory-page .member-search-group .member-search-button {
+        width: 100%;
+        margin-left: 0 !important;
+    }
+
+    .book-inventory-page .member-search-group .member-filter-select {
+        grid-column: 1 / -1;
+    }
+
+    .book-inventory-page .member-search-group .member-search-button {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .book-inventory-page #adminInventoryTabs .nav-link {
+        width: 100%;
+    }
+
+    .book-inventory-page #admin-books-pane .member-table tbody tr.book-data-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .book-inventory-page .member-summary-chips {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Category and genre management tab. */
+.book-inventory-page .category-management-hero {
+    position: relative;
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 28px;
+    padding: 30px 40px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.book-inventory-page .category-management-hero::before,
+.book-inventory-page .category-management-hero::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.book-inventory-page .category-management-hero::before {
+    top: -150px;
+    right: -68px;
+    width: 345px;
+    height: 345px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+}
+
+.book-inventory-page .category-management-hero::after {
+    right: 220px;
+    bottom: -145px;
+    width: 240px;
+    height: 240px;
+}
+
+.book-inventory-page .category-management-hero-copy,
+.book-inventory-page .category-management-hero .book-category-actions {
+    position: relative;
+    z-index: 1;
+}
+
+.book-inventory-page .category-management-hero-copy {
+    min-width: 0;
+    max-width: 720px;
+}
+
+.book-inventory-page .category-management-hero :is(.member-page-eyebrow, .member-page-title, .member-page-description) {
+    color: #fff;
+}
+
+.book-inventory-page .category-management-hero .member-page-eyebrow {
+    opacity: .84;
+}
+
+.book-inventory-page .category-management-hero .member-page-title {
+    font-size: clamp(32px, 3.5vw, 46px);
+    font-weight: 500;
+}
+
+.book-inventory-page .category-management-hero .member-page-description {
+    font-size: 14px;
+    opacity: .88;
+}
+
+.book-inventory-page .category-management-hero .book-category-actions {
+    flex-wrap: nowrap;
+}
+
+.book-inventory-page .category-management-hero .book-category-action {
+    min-width: 154px;
+    height: 44px;
+    border-color: #fff;
+    border-radius: 10px;
+    background: #fff;
+    color: #513215;
+    box-shadow: 0 5px 14px rgba(46, 26, 8, .14);
+}
+
+.book-inventory-page .category-management-hero .book-category-action:hover,
+.book-inventory-page .category-management-hero .book-category-action:focus-visible {
+    border-color: #fceee7;
+    background: #fceee7;
+    color: #2e1a08;
+}
+
+.book-inventory-page .category-management-card {
+    background: #faf6f1;
+}
+
+.book-inventory-page .category-management-card .member-summary-chips {
+    max-width: 700px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.book-inventory-page .category-management-card .member-toolbar {
+    margin-bottom: 18px;
+}
+
+.book-inventory-page .category-table-wrap {
+    max-width: 100%;
+    overflow-x: hidden;
+    border-radius: 12px;
+}
+
+.book-inventory-page .category-management-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 9px;
+}
+
+.book-inventory-page .category-management-table thead th {
+    padding: 12px 18px;
+    border: 0;
+    background: transparent;
+    color: var(--member-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.book-inventory-page .category-management-table thead th:last-child {
+    width: 150px;
+}
+
+.book-inventory-page .category-management-table tbody td {
+    height: 64px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--member-hairline);
+    border-bottom: 1px solid var(--member-hairline);
+    background: #fff;
+    vertical-align: middle;
+}
+
+.book-inventory-page .category-management-table tbody td:first-child {
+    border-left: 4px solid #8b5a2b;
+    border-radius: 11px 0 0 11px;
+}
+
+.book-inventory-page .category-management-table tbody td:last-child {
+    border-right: 1px solid var(--member-hairline);
+    border-radius: 0 11px 11px 0;
+}
+
+.book-inventory-page .category-management-table .category-data-row:hover > td {
+    border-color: rgba(139, 90, 43, .34);
+    background: #fffdfb;
+}
+
+.book-inventory-page .category-management-table .genre-data-row td {
+    height: 56px;
+    background: #fcfaf7;
+}
+
+.book-inventory-page .category-management-table .genre-data-row td:first-child {
+    border-left-color: #c38040;
+}
+
+.book-inventory-page .category-management-table .genre-name {
+    padding-left: 28px;
+    color: var(--member-body);
+    font-weight: 500;
+}
+
+.book-inventory-page .category-management-table .category-toggle-icon {
+    color: #8b5a2b;
+    transition: transform 150ms ease;
+}
+
+.book-inventory-page .category-management-table .category-data-row[aria-expanded="true"] .category-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.book-inventory-page .category-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.book-inventory-page .category-row-actions .member-icon-action {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    border-color: rgba(139, 90, 43, .2);
+    background: #fff;
+    color: #513215;
+}
+
+.book-inventory-page .category-row-actions .member-icon-action:hover,
+.book-inventory-page .category-row-actions .member-icon-action:focus-visible {
+    border-color: #c38040;
+    background: #fceee7;
+}
+
+.book-inventory-page .category-row-actions .member-icon-action-danger {
+    border-color: rgba(146, 59, 54, .24);
+    color: var(--app-color-danger-ink);
+}
+
+.book-inventory-page .category-row-actions .member-icon-action-danger:hover,
+.book-inventory-page .category-row-actions .member-icon-action-danger:focus-visible {
+    border-color: var(--app-color-danger-ink);
+    background: var(--app-color-danger-soft);
+    color: var(--app-color-danger-ink);
+}
+
+@media (max-width: 899.98px) {
+    .book-inventory-page .category-management-hero {
+        min-height: 0;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 24px;
+    }
+
+    .book-inventory-page .category-management-hero .book-category-actions {
+        margin-top: 18px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .book-inventory-page .category-management-hero .member-page-title {
+        font-size: 31px;
+    }
+
+    .book-inventory-page .category-management-hero .book-category-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .book-inventory-page .category-management-hero .book-category-action {
+        width: 100%;
+    }
+
+    .book-inventory-page .category-management-card .member-summary-chips {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .book-inventory-page .category-management-table thead th {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .book-inventory-page .category-management-table thead th:last-child {
+        width: 104px;
+    }
+
+    .book-inventory-page .category-management-table tbody td {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .book-inventory-page .category-row-actions {
+        gap: 5px;
+    }
+
+    .book-inventory-page .category-row-actions .member-icon-action {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* Physical book-copy management tab. */
+.book-inventory-page .copy-management-hero {
+    position: relative;
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 28px;
+    padding: 30px 40px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.book-inventory-page .copy-management-hero::before,
+.book-inventory-page .copy-management-hero::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.book-inventory-page .copy-management-hero::before {
+    top: -150px;
+    right: -68px;
+    width: 345px;
+    height: 345px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+}
+
+.book-inventory-page .copy-management-hero::after {
+    right: 220px;
+    bottom: -145px;
+    width: 240px;
+    height: 240px;
+}
+
+.book-inventory-page .copy-management-hero-copy,
+.book-inventory-page .copy-management-hero-decoration {
+    position: relative;
+    z-index: 1;
+}
+
+.book-inventory-page .copy-management-hero-copy {
+    min-width: 0;
+    max-width: 760px;
+}
+
+.book-inventory-page .copy-management-hero :is(.member-page-eyebrow, .member-page-title, .member-page-description) {
+    color: #fff;
+}
+
+.book-inventory-page .copy-management-hero .member-page-eyebrow {
+    opacity: .84;
+}
+
+.book-inventory-page .copy-management-hero .member-page-title {
+    font-size: clamp(32px, 3.5vw, 46px);
+    font-weight: 500;
+}
+
+.book-inventory-page .copy-management-hero .member-page-description {
+    font-size: 14px;
+    opacity: .88;
+}
+
+.book-inventory-page .copy-management-hero-decoration {
+    display: grid;
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    place-items: center;
+    margin-right: 46px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .09);
+    color: #fff;
+    font-size: 32px;
+    backdrop-filter: blur(3px);
+}
+
+.book-inventory-page .copy-management-card {
+    background: #faf6f1;
+}
+
+.book-inventory-page .copy-summary-chips {
+    max-width: 1050px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.book-inventory-page .copy-table-wrap {
+    max-width: 100%;
+    overflow-x: hidden;
+    border: 0;
+    border-radius: 0;
+}
+
+.book-inventory-page .copy-management-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+.book-inventory-page .copy-management-table thead th {
+    padding: 11px 10px;
+    border: 0;
+    background: transparent;
+    color: var(--member-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.book-inventory-page .copy-management-table thead th:nth-child(1) { width: 7%; }
+.book-inventory-page .copy-management-table thead th:nth-child(2) { width: 10%; }
+.book-inventory-page .copy-management-table thead th:nth-child(3) { width: 30%; }
+.book-inventory-page .copy-management-table thead th:nth-child(4),
+.book-inventory-page .copy-management-table thead th:nth-child(5) { width: 18%; }
+.book-inventory-page .copy-management-table thead th:nth-child(6) { width: 17%; }
+
+.book-inventory-page .copy-management-table tbody td {
+    padding: 13px 10px;
+    border-top: 1px solid var(--member-hairline);
+    border-bottom: 1px solid var(--member-hairline);
+    background: #fff;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.book-inventory-page .copy-management-table tbody td:first-child {
+    border-left: 4px solid #8b5a2b;
+    border-radius: 11px 0 0 11px;
+}
+
+.book-inventory-page .copy-management-table tbody td:last-child {
+    border-right: 1px solid var(--member-hairline);
+    border-radius: 0 11px 11px 0;
+}
+
+.book-inventory-page .copy-management-table tbody tr:hover > td {
+    border-color: rgba(139, 90, 43, .34);
+    background: #fffdfb;
+}
+
+.book-inventory-page .copy-management-table .status-badge {
+    min-width: 86px;
+}
+
+.book-inventory-page .copy-management-table .status-badge.status-payment-pending {
+    color: #8a5a00;
+    background: #fff4d6;
+    border: 1px solid #e8c66a;
+}
+
+.book-inventory-page .copy-management-table .status-badge.status-waiting-pickup {
+    color: #6542a6;
+    background: #f0e9ff;
+    border: 1px solid #c9b6ef;
+}
+
+.book-inventory-page .book-condition-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 4px 12px;
+    border: 1px solid;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+}
+.book-inventory-page .condition-new {
+    color: #216e39;
+    background: #e6f4ea;
+    border-color: #98d5aa;
+}
+.book-inventory-page .condition-minor {
+    color: #8a5a00;
+    background: #fff4d6;
+    border-color: #e8c66a;
+}
+.book-inventory-page .condition-severe {
+    color: #a44b12;
+    background: #ffeadc;
+    border-color: #efb184;
+}
+.book-inventory-page .condition-lost {
+    color: #a83232;
+    background: #fce8e6;
+    border-color: #e8aaa5;
+}
+
+.book-inventory-page .copy-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.book-inventory-page .copy-row-actions .member-icon-action {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    border-color: rgba(139, 90, 43, .2);
+    background: #fff;
+    color: #513215;
+}
+
+.book-inventory-page .copy-row-actions .member-icon-action:hover,
+.book-inventory-page .copy-row-actions .member-icon-action:focus-visible {
+    border-color: #c38040;
+    background: #fceee7;
+    color: #513215;
+}
+
+.book-inventory-page .copy-row-actions .copy-add-action {
+    border-color: rgba(139, 90, 43, .38);
+    background: #fceee7;
+    color: #724922;
+}
+
+@media (max-width: 1099.98px) {
+    .book-inventory-page .copy-management-table,
+    .book-inventory-page .copy-management-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .book-inventory-page .copy-management-table thead {
+        display: none;
+    }
+
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 22px;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border: 1px solid var(--member-hairline);
+        border-left: 4px solid #8b5a2b;
+        border-radius: 11px;
+        background: #fff;
+    }
+
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td,
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td:first-child,
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td:last-child {
+        display: grid;
+        width: 100%;
+        grid-template-columns: minmax(110px, 145px) minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        padding: 9px 0;
+        border: 0;
+        border-bottom: 1px solid var(--member-hairline);
+        border-radius: 0;
+        background: transparent;
+        text-align: left !important;
+    }
+
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td::before {
+        color: var(--member-muted);
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .055em;
+        text-transform: uppercase;
+    }
+
+    .book-inventory-page .copy-row-actions {
+        justify-content: flex-start;
+    }
+
+    .book-inventory-page .copy-management-table tbody tr:not(.copy-data-row) {
+        display: block;
+        width: 100%;
+    }
+
+    .book-inventory-page .copy-management-table tbody tr:not(.copy-data-row) > td {
+        display: block;
+        width: 100%;
+        padding: 28px 14px;
+        border: 1px solid var(--member-hairline);
+        border-radius: 11px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .book-inventory-page .copy-management-hero {
+        min-height: 0;
+        padding: 24px;
+    }
+
+    .book-inventory-page .copy-management-hero-decoration {
+        display: none;
+    }
+
+    .book-inventory-page .copy-summary-chips {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .book-inventory-page .copy-management-hero .member-page-title {
+        font-size: 31px;
+    }
+
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td,
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td:first-child,
+    .book-inventory-page .copy-management-table tbody tr.copy-data-row > td:last-child {
+        grid-template-columns: minmax(96px, 122px) minmax(0, 1fr);
+    }
+}
+
+/* Bookshelf and physical storage management subsection. */
+.book-inventory-page .storage-management-hero {
+    position: relative;
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    overflow: hidden;
+    margin-bottom: 28px;
+    padding: 30px 40px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #533b2f 0%, #8b5a2b 58%, #c28b52 100%);
+    box-shadow: 0 14px 30px rgba(71, 45, 28, .14);
+}
+
+.book-inventory-page .storage-management-hero::before,
+.book-inventory-page .storage-management-hero::after {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.book-inventory-page .storage-management-hero::before {
+    top: -150px;
+    right: -68px;
+    width: 345px;
+    height: 345px;
+    box-shadow: 0 0 0 58px rgba(255, 255, 255, .045);
+}
+
+.book-inventory-page .storage-management-hero::after {
+    right: 220px;
+    bottom: -145px;
+    width: 240px;
+    height: 240px;
+}
+
+.book-inventory-page .storage-management-hero-copy,
+.book-inventory-page .storage-management-hero .storage-add-action {
+    position: relative;
+    z-index: 1;
+}
+
+.book-inventory-page .storage-management-hero-copy {
+    min-width: 0;
+    max-width: 740px;
+}
+
+.book-inventory-page .storage-management-hero :is(.member-page-eyebrow, .member-page-title, .member-page-description) {
+    color: #fff;
+}
+
+.book-inventory-page .storage-management-hero .member-page-eyebrow {
+    opacity: .84;
+}
+
+.book-inventory-page .storage-management-hero .member-page-title {
+    font-size: clamp(32px, 3.5vw, 46px);
+    font-weight: 500;
+}
+
+.book-inventory-page .storage-management-hero .member-page-description {
+    font-size: 14px;
+    opacity: .88;
+}
+
+.book-inventory-page .storage-management-hero .storage-add-action {
+    width: auto;
+    min-width: 170px;
+    height: 44px;
+    padding: 0 18px;
+    border-color: #fff;
+    border-radius: 10px;
+    background: #fff;
+    color: #513215;
+    box-shadow: 0 5px 14px rgba(46, 26, 8, .14);
+}
+
+.book-inventory-page .storage-management-hero .storage-add-action:hover,
+.book-inventory-page .storage-management-hero .storage-add-action:focus-visible {
+    border-color: #fceee7;
+    background: #fceee7;
+    color: #2e1a08;
+}
+
+.book-inventory-page .storage-management-card {
+    background: #faf6f1;
+}
+
+.book-inventory-page .storage-summary-chips {
+    max-width: 350px;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.book-inventory-page .storage-table-wrap {
+    max-width: 100%;
+    overflow-x: hidden;
+    border: 0;
+    border-radius: 0;
+}
+
+.book-inventory-page #bookShelfPanel .storage-management-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+.book-inventory-page .storage-management-table thead th {
+    padding: 11px 14px;
+    border: 0;
+    background: transparent;
+    color: var(--member-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.book-inventory-page .storage-management-table tbody td {
+    height: 66px;
+    padding: 13px 14px;
+    border-top: 1px solid var(--member-hairline);
+    border-bottom: 1px solid var(--member-hairline);
+    background: #fff;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.book-inventory-page .storage-management-table tbody td:first-child {
+    border-left: 4px solid #8b5a2b;
+    border-radius: 11px 0 0 11px;
+    color: #513215;
+    font-weight: 600;
+}
+
+.book-inventory-page .storage-management-table tbody td:last-child {
+    border-right: 1px solid var(--member-hairline);
+    border-radius: 0 11px 11px 0;
+}
+
+.book-inventory-page .storage-management-table tbody tr:hover > td {
+    border-color: rgba(139, 90, 43, .34);
+    background: #fffdfb;
+}
+
+.book-inventory-page .storage-management-table tbody td:nth-child(3) {
+    color: #2f6f3e;
+    font-variant-numeric: tabular-nums;
+}
+
+.book-inventory-page .storage-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.book-inventory-page .storage-row-actions .member-icon-action {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    border-color: rgba(139, 90, 43, .2);
+    background: #fff;
+    color: #513215;
+}
+
+.book-inventory-page .storage-row-actions .member-icon-action:hover,
+.book-inventory-page .storage-row-actions .member-icon-action:focus-visible {
+    border-color: #c38040;
+    background: #fceee7;
+}
+
+.book-inventory-page .storage-row-actions .member-icon-action-danger {
+    border-color: rgba(146, 59, 54, .24);
+    color: var(--app-color-danger-ink);
+}
+
+.book-inventory-page .storage-row-actions .member-icon-action-danger:hover,
+.book-inventory-page .storage-row-actions .member-icon-action-danger:focus-visible {
+    border-color: var(--app-color-danger-ink);
+    background: var(--app-color-danger-soft);
+    color: var(--app-color-danger-ink);
+}
+
+@media (max-width: 767.98px) {
+    .book-inventory-page .storage-management-hero {
+        min-height: 0;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 24px;
+    }
+
+    .book-inventory-page .storage-management-hero .storage-add-action {
+        align-self: flex-start;
+        margin-top: 18px;
+    }
+
+    .book-inventory-page #bookShelfPanel .storage-management-table,
+    .book-inventory-page #bookShelfPanel .storage-management-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .book-inventory-page #bookShelfPanel .storage-management-table colgroup,
+    .book-inventory-page #bookShelfPanel .storage-management-table thead {
+        display: none;
+    }
+
+    .book-inventory-page .storage-management-table tbody tr.bookshelf-data-row {
+        display: block;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border: 1px solid var(--member-hairline);
+        border-left: 4px solid #8b5a2b;
+        border-radius: 11px;
+        background: #fff;
+    }
+
+    .book-inventory-page .storage-management-table tbody tr.bookshelf-data-row > td,
+    .book-inventory-page .storage-management-table tbody tr.bookshelf-data-row > td:first-child,
+    .book-inventory-page .storage-management-table tbody tr.bookshelf-data-row > td:last-child {
+        display: grid;
+        width: 100%;
+        height: auto;
+        grid-template-columns: minmax(100px, 132px) minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border: 0;
+        border-bottom: 1px solid var(--member-hairline);
+        border-radius: 0;
+        background: transparent;
+        text-align: left !important;
+    }
+
+    .book-inventory-page .storage-management-table tbody tr.bookshelf-data-row > td::before {
+        color: var(--member-muted);
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .055em;
+        text-transform: uppercase;
+    }
+
+    .book-inventory-page .storage-row-actions {
+        justify-content: flex-start;
+    }
+
+    .book-inventory-page .storage-management-table tbody tr:not(.bookshelf-data-row) {
+        display: block;
+        width: 100%;
+    }
+
+    .book-inventory-page .storage-management-table tbody tr:not(.bookshelf-data-row) > td {
+        display: block;
+        width: 100%;
+        padding: 28px 14px;
+        border: 1px solid var(--member-hairline);
+        border-radius: 11px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .book-inventory-page .storage-management-hero .member-page-title {
+        font-size: 31px;
+    }
+
+    .book-inventory-page .storage-management-hero .storage-add-action,
+    .book-inventory-page .storage-summary-chips {
+        width: 100%;
+        max-width: none;
+    }
+}

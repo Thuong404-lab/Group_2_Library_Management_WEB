@@ -2,39 +2,36 @@ package com.lms.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.Locale;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    public static final String LOCALE_COOKIE_NAME = "LMS_LOCALE";
+    private final InactiveMemberInterceptor inactiveMemberInterceptor;
+    private final ActiveStaffInterceptor activeStaffInterceptor;
     private final MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor;
 
-    public WebMvcConfig() {
-        this.memberLocalePreferenceInterceptor = null;
-    }
-
-    @Autowired
-    public WebMvcConfig(MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor) {
+    public WebMvcConfig(InactiveMemberInterceptor inactiveMemberInterceptor,
+                        ActiveStaffInterceptor activeStaffInterceptor,
+                        MemberLocalePreferenceInterceptor memberLocalePreferenceInterceptor) {
+        this.inactiveMemberInterceptor = inactiveMemberInterceptor;
+        this.activeStaffInterceptor = activeStaffInterceptor;
         this.memberLocalePreferenceInterceptor = memberLocalePreferenceInterceptor;
     }
 
     @Bean
     public LocaleResolver localeResolver() {
-        CookieLocaleResolver resolver = new CookieLocaleResolver(LOCALE_COOKIE_NAME);
+        SessionLocaleResolver resolver = new SessionLocaleResolver();
         resolver.setDefaultLocale(Locale.ENGLISH);
-        resolver.setCookieMaxAge(Duration.ofDays(365));
         return resolver;
     }
 
@@ -48,6 +45,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(localeChangeInterceptor());
+        registry.addInterceptor(inactiveMemberInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico",
+                        "/login", "/logout", "/error", "/403",
+                        "/oauth2/**", "/login/oauth2/**");
+        registry.addInterceptor(activeStaffInterceptor)
+                .addPathPatterns("/admin/**", "/librarian/**");
         if (memberLocalePreferenceInterceptor != null) {
             registry.addInterceptor(memberLocalePreferenceInterceptor);
         }
@@ -57,7 +62,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         Path uploadDir = Paths.get("uploads");
         String uploadPath = uploadDir.toFile().getAbsolutePath();
-        
+
         // Map đường dẫn /uploads/** tới thư mục vật lý trên máy
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:/" + uploadPath + "/");

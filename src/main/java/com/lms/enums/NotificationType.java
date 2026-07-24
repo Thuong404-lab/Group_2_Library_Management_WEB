@@ -1,9 +1,7 @@
 package com.lms.enums;
 
-import org.springframework.context.i18n.LocaleContextHolder;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ResourceBundle;
 
 public enum NotificationType {
     GENERAL("notification.type.general", true),
@@ -23,10 +21,6 @@ public enum NotificationType {
     NotificationType(String messageKey, boolean manualSelectable) {
         this.messageKey = messageKey;
         this.manualSelectable = manualSelectable;
-    }
-
-    public String getDisplayName() {
-        return ResourceBundle.getBundle("messages", LocaleContextHolder.getLocale()).getString(messageKey);
     }
 
     public String getMessageKey() {

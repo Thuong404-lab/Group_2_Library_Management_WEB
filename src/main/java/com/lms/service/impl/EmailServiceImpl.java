@@ -32,14 +32,10 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendEmail(String to, String subject, String text) {
-
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
-        // Cần cấu hình spring.mail.username trong application.properties
-        // message.setFrom("your-email@example.com"); // Có thể set từ đây hoặc cấu hình trong properties
-
         try {
             mailSender.send(message);
         } catch (MailException ex) {
@@ -59,5 +55,58 @@ public class EmailServiceImpl implements EmailService {
         } catch (MessagingException | MailException ex) {
             throw new ExternalServiceException(messages.get("backend.email.sendFailed"), ex);
         }
+    }
+
+    @Override
+    public void sendNotificationEmail(String to, String recipientName, String title, String content) {
+        String safeName = org.springframework.web.util.HtmlUtils.htmlEscape(recipientName == null || recipientName.isBlank() ? "Độc giả" : recipientName);
+        String safeTitle = org.springframework.web.util.HtmlUtils.htmlEscape(title == null ? "Thông báo từ Thư viện" : title);
+        String safeContent = org.springframework.web.util.HtmlUtils.htmlEscape(content == null ? "" : content);
+
+        String htmlContent = """
+                <!doctype html>
+                <html>
+                <body style="margin:0;padding:0;background-color:#f5f1eb;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#33271f;">
+                  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="background-color:#f5f1eb;padding:32px 16px;">
+                    <tr>
+                      <td align="center">
+                        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:600px;background-color:#fffdf9;border:1px solid #e4d8ca;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(68,48,35,0.06);">
+                          <!-- Header -->
+                          <tr>
+                            <td style="padding:28px 32px;background:linear-gradient(135deg, #7c4c20 0%%, #563314 100%%);color:#ffffff;text-align:center;">
+                              <div style="font-family:'Georgia',serif;font-size:22px;font-weight:bold;letter-spacing:0.5px;">THƯ VIỆN & QUẢN LÝ THÔNG BÁO</div>
+                              <div style="font-size:12px;opacity:0.85;margin-top:4px;text-transform:uppercase;letter-spacing:1px;">Hệ thống Thông báo Tự động</div>
+                            </td>
+                          </tr>
+                          <!-- Body -->
+                          <tr>
+                            <td style="padding:32px;">
+                              <p style="font-size:16px;line-height:1.5;margin-top:0;margin-bottom:16px;">Xin chào <strong>%s</strong>,</p>
+                              
+                              <!-- Notification Box -->
+                              <div style="background-color:#fff8ef;border-left:4px solid #7c4c20;border-radius:8px;padding:20px;margin-bottom:24px;">
+                                <h3 style="margin:0 0 10px 0;color:#563314;font-size:17px;font-family:'Georgia',serif;">%s</h3>
+                                <p style="margin:0;font-size:15px;line-height:1.6;color:#4d3e33;">%s</p>
+                              </div>
+
+                              <p style="font-size:14px;color:#78685c;line-height:1.5;margin-bottom:0;">Vui lòng truy cập trang cá nhân của bạn trên Hệ thống Thư viện để theo dõi chi tiết phiếu mượn và số dư ví.</p>
+                            </td>
+                          </tr>
+                          <!-- Footer -->
+                          <tr>
+                            <td style="padding:20px 32px;background-color:#f0e8dc;border-top:1px solid #e4d8ca;text-align:center;font-size:12px;color:#8a786c;line-height:1.5;">
+                              <p style="margin:0;">Email này được gửi tự động từ Hệ thống Quản lý Thư viện.</p>
+                              <p style="margin:4px 0 0 0;">Vui lòng không phản hồi trực tiếp qua email này.</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(safeName, safeTitle, safeContent);
+
+        sendHtmlEmail(to, safeTitle, htmlContent);
     }
 }

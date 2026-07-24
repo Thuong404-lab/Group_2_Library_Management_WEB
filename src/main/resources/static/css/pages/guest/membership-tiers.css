@@ -1,10 +1,11 @@
 /* Presentation owner for templates/guest/membership-tiers.html */
 
 .membership-tiers-page {
-    --tier-brown: #8b5a2b;
-    --tier-brown-dark: #4a3b32;
-    --tier-cream: #fdfbf7;
-    --tier-gold: #c99745;
+    --tier-brown: var(--member-palette-600);
+    --tier-brown-dark: var(--member-palette-800);
+    --tier-cream: #fff;
+    --tier-gold: var(--member-palette-300);
+    padding: 36px 0 64px;
     color: #2c1e16;
     font-family: 'Lora', serif;
 }
@@ -12,11 +13,19 @@
 .membership-tiers-hero {
     position: relative;
     overflow: hidden;
-    padding: 88px 0 112px;
+    width: calc(100% - 30px);
+    max-width: 1320px;
+    height: var(--guest-public-hero-height);
+    min-height: var(--guest-public-hero-height);
+    box-sizing: border-box;
+    padding: 44px 40px;
+    margin: 0 auto;
+    border-radius: 18px;
     background:
         radial-gradient(circle at 15% 30%, rgba(220, 179, 138, .18), transparent 24%),
         radial-gradient(circle at 85% 15%, rgba(201, 151, 69, .16), transparent 28%),
-        linear-gradient(135deg, #3c2b22 0%, #5d3c25 55%, #7a4c28 100%);
+        linear-gradient(120deg, var(--member-palette-800) 0%, var(--member-palette-600) 58%, var(--member-palette-400) 100%);
+    box-shadow: var(--member-card-shadow);
     color: var(--tier-cream);
 }
 
@@ -59,7 +68,7 @@
 
 .membership-tiers-hero p {
     max-width: 760px;
-    margin: 0 auto;
+    margin: 0;
     color: rgba(253, 251, 247, .78);
     font-size: 1.08rem;
     line-height: 1.8;
@@ -68,8 +77,9 @@
 .membership-tiers-content {
     position: relative;
     z-index: 2;
-    margin-top: -52px;
-    padding-bottom: 72px;
+    max-width: 1320px;
+    margin-top: 24px;
+    padding-bottom: 0;
 }
 
 .membership-tier-grid {
@@ -83,7 +93,7 @@
     padding: 28px;
     border: 1px solid rgba(139, 90, 43, .2);
     border-radius: 16px;
-    background: rgba(253, 251, 247, .98);
+    background: #fff;
     box-shadow: 0 14px 38px rgba(74, 59, 50, .12);
     transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
 }
@@ -178,33 +188,6 @@
     font-weight: 700;
 }
 
-.membership-tier-benefits {
-    min-height: 132px;
-    padding: 18px;
-    border-radius: 12px;
-    background: #f5eee4;
-}
-
-.membership-tier-benefits h4 {
-    margin-bottom: 9px;
-    color: var(--tier-brown);
-    font-family: 'Lora', serif;
-    font-size: .82rem;
-    font-weight: 700;
-}
-
-.membership-tier-benefits h4 i {
-    margin-right: 7px;
-}
-
-.membership-tier-benefits p {
-    margin: 0;
-    color: #625147;
-    font-size: .88rem;
-    line-height: 1.65;
-    white-space: pre-line;
-}
-
 .membership-tiers-empty {
     padding: 64px 24px;
     border: 1px solid rgba(139, 90, 43, .2);
@@ -232,13 +215,15 @@
 
 @media (max-width: 991.98px) {
     .membership-tiers-hero {
-        padding: 72px 0 100px;
+        padding: 36px 32px;
     }
 }
 
 @media (max-width: 767.98px) {
     .membership-tiers-hero {
-        padding: 58px 18px 88px;
+        height: auto;
+        min-height: 0;
+        padding: 30px 24px;
     }
 
     .membership-tiers-content {

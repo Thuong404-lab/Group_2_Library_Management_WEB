@@ -8,11 +8,15 @@ import com.lms.entity.MemberNotificationId;
 import com.lms.entity.Notification;
 import com.lms.entity.Reservation;
 import com.lms.entity.SystemSetting;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
+import com.lms.enums.TransactionChannel;
+import com.lms.enums.TransactionStatus;
+import com.lms.enums.TransactionType;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ForbiddenException;
 import com.lms.exception.ResourceNotFoundException;
@@ -28,9 +32,11 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.service.TopUpPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +46,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Financial transaction rules maintained by Pham Kien Quoc for member fees,
@@ -57,18 +64,17 @@ public class FinancialServiceImpl implements FinancialService {
     private static final String DEPOSIT_TYPE = "DEPOSIT";
     private static final String REFUND_TYPE = "REFUND";
     private static final String COMPLETED_STATUS = "Completed";
-    private static final String PAID_STATUS = "Paid";
     private static final String PENDING_STATUS = "Pending";
     private static final String BORROW_FEE_SETTING_KEY = "BORROW_FEE_PER_BOOK";
     private static final String FINE_PER_DAY_SETTING_KEY = "Fine_Per_Day";
     private static final String DAMAGE_COMPENSATION_SETTING_KEY = "Damage_Compensation_Amount";
     private static final String DEPOSIT_SETTING_KEY = "Deposit_Amount";
     private static final BigDecimal DEFAULT_DEPOSIT_AMOUNT = BigDecimal.valueOf(50000);
-    private static final BigDecimal DEFAULT_DAMAGE_COMPENSATION_AMOUNT = BigDecimal.valueOf(120000);
     private static final int DEFAULT_BORROW_FEE_DAYS = 10;
     private static final BigDecimal DEFAULT_BORROW_FEE_PER_BOOK = BigDecimal.valueOf(5000);
     private static final int MEMBER_TRANSACTION_PAGE_SIZE = 10;
-    private static final int LIBRARIAN_TRANSACTION_PAGE_SIZE = 12;
+    @Value("${library.transactions.page-size:12}")
+    private int librarianTransactionPageSize = 12;
 
     private final TransactionRepository transactionRepository;
     private final WalletRepository walletRepository;
@@ -103,7 +109,7 @@ public class FinancialServiceImpl implements FinancialService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void payOverdueFine(Integer memberId, Integer fineId) {
-        Transaction fine = transactionRepository.findById(fineId)
+        Transaction fine = transactionRepository.findByIdForUpdate(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.fineNotFound", fineId)));
 
         validateTransactionOwner(fine, memberId);
@@ -113,24 +119,28 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ValidationException(localizedMessageService.get("backend.financial.notFineTransaction"));
         }
 
-        if (isCompletedStatus(fine.getStatus())) {
-            throw new ConflictException(localizedMessageService.get("backend.financial.fineAlreadyPaid"));
-        }
+        requirePendingFine(fine);
 
         BigDecimal fineAmount = amountOrZero(fine.getAmount()).abs();
         if (fineAmount.signum() <= 0) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidFineAmount"));
         }
 
-        var wallet = fine.getWallet();
+        var wallet = walletRepository.findByMemberIdForUpdate(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
         ensureSufficientBalance(currentBalance, fineAmount, localizedMessageService.get("backend.financial.fineLabel"));
         wallet.setBalance(currentBalance.subtract(fineAmount));
         walletRepository.save(wallet);
 
         fine.setAmount(fineAmount.negate());
-        fine.setTransactionDate(LocalDateTime.now());
+        LocalDateTime paidAt = LocalDateTime.now();
+        fine.setTransactionDate(paidAt);
+        fine.setPaidAt(paidAt);
         fine.setStatus(COMPLETED_STATUS);
+        fine.setChannel(TransactionChannel.WALLET.name());
+        fine.setBalanceBefore(currentBalance);
+        fine.setBalanceAfter(wallet.getBalance());
         transactionRepository.save(fine);
 
         Member member = wallet.getMember();
@@ -161,7 +171,7 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidBorrowFee"));
         }
 
-        var wallet = walletRepository.findByMemberMemberId(memberId)
+        var wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
 
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
@@ -181,9 +191,9 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
         }
 
-        BigDecimal perBookPerDay = getBorrowFeePerBookPerDay();
         return details.stream()
-                .map(detail -> BigDecimal.valueOf(calculateBorrowDays(detail)).multiply(perBookPerDay))
+                .map(detail -> BigDecimal.valueOf(calculateBorrowDays(detail))
+                        .multiply(getBorrowFeeForCondition(detail.getBookItem())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -209,13 +219,11 @@ public class FinancialServiceImpl implements FinancialService {
         if ("DEPOSIT_PAID".equals(reservationStatus) || "PAID".equals(reservationStatus)) {
             throw new ConflictException(localizedMessageService.get("backend.financial.depositAlreadyPaid"));
         }
-        if ("COMPLETED".equals(reservationStatus) || "CANCELED".equals(reservationStatus)
-                || "CANCELLED".equals(reservationStatus) || "REFUNDED".equals(reservationStatus)
-                || "REFUND_PENDING".equals(reservationStatus)) {
+        if (!"PENDING".equals(reservationStatus)) {
             throw new ConflictException(localizedMessageService.get("backend.financial.depositNotPayable"));
         }
 
-        Wallet wallet = walletRepository.findByMemberMemberId(memberId)
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal depositAmount = getReservationDepositAmount();
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
@@ -275,17 +283,23 @@ public class FinancialServiceImpl implements FinancialService {
 
         Borrow borrow = detail.getBorrow();
         Member member = borrow.getMember();
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
-        Transaction transaction = transactionRepository
-                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
-                        borrow.getBorrowId(), FINE_TYPE, PENDING_STATUS)
-                .map(existing -> {
-                    existing.setAmount(amountOrZero(existing.getAmount()).subtract(fineAmount));
-                    return transactionRepository.save(existing);
-                })
-                .orElseGet(() -> saveWalletTransaction(
-                        wallet, borrow, FINE_TYPE, fineAmount.negate(), PENDING_STATUS));
+        var existingPending = transactionRepository
+                .findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                        detail.getBorrowDetailId(), FINE_TYPE, PENDING_STATUS);
+        Transaction transaction;
+        if (existingPending.isPresent()) {
+            transaction = existingPending.get();
+            transaction.setAmount(fineAmount.negate());
+            transaction = transactionRepository.save(transaction);
+        } else if (transactionRepository.countByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCase(
+                detail.getBorrowDetailId(), FINE_TYPE) > 0) {
+            return;
+        } else {
+            transaction = saveBorrowDetailTransaction(
+                    wallet, borrow, detail, FINE_TYPE, fineAmount.negate(), PENDING_STATUS);
+        }
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
                 ? localizedMessageService.get("backend.book.unknownTitle")
@@ -315,17 +329,23 @@ public class FinancialServiceImpl implements FinancialService {
 
         Borrow borrow = detail.getBorrow();
         Member member = borrow.getMember();
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
-        Transaction transaction = transactionRepository
-                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
-                        borrow.getBorrowId(), DAMAGE_FEE_TYPE, PENDING_STATUS)
-                .map(existing -> {
-                    existing.setAmount(amountOrZero(existing.getAmount()).subtract(compensationAmount));
-                    return transactionRepository.save(existing);
-                })
-                .orElseGet(() -> saveWalletTransaction(
-                        wallet, borrow, DAMAGE_FEE_TYPE, compensationAmount.negate(), PENDING_STATUS));
+        var existingPending = transactionRepository
+                .findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                        detail.getBorrowDetailId(), DAMAGE_FEE_TYPE, PENDING_STATUS);
+        Transaction transaction;
+        if (existingPending.isPresent()) {
+            transaction = existingPending.get();
+            transaction.setAmount(compensationAmount.negate());
+            transaction = transactionRepository.save(transaction);
+        } else if (transactionRepository.countByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCase(
+                detail.getBorrowDetailId(), DAMAGE_FEE_TYPE) > 0) {
+            return;
+        } else {
+            transaction = saveBorrowDetailTransaction(
+                    wallet, borrow, detail, DAMAGE_FEE_TYPE, compensationAmount.negate(), PENDING_STATUS);
+        }
 
         String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
                 ? localizedMessageService.get("backend.book.unknownTitle")
@@ -347,25 +367,31 @@ public class FinancialServiceImpl implements FinancialService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void payFineByCash(Integer fineId) {
-        Transaction fine = transactionRepository.findById(fineId)
+    public void payFineByCash(Integer fineId, Staff performedBy) {
+        if (performedBy == null || performedBy.getStaffId() == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.staffRequired"));
+        }
+        Transaction fine = transactionRepository.findByIdForUpdate(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.financial.fineNotFound", fineId)));
         String type = normalize(fine.getTransactionType());
         if (!FINE_TYPE.equals(type) && !DAMAGE_FEE_TYPE.equals(type)) {
             throw new ValidationException(localizedMessageService.get("backend.financial.notFineTransaction"));
         }
-        if (isCompletedStatus(fine.getStatus())) {
-            throw new ConflictException(localizedMessageService.get("backend.financial.fineAlreadyPaid"));
-        }
+        requirePendingFine(fine);
         BigDecimal fineAmount = amountOrZero(fine.getAmount()).abs();
         if (fineAmount.signum() <= 0) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidFineAmount"));
         }
 
         fine.setAmount(fineAmount.negate());
+        LocalDateTime paidAt = LocalDateTime.now();
         fine.setStatus(COMPLETED_STATUS);
-        fine.setTransactionDate(LocalDateTime.now());
+        fine.setTransactionDate(paidAt);
+        fine.setPaidAt(paidAt);
+        fine.setChannel(TransactionChannel.CASH.name());
+        fine.setPerformedByStaff(performedBy);
+        fine.setReferenceCode("CASH-FINE-" + fine.getTransactionId());
         transactionRepository.save(fine);
 
         Member member = fine.getWallet() == null ? null : fine.getWallet().getMember();
@@ -379,8 +405,11 @@ public class FinancialServiceImpl implements FinancialService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void payFineByWalletAtDesk(Integer fineId) {
-        Transaction fine = transactionRepository.findById(fineId)
+    public void payFineByWalletAtDesk(Integer fineId, Staff performedBy) {
+        if (performedBy == null || performedBy.getStaffId() == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.staffRequired"));
+        }
+        Transaction fine = transactionRepository.findByIdForUpdate(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.financial.fineNotFound", fineId)));
         Member member = fine.getWallet() == null ? null : fine.getWallet().getMember();
@@ -389,39 +418,106 @@ public class FinancialServiceImpl implements FinancialService {
         }
 
         payOverdueFine(member.getMemberId(), fineId);
+        fine.setPerformedByStaff(performedBy);
+        transactionRepository.save(fine);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Transaction> getAllTransactions(int page, String type) {
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), LIBRARIAN_TRANSACTION_PAGE_SIZE);
-        if (type == null || type.trim().isEmpty()) {
-            return transactionRepository.findAllByOrderByTransactionDateDesc(pageable);
+    public Page<Transaction> getAllTransactions(int page, String query, String type,
+            String status, String channel, LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new ValidationException(localizedMessageService.get("backend.transaction.invalidDateRange"));
         }
-        return transactionRepository.findByTransactionTypeContainingIgnoreCaseOrderByTransactionDateDesc(
-                type.trim(), pageable);
+        String normalizedType = normalizeTransactionType(type);
+        String normalizedStatus = normalizeTransactionStatus(status);
+        String normalizedChannel = normalizeTransactionChannel(channel);
+        String normalizedQuery = query == null ? "" : query.trim();
+        TransactionSearchIds searchIds = extractTransactionSearchIds(normalizedQuery);
+        int pageSize = Math.max(5, Math.min(librarianTransactionPageSize, 100));
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), pageSize);
+        return transactionRepository.searchForLibrarian(
+                normalizedQuery, searchIds.transactionId(), searchIds.memberId(),
+                normalizedType, normalizedStatus, normalizedChannel,
+                fromDate == null ? null : fromDate.atStartOfDay(),
+                toDate == null ? null : toDate.plusDays(1).atStartOfDay(), pageable);
+    }
+
+    private String normalizeTransactionType(String type) {
+        if (type == null || type.isBlank()) return null;
+        return TransactionType.fromCode(type).map(Enum::name)
+                .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.transaction.invalidType")));
+    }
+
+    private String normalizeTransactionStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        return TransactionStatus.fromValue(status).map(value -> value.getDatabaseValue().toUpperCase())
+                .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.transaction.invalidStatus")));
+    }
+
+    private String normalizeTransactionChannel(String channel) {
+        if (channel == null || channel.isBlank()) return null;
+        return TransactionChannel.fromCode(channel).map(Enum::name)
+                .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.transaction.invalidChannel")));
+    }
+
+    private TransactionSearchIds extractTransactionSearchIds(String query) {
+        if (query == null || query.isBlank()) return new TransactionSearchIds(null, null);
+        String normalized = query.trim().toUpperCase(java.util.Locale.ROOT);
+        boolean transactionCode = normalized.matches("^#?TXN-\\d+$");
+        boolean memberCode = normalized.matches("^(TV-|MEM-)\\d+$");
+        String digits = normalized.replaceFirst("^(#?TXN-|TV-|MEM-)", "");
+        if (!digits.matches("\\d+")) return new TransactionSearchIds(null, null);
+        try {
+            Integer value = Integer.valueOf(digits);
+            if (transactionCode) return new TransactionSearchIds(value, null);
+            if (memberCode) return new TransactionSearchIds(null, value);
+            return new TransactionSearchIds(value, value);
+        } catch (NumberFormatException ignored) {
+            return new TransactionSearchIds(null, null);
+        }
+    }
+
+    private record TransactionSearchIds(Integer transactionId, Integer memberId) {
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void topUpMemberAccount(String memberPhone, Double amount) {
-        if (memberPhone == null || memberPhone.trim().isEmpty()) {
+    public void topUpMemberAccount(String memberLookup, BigDecimal amount, String requestId, Staff performedBy) {
+        if (memberLookup == null || memberLookup.trim().isEmpty()) {
             throw new ValidationException(localizedMessageService.get("backend.financial.memberLookupRequired"));
         }
-        if (amount == null || amount <= 0) {
-            throw new ValidationException(localizedMessageService.get("backend.financial.topupPositive"));
+        if (!isValidRequestId(requestId)) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.invalidRequest"));
         }
+        if (performedBy == null || performedBy.getStaffId() == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.staffRequired"));
+        }
+        String referenceCode = "CASH-TOPUP-" + requestId.trim();
+        if (transactionRepository.existsByReferenceCode(referenceCode)) return;
 
-        Member member = findMemberByLookup(memberPhone.trim());
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+        BigDecimal topUpAmount = requireTopUpAmount(amount);
+
+        Member member = findMemberByLookup(memberLookup.trim());
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
                 .orElseGet(() -> createWalletForMember(member));
+        if (transactionRepository.existsByReferenceCode(referenceCode)) return;
 
-        BigDecimal topUpAmount = BigDecimal.valueOf(amount).abs();
-        BigDecimal newBalance = balanceOf(wallet.getBalance()).add(topUpAmount);
+        BigDecimal oldBalance = balanceOf(wallet.getBalance());
+        BigDecimal newBalance = oldBalance.add(topUpAmount);
+        if (newBalance.compareTo(TopUpPolicy.MAX_WALLET_BALANCE) > 0) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.walletLimit", TopUpPolicy.MAX_WALLET_BALANCE));
+        }
         wallet.setBalance(newBalance);
         walletRepository.save(wallet);
 
-        saveWalletTransaction(wallet, null, TOP_UP_TYPE, topUpAmount, COMPLETED_STATUS);
+        Transaction transaction = saveWalletTransaction(wallet, null, TOP_UP_TYPE, topUpAmount, COMPLETED_STATUS);
+        transaction.setReferenceCode(referenceCode);
+        transaction.setPerformedByStaff(performedBy);
+        transaction.setChannel("CASH");
+        transaction.setBalanceBefore(oldBalance);
+        transaction.setBalanceAfter(newBalance);
+        transactionRepository.save(transaction);
 
         createMemberNotification(
                 member,
@@ -480,7 +576,7 @@ public class FinancialServiceImpl implements FinancialService {
             throw new ConflictException(localizedMessageService.get("backend.financial.refundPendingOnly"));
         }
 
-        Wallet wallet = walletRepository.findByMemberMemberId(memberId)
+        Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
         BigDecimal refundAmount = getReservationDepositAmount();
         if (refundAmount.signum() <= 0) {
@@ -556,6 +652,30 @@ public class FinancialServiceImpl implements FinancialService {
         return walletRepository.save(wallet);
     }
 
+    private BigDecimal requireTopUpAmount(BigDecimal amount) {
+        if (amount == null) {
+            throw new ValidationException(localizedMessageService.get("backend.financial.topupPositive"));
+        }
+        BigDecimal value = amount.stripTrailingZeros();
+        if (value.scale() > 0 || value.compareTo(TopUpPolicy.MIN_AMOUNT) < 0
+                || value.compareTo(TopUpPolicy.MAX_AMOUNT) > 0) {
+            throw new ValidationException(localizedMessageService.get("backend.payment.amountRange"));
+        }
+        return value;
+    }
+
+    private boolean isValidRequestId(String requestId) {
+        if (requestId == null || requestId.isBlank() || requestId.length() > 48) {
+            return false;
+        }
+        try {
+            UUID.fromString(requestId.trim());
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
+    }
+
     private Transaction saveWalletTransaction(Wallet wallet,
                                               Borrow borrow,
                                               String transactionType,
@@ -568,6 +688,24 @@ public class FinancialServiceImpl implements FinancialService {
         transaction.setAmount(amount);
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setStatus(status);
+        return transactionRepository.save(transaction);
+    }
+
+    private Transaction saveBorrowDetailTransaction(Wallet wallet,
+                                                    Borrow borrow,
+                                                    BorrowDetail detail,
+                                                    String transactionType,
+                                                    BigDecimal amount,
+                                                    String status) {
+        Transaction transaction = new Transaction();
+        transaction.setWallet(wallet);
+        transaction.setBorrow(borrow);
+        transaction.setBorrowDetail(detail);
+        transaction.setTransactionType(transactionType);
+        transaction.setAmount(amount);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setStatus(status);
+        transaction.setChannel("SYSTEM");
         return transactionRepository.save(transaction);
     }
 
@@ -619,6 +757,33 @@ public class FinancialServiceImpl implements FinancialService {
         }
     }
 
+    private BigDecimal getBorrowFeeForCondition(com.lms.entity.BookItem item) {
+        String condition = item == null || item.getBookCondition() == null
+                ? ""
+                : item.getBookCondition().trim().toLowerCase(java.util.Locale.ROOT);
+        if (condition.contains("severely")) {
+            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", BigDecimal.valueOf(3000));
+        }
+        if (condition.contains("minor")) {
+            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", BigDecimal.valueOf(4000));
+        }
+        return getBorrowFeePerBookPerDay();
+    }
+
+    private BigDecimal getMoneySetting(String key, BigDecimal defaultValue) {
+        try {
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
+                    .map(SystemSetting::getSettingValue)
+                    .filter(value -> value != null && !value.isBlank())
+                    .map(String::trim)
+                    .map(BigDecimal::new)
+                    .filter(value -> value.signum() >= 0)
+                    .orElse(defaultValue);
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
+    }
+
     private BigDecimal getFinePerDay() {
         try {
             return systemSettingRepository.findBySettingKeyIgnoreCase(FINE_PER_DAY_SETTING_KEY)
@@ -627,9 +792,9 @@ public class FinancialServiceImpl implements FinancialService {
                     .map(String::trim)
                     .map(BigDecimal::new)
                     .filter(value -> value.signum() >= 0)
-                    .orElse(BigDecimal.valueOf(5000));
+                    .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.financial.fineRateNotConfigured")));
         } catch (NumberFormatException ignored) {
-            return BigDecimal.valueOf(5000);
+            throw new ValidationException(localizedMessageService.get("backend.financial.fineRateNotConfigured"));
         }
     }
 
@@ -643,9 +808,9 @@ public class FinancialServiceImpl implements FinancialService {
                     .map(String::trim)
                     .map(BigDecimal::new)
                     .filter(value -> value.signum() > 0)
-                    .orElse(DEFAULT_DAMAGE_COMPENSATION_AMOUNT);
+                    .orElseThrow(() -> new ValidationException(localizedMessageService.get("backend.financial.damageRateNotConfigured")));
         } catch (NumberFormatException ignored) {
-            return DEFAULT_DAMAGE_COMPENSATION_AMOUNT;
+            throw new ValidationException(localizedMessageService.get("backend.financial.damageRateNotConfigured"));
         }
     }
 
@@ -686,10 +851,10 @@ public class FinancialServiceImpl implements FinancialService {
         }
     }
 
-    private boolean isCompletedStatus(String status) {
-        String normalizedStatus = normalize(status);
-        return COMPLETED_STATUS.toUpperCase().equals(normalizedStatus)
-                || PAID_STATUS.toUpperCase().equals(normalizedStatus);
+    private void requirePendingFine(Transaction fine) {
+        if (!PENDING_STATUS.equalsIgnoreCase(fine.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.financial.fineNotPending"));
+        }
     }
 
     private BigDecimal amountOrZero(BigDecimal amount) {

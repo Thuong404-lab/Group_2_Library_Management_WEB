@@ -1,7 +1,6 @@
 package com.lms.service;
 
 import com.lms.config.CustomUserDetails;
-import com.lms.entity.SystemLog;
 import com.lms.entity.User;
 import com.lms.enums.ActionType;
 import com.lms.repository.SystemLogRepository;
@@ -21,7 +20,7 @@ public class AuditLogService {
     private final UserRepository userRepository;
 
     public AuditLogService(SystemLogRepository systemLogRepository,
-                           UserRepository userRepository) {
+            UserRepository userRepository) {
         this.systemLogRepository = systemLogRepository;
         this.userRepository = userRepository;
     }
@@ -33,12 +32,12 @@ public class AuditLogService {
         String ipAddress = request == null ? null : request.getRemoteAddr();
         String userAgent = request == null ? null : request.getHeader("User-Agent");
 
-        systemLogRepository.save(new SystemLog(
-                actor,
+        systemLogRepository.insertAudit(
+                actor == null ? null : actor.getId(),
                 actionType.name(),
                 ipAddress,
                 userAgent,
-                description));
+                description);
     }
 
     private User getCurrentUser() {

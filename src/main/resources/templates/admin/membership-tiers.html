@@ -1,124 +1,234 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/admin_base}">
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin_base}">
+
 <head>
-<title th:text="#{admin.tiers.title}">Membership Tier Management</title>
-    <link rel="stylesheet" th:href="@{/css/pages/admin/membership-tiers.css}" />
-  </head>
+    <title th:text="#{admin.tiers.title}">Quản lý hạng thành viên</title>
+    <link rel="stylesheet" th:href="@{/css/pages/admin/membership-tiers.css}">
+</head>
+
 <body>
-    <div layout:fragment="content" th:with="activeMenu='tiers'">
-
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom u-border-color-rgba-139-90-43-0-2-important-f8e732ba"
-           >
-            <div>
-                <h2 class="fw-bold mb-1 u-color-4a3b32-font-family-playfair-display-serif-70239336" th:text="#{admin.tiers.heading}">Membership Tier Management</h2>
-                <div class="text-muted" th:text="#{admin.tiers.description}">Configure membership tiers and benefits.</div>
-            </div>
+<main layout:fragment="content" th:with="activeMenu='tiers'" class="tiers-page">
+    <header class="tiers-hero">
+        <div class="tiers-hero-copy">
+            <span class="tiers-eyebrow" th:text="#{admin.tiers.eyebrow}">Chương trình thành viên</span>
+            <h1 th:text="#{admin.tiers.heading}">Quản lý hạng thành viên</h1>
+            <p th:text="#{admin.tiers.description}">Thiết lập các mức hạng và quyền lợi của độc giả.</p>
         </div>
+    </header>
 
-        <!-- Alerts -->
-        <div th:if="${success}" class="alert alert-success fade show shadow-sm" role="alert">
-            <span th:text="${success}"></span>
+    <div class="tiers-feedback-source" aria-hidden="true">
+        <span th:if="${success}" data-app-feedback="success" th:text="${success}"></span>
+        <span th:if="${error}" data-app-feedback="error" th:text="${error}"></span>
+    </div>
+
+    <section class="summary-chips" th:aria-label="#{admin.tiers.summaryAria}">
+        <span class="summary-chip summary-chip--total">
+            <i class="bi bi-layers" aria-hidden="true"></i>
+            <strong class="chip-count app-number" th:text="${@displayNumber.count(tiers.size())}">4</strong>
+            <span th:text="#{admin.tiers.chipTotal}">hạng thành viên</span>
+        </span>
+        <span class="summary-chip" th:each="tier : ${tiers}">
+            <span class="tier-badge tier-badge--compact" th:text="${tier.displayName}">Thành viên</span>
+            <strong class="chip-count app-number"
+                    th:text="${@displayNumber.count(memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0)}">0</strong>
+            <span th:text="#{admin.tiers.memberCount}">thành viên</span>
+        </span>
+    </section>
+
+    <section class="tiers-table-card" th:aria-label="#{admin.tiers.tableAria}">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <colgroup>
+                    <col class="col-stt">
+                    <col class="col-tier">
+                    <col class="col-condition">
+                    <col class="col-discount">
+                    <col class="col-limit">
+                    <col class="col-members">
+                    <col class="col-benefits">
+                    <col class="col-actions">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th class="ps-4" th:text="#{common.number}">No.</th>
+                    <th th:text="#{admin.tiers.name}">Tên hạng</th>
+                    <th th:text="#{admin.tiers.condition}">Điều kiện (VND)</th>
+                    <th th:text="#{admin.tiers.discount}">Giảm giá (%)</th>
+                    <th th:text="#{admin.tiers.borrowLimit}">Giới hạn mượn</th>
+                    <th th:text="#{admin.tiers.memberCount}">Thành viên</th>
+                    <th th:text="#{admin.tiers.benefits}">Quyền lợi</th>
+                    <th class="text-end pe-4" th:text="#{common.actions}">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(tiers)}" class="tiers-empty-row">
+                    <td colspan="8">
+                        <div class="tiers-empty-state">
+                            <i class="bi bi-inbox" aria-hidden="true"></i>
+                            <span th:text="#{admin.tiers.empty}">Không có hạng thành viên nào.</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="tier, tierStat : ${tiers}" class="tier-row">
+                    <td class="ps-4 tier-index app-number" th:data-label="#{common.number}"
+                        th:text="${@displayNumber.count(tierStat.index + 1)}">1</td>
+                    <td th:data-label="#{admin.tiers.name}"><span class="tier-badge" th:text="${tier.displayName}">Thành viên</span></td>
+                    <td th:data-label="#{admin.tiers.condition}">
+                        <div class="info-value app-money">
+                            <span class="app-money-value" th:text="${@displayNumber.moneyOrZero(tier.condition)}">0</span>
+                            <span class="app-money-currency" th:text="#{currency.vnd}">VND</span>
+                        </div>
+                        <div class="info-sub" th:text="#{admin.tiers.conditionSub}">phí đã thanh toán</div>
+                    </td>
+                    <td th:data-label="#{admin.tiers.discount}">
+                        <span class="discount-badge app-percent"
+                              th:text="${@displayNumber.percent(tier.discountPercent != null ? tier.discountPercent : 0)}">0%</span>
+                    </td>
+                    <td th:data-label="#{admin.tiers.borrowLimit}">
+                        <div class="info-value app-number" th:text="${@displayNumber.count(tier.borrowLimit)}">5</div>
+                        <div class="info-sub" th:text="#{admin.tiers.bookUnit}">cuốn đang mượn đồng thời</div>
+                    </td>
+                    <td th:data-label="#{admin.tiers.memberCount}">
+                        <span class="member-count-badge">
+                            <i class="bi bi-people" aria-hidden="true"></i>
+                            <span class="app-number"
+                                  th:text="${@displayNumber.count(memberCounts.containsKey(tier.tierId) ? memberCounts[tier.tierId] : 0)}">0</span>
+                        </span>
+                    </td>
+                    <td th:data-label="#{admin.tiers.benefits}">
+                        <div class="benefit-summary"
+                             th:if="${tier.discountPercent != null and tier.discountPercent > 0}"
+                             th:text="#{public.tiers.benefits.dynamic(${@displayNumber.number(tier.discountPercent)}, ${@displayNumber.count(tier.borrowLimit)})}"></div>
+                        <div class="benefit-summary"
+                             th:if="${tier.discountPercent == null or tier.discountPercent == 0}"
+                             th:text="#{public.tiers.benefits.dynamicNoDiscount(${@displayNumber.count(tier.borrowLimit)})}"></div>
+                    </td>
+                    <td class="text-end pe-4 tier-actions-cell" th:data-label="#{common.actions}">
+                        <button type="button" class="tier-action-btn"
+                                data-bs-toggle="modal"
+                                th:data-bs-target="${'#editTierModal-' + tier.tierId}"
+                                th:aria-label="#{admin.tiers.editAria(${tier.displayName})}"
+                                th:title="#{common.edit}">
+                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
-        </div>
+    </section>
 
-        <!-- Table -->
-        <div class="card-classic shadow-sm mb-4">
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 stable-table-layout">
-                        <colgroup>
-                            <col class="u-width-6-89d41777">
-                            <col class="u-width-11-ed323c3f">
-                            <col class="u-width-15-f7f760e2">
-                            <col class="u-width-11-ed323c3f">
-                            <col class="admin-membership-tiers-col-width-06">
-                            <col class="admin-membership-tiers-col-width-07">
-                            <col class="u-width-12-392c6809">
-                        </colgroup>
-                        <thead class="table-light text-uppercase small text-muted">
-                            <tr>
-                                <th class="ps-3">ID</th>
-                                <th th:text="#{admin.tiers.name}">Tier Name</th>
-                                <th th:text="#{admin.tiers.condition}">Requirement (VND)</th>
-                                <th th:text="#{admin.tiers.discount}">Discount (%)</th>
-                                <th th:text="#{admin.tiers.borrowLimit}">Borrowing Limit</th>
-                                <th th:text="#{admin.tiers.benefits}">Benefits</th>
-                                <th class="text-end pe-3" th:text="#{common.actions}">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="tier : ${tiers}">
-                                <td class="ps-3 fw-bold u-color-8b5a2b-93ece783" th:text="${'#' + tier.tierId}"></td>
-                                    <td class="fw-bold" th:text="${tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : tier.tierName)))}"></td>
-                                <td><span th:text="${tier.condition != null ? #numbers.formatDecimal(tier.condition, 0, 'COMMA', 0, 'POINT') : '0'}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
-                                <td><span class="badge rounded-pill px-3 py-2 text-white admin-membership-tiers-span-background-10"
-                                    th:text="${tier.discountPercent + '%'}"></span></td>
-                                <td th:text="#{common.bookCount(${tier.borrowLimit})}">0 books</td>
-                                <td>
-                                    <div class="mb-1" th:if="${tier.discountPercent > 0}" th:text="#{public.tiers.benefits.dynamic(${#numbers.formatDecimal(tier.discountPercent, 0, 'COMMA', 0, 'POINT')}, ${tier.borrowLimit})}"></div>
-                                    <div class="mb-1" th:if="${tier.discountPercent == 0}" th:text="#{public.tiers.benefits.dynamicNoDiscount(${tier.borrowLimit})}"></div>
-                                    <div class="mb-0 text-muted small" th:if="${tier.benefits != null && !tier.benefits.trim().isEmpty() && !tier.benefits.startsWith('Giảm') && !tier.benefits.startsWith('Mượn') && !tier.benefits.startsWith('Borrow') && !tier.benefits.contains('discount')}" th:text="${tier.benefits}"></div>
-                                </td>
-                                <td class="text-end pe-3">
-                                    <button class="btn btn-sm btn-outline-classic me-1"
-                                            data-bs-toggle="modal" th:data-bs-target="${'#editTierModal' + tier.tierId}">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </button>
-                                </td>
+    <th:block th:each="tier : ${tiers}"
+              th:with="isOpen=${openTierId != null and openTierId.equals(tier.tierId)}">
+        <div class="modal fade tier-edit-modal" th:id="${'editTierModal-' + tier.tierId}"
+             tabindex="-1" th:aria-labelledby="${'editTierTitle-' + tier.tierId}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/admin/tiers/save}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}"
+                               th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <input type="hidden" name="tierId" th:value="${tier.tierId}">
+                        <input type="hidden" name="version" th:value="${tier.version}">
 
-                                <!-- Edit Modal cho mỗi dòng -->
-                                <div class="modal fade" th:id="${'editTierModal' + tier.tierId}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow">
+                        <div class="modal-header">
+                            <div>
+                                <span class="modal-eyebrow" th:text="#{admin.tiers.eyebrow}">Chương trình thành viên</span>
+                                <h2 class="modal-title" th:id="${'editTierTitle-' + tier.tierId}">
+                                    <span th:text="#{admin.tiers.editTitle}">Chỉnh sửa hạng</span>
+                                    <span class="tier-badge tier-badge--compact" th:text="${tier.displayName}">Thành viên</span>
+                                </h2>
+                            </div>
+                        </div>
 
-                                            <form th:action="@{/admin/tiers/save}" method="post">
-                                                <input type="hidden" name="tierId" th:value="${tier.tierId}" />
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                <label class="form-label fw-bold text-muted small"><span th:text="#{admin.tiers.name}">Tier Name</span> <span class="text-danger">*</span></label>
-                                                        <input type="text" name="tierName" class="form-control" th:value="${tier.tierName}" readonly required>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-6 mb-3">
-                                                <label class="form-label fw-bold text-muted small" th:text="#{admin.tiers.spending}">Points/Spending (VND)</label>
-                                                            <input type="number" step="0.01" min="0" name="condition" class="form-control" th:value="${tier.condition}" required>
-                                                        </div>
-                                                        <div class="col-6 mb-3">
-                                                <label class="form-label fw-bold text-muted small"><span th:text="#{admin.tiers.discount}">Discount (%)</span> <span class="text-danger">*</span></label>
-                                                            <input type="number" step="0.01" min="0" max="100" name="discountPercent" class="form-control" th:value="${tier.discountPercent}" required>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                <label class="form-label fw-bold text-muted small"><span th:text="#{admin.tiers.borrowLimitBooks}">Borrowing Limit (books)</span> <span class="text-danger">*</span></label>
-                                                        <input type="number" name="borrowLimit" class="form-control" min="0" th:value="${tier.borrowLimit}" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                <label class="form-label fw-bold text-muted small" th:text="#{admin.tiers.additionalBenefits}">Additional Benefits</label>
-                                                        <textarea name="benefits" class="form-control" rows="3" th:text="${tier.benefits}"></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer border-top">
-                                                <button type="button" class="btn btn-light border" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                                                <button type="submit" class="btn btn-classic" th:text="#{common.saveChanges}">Save Changes</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
+                        <div class="modal-body">
+                            <div class="tier-sync-note" role="note">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                <span th:text="#{admin.tiers.syncWarning}"></span>
+                            </div>
+
+                            <div class="tier-form-field">
+                                <label th:for="${'tier-name-' + tier.tierId}" th:text="#{admin.tiers.name}">Tên hạng</label>
+                                <div class="tier-name-display" th:id="${'tier-name-' + tier.tierId}">
+                                    <span class="tier-badge tier-badge--compact" th:text="${tier.displayName}">Thành viên</span>
+                                    <span class="form-help" th:text="#{admin.tiers.nameFixed}">Tên hạng không thể thay đổi</span>
                                 </div>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(tiers)}">
-                                <td colspan="7" class="text-center py-5 text-muted" th:text="#{admin.tiers.empty}">No membership tiers found.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                            </div>
+
+                            <div class="tier-form-grid">
+                                <div class="tier-form-field">
+                                    <label th:for="${'condition-input-' + tier.tierId}">
+                                        <span th:text="#{admin.tiers.spending}">Điều kiện (VND)</span>
+                                        <span class="required-mark" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="number" th:id="${'condition-input-' + tier.tierId}" name="condition"
+                                           step="1000" min="0" max="9999999999999999.99" required
+                                           th:classappend="${isOpen and tierFieldErrors != null and tierFieldErrors.containsKey('condition')} ? 'is-invalid'"
+                                           th:value="${isOpen and tierForm != null ? tierForm.condition : tier.condition}">
+                                    <div class="form-help" th:text="#{admin.tiers.conditionHint}"></div>
+                                    <div class="field-error"
+                                         th:if="${isOpen and tierFieldErrors != null and tierFieldErrors.containsKey('condition')}"
+                                         th:text="${tierFieldErrors['condition']}"></div>
+                                </div>
+
+                                <div class="tier-form-field">
+                                    <label th:for="${'discount-input-' + tier.tierId}">
+                                        <span th:text="#{admin.tiers.discount}">Giảm giá (%)</span>
+                                        <span class="required-mark" aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="number" th:id="${'discount-input-' + tier.tierId}" name="discountPercent"
+                                           step="0.01" min="0" max="100" required
+                                           th:classappend="${isOpen and tierFieldErrors != null and tierFieldErrors.containsKey('discountPercent')} ? 'is-invalid'"
+                                           th:value="${isOpen and tierForm != null ? tierForm.discountPercent : tier.discountPercent}">
+                                    <div class="form-help" th:text="#{admin.tiers.discountHint}"></div>
+                                    <div class="field-error"
+                                         th:if="${isOpen and tierFieldErrors != null and tierFieldErrors.containsKey('discountPercent')}"
+                                         th:text="${tierFieldErrors['discountPercent']}"></div>
+                                </div>
+                            </div>
+
+                            <div class="tier-form-field">
+                                <label th:for="${'borrow-limit-input-' + tier.tierId}">
+                                    <span th:text="#{admin.tiers.borrowLimitBooks}">Giới hạn mượn (cuốn)</span>
+                                    <span class="required-mark" aria-hidden="true">*</span>
+                                </label>
+                                <input type="number" th:id="${'borrow-limit-input-' + tier.tierId}" name="borrowLimit"
+                                       min="1" max="100" required
+                                       th:classappend="${isOpen and tierFieldErrors != null and tierFieldErrors.containsKey('borrowLimit')} ? 'is-invalid'"
+                                       th:value="${isOpen and tierForm != null ? tierForm.borrowLimit : tier.borrowLimit}">
+                                <div class="form-help" th:text="#{admin.tiers.borrowLimitHint}"></div>
+                                <div class="field-error"
+                                     th:if="${isOpen and tierFieldErrors != null and tierFieldErrors.containsKey('borrowLimit')}"
+                                     th:text="${tierFieldErrors['borrowLimit']}"></div>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="tier-button tier-button--secondary" data-bs-dismiss="modal"
+                                    th:text="#{common.cancel}">Hủy</button>
+                            <button type="submit" class="tier-button tier-button--primary"
+                                    th:text="#{common.saveChanges}">Lưu thay đổi</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+    </th:block>
 
-    </div>
+    <span id="tierModalRestore" hidden th:if="${openTierId != null}" th:data-tier-id="${openTierId}"></span>
+</main>
+
+<th:block layout:fragment="scripts">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var restore = document.getElementById("tierModalRestore");
+            if (!restore || !window.bootstrap) return;
+            var modal = document.getElementById("editTierModal-" + restore.dataset.tierId);
+            if (modal) window.bootstrap.Modal.getOrCreateInstance(modal).show();
+        });
+    </script>
+</th:block>
 </body>
 </html>

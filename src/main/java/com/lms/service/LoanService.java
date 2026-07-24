@@ -30,7 +30,7 @@ public interface LoanService {
     // UC-13.4: Gia hạn mượn
     void processRenewal(Integer borrowDetailId) ;
     void approveRenewal(Integer borrowDetailId, String staffUsername);
-    void rejectRenewal(Integer borrowDetailId, String staffUsername, String reason);
+    void rejectRenewal(Integer borrowDetailId, String staffUsername, String reasonCode, String reason);
     List<BorrowDetail> getAllPendingRenewals();
 
     List<BorrowDetail> getAllBorrowDetails();
@@ -43,6 +43,7 @@ public interface LoanService {
 
     // Tìm kiếm các ca mượn đang hoạt động bằng truy vấn đa năng (Barcode, Mã phiếu, SĐT)
     java.util.List<com.lms.entity.BorrowDetail> searchActiveLoansByQuery(String query);
+    com.lms.entity.BorrowDetail recoverMissingBookItem(Integer borrowDetailId, String barcode);
 
     // Xác nhận trả sách hàng loạt với thông tin chi tiết
     com.lms.entity.Transaction confirmBatchReturnWithDetails(java.util.List<String> barcodes, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, java.math.BigDecimal damageFine, String paymentMethod, String staffUsername);

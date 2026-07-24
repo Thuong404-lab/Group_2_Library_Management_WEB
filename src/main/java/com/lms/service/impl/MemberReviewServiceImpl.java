@@ -2,10 +2,12 @@ package com.lms.service.impl;
 
 import com.lms.dto.request.MemberReviewSubmitRequest;
 import com.lms.dto.request.MemberReviewUpdateRequest;
+import com.lms.util.ReviewPolicy;
 import com.lms.entity.MemberAccount;
 import com.lms.entity.Book;
 import com.lms.entity.Feedback;
 import com.lms.entity.Member;
+import com.lms.enums.FeedbackStatus;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ForbiddenException;
@@ -19,6 +21,7 @@ import com.lms.service.LocalizedMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +33,6 @@ public class MemberReviewServiceImpl implements MemberReviewService {
 
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
-
-    private static final String APPROVED_STATUS = "APPROVED";
-    private static final String DELETED_BY_MEMBER_STATUS = "DELETED_BY_MEMBER";
 
     private final MemberAccountRepository memberAccountRepository;
     private final BookRepository bookRepository;
@@ -53,6 +53,10 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Transactional
     public void submitReview(String username, MemberReviewSubmitRequest request) {
         String normalizedComment = validateAndNormalizeComment(request.getComment());
+        validateRating(request.getRating());
+        if (request.getBookId() == null) {
+            throw new ValidationException(messages.get("validation.review.bookRequired"));
+        }
         MemberAccount account = memberAccountRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.profile.accountNotFound", username)));
 
@@ -71,7 +75,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         }
 
         if (feedbackRepository.existsByMember_MemberIdAndBook_BookIdAndStatusNot(
-                member.getMemberId(), book.getBookId(), DELETED_BY_MEMBER_STATUS)) {
+                member.getMemberId(), book.getBookId(), FeedbackStatus.DELETED_BY_MEMBER)) {
             throw new ConflictException(messages.get("backend.review.alreadySubmitted"));
         }
 
@@ -81,9 +85,13 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         feedback.setRating(request.getRating());
         feedback.setComment(normalizedComment);
         feedback.setCreatedDate(LocalDateTime.now());
-        feedback.setStatus(APPROVED_STATUS);
+        feedback.setStatus(FeedbackStatus.PENDING);
 
-        feedbackRepository.save(feedback);
+        try {
+            feedbackRepository.saveAndFlush(feedback);
+        } catch (DataIntegrityViolationException exception) {
+            throw new ConflictException(messages.get("backend.review.alreadySubmitted"), exception);
+        }
     }
 
     @Override
@@ -98,7 +106,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         }
 
         return feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
-                member.getMemberId(), DELETED_BY_MEMBER_STATUS);
+                member.getMemberId(), FeedbackStatus.DELETED_BY_MEMBER);
     }
 
     @Override
@@ -113,7 +121,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         }
 
         Page<Feedback> reviews = feedbackRepository.findByMember_MemberIdAndStatusNotOrderByCreatedDateDesc(
-                member.getMemberId(), DELETED_BY_MEMBER_STATUS, pageable);
+                member.getMemberId(), FeedbackStatus.DELETED_BY_MEMBER, pageable);
         reviews.forEach(review -> {
             if (review.getBook() != null && review.getBook().getAuthors() != null) {
                 review.getBook().getAuthors().size();
@@ -125,7 +133,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     @Override
     @Transactional(readOnly = true)
     public List<Feedback> getApprovedReviewsByBookId(Integer bookId) {
-        return feedbackRepository.findByBook_BookIdAndStatusOrderByCreatedDateDesc(bookId, APPROVED_STATUS);
+        return feedbackRepository.findByBook_BookIdAndStatusOrderByCreatedDateDesc(bookId, FeedbackStatus.APPROVED);
     }
 
     @Override
@@ -140,7 +148,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     public boolean hasActiveReview(String username, Integer bookId) {
         Member member = getMemberByUsername(username);
         return feedbackRepository.existsByMember_MemberIdAndBook_BookIdAndStatusNot(
-                member.getMemberId(), bookId, DELETED_BY_MEMBER_STATUS);
+                member.getMemberId(), bookId, FeedbackStatus.DELETED_BY_MEMBER);
     }
 
     @Override
@@ -158,6 +166,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
     public void updateMyReview(String username, Integer feedbackId, MemberReviewUpdateRequest request) {
         Feedback feedback = getEditableReview(username, feedbackId);
         String normalizedComment = validateAndNormalizeComment(request.getComment());
+        validateRating(request.getRating());
 
         if (borrowDetailRepository.countEligibleReviewBorrows(
                 feedback.getMember().getMemberId(), feedback.getBook().getBookId()) == 0) {
@@ -167,6 +176,11 @@ public class MemberReviewServiceImpl implements MemberReviewService {
 
         feedback.setRating(request.getRating());
         feedback.setComment(normalizedComment);
+        if (feedback.getStatus() == FeedbackStatus.REJECTED) {
+            feedback.setStatus(FeedbackStatus.PENDING);
+            feedback.setModerationReason(null);
+            feedback.setModeratedDate(null);
+        }
         feedbackRepository.save(feedback);
     }
 
@@ -176,13 +190,26 @@ public class MemberReviewServiceImpl implements MemberReviewService {
         if (normalizedComment.isEmpty()) {
             throw new ValidationException(messages.get("backend.review.contentRequired"));
         }
-        if (normalizedComment.length() < 5 || normalizedComment.length() > 1000) {
+        if (normalizedComment.length() < ReviewPolicy.CONTENT_MIN_LENGTH
+                || normalizedComment.length() > ReviewPolicy.CONTENT_MAX_LENGTH) {
             throw new ValidationException(messages.get("backend.review.contentRange"));
         }
         if (normalizedComment.codePoints().noneMatch(Character::isLetter)) {
             throw new ValidationException(messages.get("backend.review.contentLetters"));
         }
         return normalizedComment;
+    }
+
+    private void validateRating(Integer rating) {
+        if (rating == null) {
+            throw new ValidationException(messages.get("validation.review.ratingRequired"));
+        }
+        if (rating < 1) {
+            throw new ValidationException(messages.get("validation.review.ratingMinimum"));
+        }
+        if (rating > 5) {
+            throw new ValidationException(messages.get("validation.review.ratingMaximum"));
+        }
     }
 
     @Override
@@ -197,7 +224,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
             throw new ForbiddenException(messages.get("backend.review.deleteForbidden"));
         }
 
-        feedback.setStatus(DELETED_BY_MEMBER_STATUS);
+        feedback.setStatus(FeedbackStatus.DELETED_BY_MEMBER);
         feedbackRepository.save(feedback);
     }
 
@@ -229,7 +256,7 @@ public class MemberReviewServiceImpl implements MemberReviewService {
                     messages.get("backend.review.repliedCannotEdit"));
         }
 
-        if (DELETED_BY_MEMBER_STATUS.equals(feedback.getStatus())) {
+        if (FeedbackStatus.DELETED_BY_MEMBER == feedback.getStatus()) {
             throw new ConflictException(messages.get("backend.review.deletedCannotEdit"));
         }
         return feedback;

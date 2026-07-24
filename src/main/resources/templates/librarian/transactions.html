@@ -1,51 +1,98 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/librarian_base}">
 <head>
     <!-- UC-14.3 UI maintained by Pham Kien Quoc. -->
     <title th:text="#{librarian.transactions.title}">Transaction Management</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-    <script defer th:src="@{/js/auto-filter.js}"></script>
-  </head>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/transactions.css}">
+</head>
 <body>
-<div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page">
-    <div class="finance-header">
+<div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page transaction-page">
+    <header class="finance-header transaction-page-hero">
         <div>
+            <span class="transaction-page-eyebrow" th:text="#{staff.nav.finance}">FINANCE</span>
             <h2 class="finance-title" th:text="#{librarian.transactions.heading}">Transaction Management</h2>
             <div class="finance-description" th:text="#{librarian.transactions.description}">Track wallet transactions, borrowing fees, fines, and top-ups.</div>
         </div>
-    </div>
+        <div class="transaction-hero-summary" th:if="${transactionPage != null}">
+            <i class="bi bi-receipt" aria-hidden="true"></i>
+            <strong th:text="${transactionPage.totalElements}">0</strong>
+            <span th:text="#{transaction.transactions}">Transactions</span>
+        </div>
+    </header>
 
-    <div class="card-classic finance-card p-4 mb-4">
-        <form method="get" th:action="@{/librarian/members/transactions}" class="row g-3 align-items-end" data-auto-filter-form>
-            <div class="col-md-4 transaction-type-filter">
-                <select name="type" class="form-select" data-auto-submit>
+    <section class="card-classic finance-card finance-management-card transaction-filter-card mb-4" th:aria-label="#{common.filter}">
+        <form method="get" th:action="@{/librarian/members/transactions}" class="transaction-filter-form">
+            <div class="transaction-filter-field transaction-search-filter">
+                <label for="transactionSearch" th:text="#{librarian.transactions.searchLabel}">Search</label>
+                <div class="transaction-input-control">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="transactionSearch" name="q" type="search" class="form-control" th:value="${query}"
+                           th:placeholder="#{librarian.transactions.searchPlaceholder}" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="transaction-filter-field transaction-type-filter">
+                <label for="transactionType" th:text="#{transaction.type}">Transaction type</label>
+                <select id="transactionType" name="type" class="form-select">
                     <option value="" th:selected="${selectedType == null or selectedType == ''}" th:text="#{member.wallet.allTransactions}">All Transactions</option>
-                    <option value="TOP_UP" th:selected="${selectedType == 'TOP_UP'}" th:text="#{transaction.type.topUp}">Top Up</option>
-                    <option value="BORROW_FEE" th:selected="${selectedType == 'BORROW_FEE'}" th:text="#{transaction.type.borrowFee}">Borrowing Fee</option>
-                    <option value="DEPOSIT" th:selected="${selectedType == 'DEPOSIT'}" th:text="#{transaction.type.deposit}">Deposit</option>
-                    <option value="FINE" th:selected="${selectedType == 'FINE'}" th:text="#{transaction.type.fine}">Fine</option>
-                    <option value="DAMAGE_FEE" th:selected="${selectedType == 'DAMAGE_FEE'}" th:text="#{transaction.type.damageFee}">Damage Fee</option>
-                    <option value="REFUND" th:selected="${selectedType == 'REFUND'}" th:text="#{transaction.type.refund}">Refund</option>
+                    <option th:each="option : ${transactionTypeOptions}" th:value="${option.key}"
+                            th:selected="${selectedType == option.key}" th:text="${option.value}">Type</option>
                 </select>
             </div>
 
-            <div class="col-auto transaction-filter-submit">
-                <button type="submit" class="btn btn-classic px-4" th:text="#{common.filter}">Filter</button>
+            <div class="transaction-filter-field">
+                <label for="transactionStatus" th:text="#{common.status}">Status</label>
+                <select id="transactionStatus" name="status" class="form-select">
+                    <option value="" th:text="#{librarian.transactions.allStatuses}">All statuses</option>
+                    <option th:each="option : ${transactionStatusOptions}" th:value="${option.key}"
+                            th:selected="${selectedStatus == option.key}" th:text="${option.value}">Status</option>
+                </select>
             </div>
-            <div class="col-auto transaction-reset-filter">
-                <a th:href="@{/librarian/members/transactions}" class="btn btn-outline-secondary" th:text="#{common.clearFilter}">Clear Filter</a>
+
+            <div class="transaction-filter-field">
+                <label for="transactionChannel" th:text="#{librarian.transactions.channel}">Channel</label>
+                <select id="transactionChannel" name="channel" class="form-select">
+                    <option value="" th:text="#{librarian.transactions.allChannels}">All channels</option>
+                    <option th:each="option : ${transactionChannelOptions}" th:value="${option.key}"
+                            th:selected="${selectedChannel == option.key}" th:text="${option.value}">Channel</option>
+                </select>
+            </div>
+
+            <div class="transaction-filter-field">
+                <label for="transactionFromDate" th:text="#{common.fromDate}">From date</label>
+                <input id="transactionFromDate" name="fromDate" type="date" class="form-control" th:value="${fromDate}">
+            </div>
+
+            <div class="transaction-filter-field">
+                <label for="transactionToDate" th:text="#{common.toDate}">To date</label>
+                <input id="transactionToDate" name="toDate" type="date" class="form-control" th:value="${toDate}">
+            </div>
+
+            <div class="transaction-filter-actions">
+                <button type="submit" class="btn btn-classic">
+                    <i class="bi bi-funnel" aria-hidden="true"></i>
+                    <span th:text="#{common.filter}">Filter</span>
+                </button>
+                <a th:href="@{/librarian/members/transactions}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                    <span th:text="#{common.clearFilter}">Clear Filter</span>
+                </a>
             </div>
         </form>
-    </div>
+    </section>
 
-    <div class="card-classic finance-card">
+    <section class="card-classic finance-card finance-management-card transaction-table-card">
+        <div class="transaction-result-summary" th:if="${transactionPage != null}"
+             th:text="#{librarian.transactions.results(${transactionPage.totalElements})}">0 transactions</div>
+
         <div th:if="${transactions == null or #lists.isEmpty(transactions)}" class="empty-state">
             <span th:text="#{transaction.empty}">No transactions found.</span>
         </div>
 
         <div class="app-table-wrap" th:if="${transactions != null and !#lists.isEmpty(transactions)}">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 transaction-table">
                 <thead class="table-light">
                 <tr>
                     <th class="ps-4" th:text="#{transaction.code}">Transaction ID</th>
@@ -58,43 +105,56 @@
                 </thead>
                 <tbody>
                 <tr th:each="transaction : ${transactions}">
-                    <td class="transaction-code ps-4" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</td>
-                    <td>
-                            <div class="transaction-member-name"
-                             th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('common.unknown')}">
-                            Member
-                        </div>
+                    <td class="ps-4" th:data-label="#{transaction.code}">
+                        <div class="transaction-code" th:text="|#TXN-${transaction.transactionId}|">#TXN-1</div>
+                        <div class="transaction-audit-value"
+                             th:if="${transaction.referenceCode != null and !#strings.isEmpty(transaction.referenceCode)}"
+                             th:text="${transaction.referenceCode}">Reference</div>
+                    </td>
+                    <td th:data-label="#{common.member}">
+                        <div class="transaction-member-name"
+                             th:text="${transaction.wallet != null and transaction.wallet.member != null and transaction.wallet.member.user != null ? transaction.wallet.member.user.fullName : #messages.msg('common.unknown')}">Member</div>
                         <div class="small text-muted"
-                             th:text="${transaction.wallet != null and transaction.wallet.member != null ? #messages.msg('member.idValue', transaction.wallet.member.memberId) : ''}">
-                            Member ID
+                             th:text="${transaction.wallet != null and transaction.wallet.member != null ? #messages.msg('member.idValue', transaction.wallet.member.memberId) : ''}">Member ID</div>
+                    </td>
+                    <td class="transaction-date" th:data-label="#{common.dateTime}">
+                        <div th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</div>
+                        <div class="transaction-audit-value" th:if="${transaction.borrow != null}"
+                             th:text="#{transaction.detail.borrow(${transaction.borrow.borrowId})}">Loan slip #1</div>
+                    </td>
+                    <td th:data-label="#{transaction.type}">
+                        <div class="transaction-content" th:switch="${transaction.transactionType}">
+                            <span th:case="'TOP_UP'" th:text="#{transaction.description.topUp}">Wallet top-up</span>
+                            <span th:case="'BORROW_FEE'" th:text="#{transaction.description.borrowFee}">Borrowing fee payment</span>
+                            <span th:case="'RENEWAL_FEE'" th:text="#{transaction.description.renewalFee}">Renewal fee payment</span>
+                            <span th:case="'DEPOSIT'" th:text="#{transaction.description.deposit}">Reservation deposit payment</span>
+                            <span th:case="'FINE'" th:text="#{transaction.description.fine}">Overdue fine payment</span>
+                            <span th:case="'OVERDUE_FINE'" th:text="#{transaction.description.fine}">Overdue fine payment</span>
+                            <span th:case="'DAMAGE_FEE'" th:text="#{transaction.description.damageFee}">Book compensation payment</span>
+                            <span th:case="'REFUND'" th:text="#{transaction.description.refund}">Wallet refund</span>
+                            <span th:case="'PAYMENT'" th:text="#{transaction.description.payment}">Library payment</span>
+                            <span th:case="'FEE'" th:text="#{transaction.description.payment}">Library payment</span>
+                            <span th:case="*" th:text="#{transaction.description.other}">Library financial transaction</span>
                         </div>
+                        <div class="transaction-audit-value"
+                             th:if="${transaction.channel != null and transactionChannelLabels != null and transactionChannelLabels.containsKey(transaction.channel)}"
+                             th:text="#{transaction.detail.channel(${transactionChannelLabels[transaction.channel]})}">Method</div>
                     </td>
-                    <td th:text="${transaction.transactionDate != null ? #temporals.format(transaction.transactionDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
-                    <td>
-                        <span class="badge transaction-type"
-                              th:classappend="${transaction.transactionType == 'TOP_UP'} ? ' type-topup' :
-                                  (${transaction.transactionType == 'BORROW_FEE'} ? ' type-borrow-fee' :
-                                  (${transaction.transactionType == 'DEPOSIT'} ? ' type-deposit' :
-                                  (${transaction.transactionType == 'FINE'} ? ' type-fine' :
-                                  (${transaction.transactionType == 'DAMAGE_FEE'} ? ' type-damage-fee' :
-                                  (${transaction.transactionType == 'REFUND'} ? ' type-refund' : ' type-default')))))"
-                              th:text="${transaction.transactionType == 'TOP_UP' ? #messages.msg('transaction.type.topUp') :
-                                  (transaction.transactionType == 'BORROW_FEE' ? #messages.msg('transaction.type.borrowFee') :
-                                  (transaction.transactionType == 'DEPOSIT' ? #messages.msg('transaction.type.deposit') :
-                                  (transaction.transactionType == 'FINE' ? #messages.msg('transaction.type.fine') :
-                                  (transaction.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') :
-                                  (transaction.transactionType == 'REFUND' ? #messages.msg('transaction.type.refund') : #messages.msg('transaction.type.other'))))))}">Transaction Type</span>
-                    </td>
-                    <td class="transaction-amount"
+                    <td class="transaction-amount" th:data-label="#{transaction.amount}"
                         th:classappend="${transaction.amount != null and transaction.amount.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
                         <span th:text="${transaction.amount != null and transaction.amount.signum() >= 0 ? '+ ' : '- '}">+ </span>
                         <span th:text="${transaction.amount != null ? #numbers.formatDecimal(transaction.amount.abs(), 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                         <span th:text="#{currency.vnd}">VND</span>
+                        <div class="transaction-balance-audit" th:if="${transaction.balanceBefore != null and transaction.balanceAfter != null}"
+                             th:text="#{librarian.transactions.balanceChange(${#numbers.formatDecimal(transaction.balanceBefore,0,'COMMA',0,'POINT')},${#numbers.formatDecimal(transaction.balanceAfter,0,'COMMA',0,'POINT')})}">Balance change</div>
                     </td>
-                    <td>
+                    <td th:data-label="#{common.status}">
                         <span class="status-badge"
-                              th:classappend="${transaction.status == 'Completed' ? 'status-completed' : (transaction.status == 'Failed' ? 'status-rejected' : (transaction.status == 'Canceled' ? 'status-canceled' : 'status-pending'))}"
-                              th:text="${transaction.status == 'Completed' ? #messages.msg('transaction.status.completed') : (transaction.status == 'Pending' ? #messages.msg('transaction.status.pending') : (transaction.status == 'Failed' ? #messages.msg('transaction.status.failed') : (transaction.status == 'Canceled' ? #messages.msg('transaction.status.canceled') : transaction.status)))}">Completed</span>
+                              th:classappend="${transactionStatusClasses != null and transactionStatusClasses.containsKey(transaction.status) ? transactionStatusClasses[transaction.status] : 'status-pending'}"
+                              th:text="${transactionStatusLabels != null and transactionStatusLabels.containsKey(transaction.status) ? transactionStatusLabels[transaction.status] : #messages.msg('transaction.status.pending')}">Completed</span>
+                        <div class="transaction-audit-value"
+                             th:if="${(transaction.performedByStaff != null and transaction.performedByStaff.user != null) or transaction.channel == 'SYSTEM' or transaction.channel == 'WALLET' or transaction.channel == 'PAYOS'}"
+                             th:text="${transaction.performedByStaff != null and transaction.performedByStaff.user != null ? transaction.performedByStaff.user.fullName : (transaction.channel == 'SYSTEM' ? #messages.msg('common.system') : #messages.msg('librarian.transactions.memberInitiated'))}">Actor</div>
                     </td>
                 </tr>
                 </tbody>
@@ -105,17 +165,17 @@
              th:with="startPage=${transactionPage.totalPages <= 10 ? 0 : (transactionPage.number < 9 ? 0 : (transactionPage.number - 8 > transactionPage.totalPages - 10 ? transactionPage.totalPages - 10 : transactionPage.number - 8))}">
             <nav th:aria-label="#{transaction.pagination}" th:with="endPage=${startPage + 9 < transactionPage.totalPages ? startPage + 9 : transactionPage.totalPages - 1}">
                 <ul class="pagination app-pagination">
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=0,type=${selectedType})}" th:text="#{pagination.first}">First</a></li>
-                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number-1},type=${selectedType})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left"></i></a></li>
-                    <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${i},type=${selectedType})}" th:text="${i+1}">1</a></li>
-                    <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">…</span></li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number+1},type=${selectedType})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right"></i></a></li>
-                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.totalPages-1},type=${selectedType})}" th:text="#{pagination.last}">Last</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=0,q=${query},type=${selectedType},status=${selectedStatus},channel=${selectedChannel},fromDate=${fromDate},toDate=${toDate})}" th:text="#{pagination.first}">First</a></li>
+                    <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number-1},q=${query},type=${selectedType},status=${selectedStatus},channel=${selectedChannel},fromDate=${fromDate},toDate=${toDate})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left"></i></a></li>
+                    <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">&hellip;</span></li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}" th:classappend="${i == transactionPage.number} ? 'active'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${i},q=${query},type=${selectedType},status=${selectedStatus},channel=${selectedChannel},fromDate=${fromDate},toDate=${toDate})}" th:text="${i+1}">1</a></li>
+                    <li class="page-item disabled" th:if="${endPage < transactionPage.totalPages-1}"><span class="page-link">&hellip;</span></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.number+1},q=${query},type=${selectedType},status=${selectedStatus},channel=${selectedChannel},fromDate=${fromDate},toDate=${toDate})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right"></i></a></li>
+                    <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/members/transactions(page=${transactionPage.totalPages-1},q=${query},type=${selectedType},status=${selectedStatus},channel=${selectedChannel},fromDate=${fromDate},toDate=${toDate})}" th:text="#{pagination.last}">Last</a></li>
                 </ul>
             </nav>
         </div>
-    </div>
+    </section>
 </div>
 </body>
 </html>

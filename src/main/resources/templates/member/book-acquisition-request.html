@@ -1,55 +1,357 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
-<head><title th:text="#{member.acquisition.title}">Book Acquisition Request</title><link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css}" /></head>
+<head>
+    <title th:text="#{member.acquisition.title}">Book Acquisition Request</title>
+    <link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css}" />
+</head>
 <body>
-<div layout:fragment="content" class="container acquisition-page">
-    <header class="member-page-header">
-        <div><span class="member-page-eyebrow" th:text="#{member.acquisition.eyebrow}">COLLECTION DEVELOPMENT</span><h1 th:text="#{member.acquisition.heading}">Request a Book</h1><p th:text="#{member.acquisition.description}">Suggest a book for the library collection.</p></div>
-        <a th:href="@{/books}" class="member-secondary-action"><i class="bi bi-arrow-left"></i><span th:text="#{member.acquisition.explore}">Explore Books</span></a>
+<div layout:fragment="content" class="container acquisition-page member-palette-page">
+    <header class="member-page-header member-dashboard-hero acquisition-hero">
+        <div class="acquisition-hero-copy">
+            <span class="member-page-eyebrow" th:text="#{member.acquisition.eyebrow}">COLLECTION DEVELOPMENT</span>
+            <h1 th:text="#{member.acquisition.heading}">Request a Book</h1>
+            <p th:text="#{member.acquisition.description}">Suggest a book for the library collection.</p>
+        </div>
+        <button type="button" class="member-primary-action acquisition-hero-action acquisition-modal-trigger member-ui-button member-ui-button--inverse" 
+                data-toggle="modal" data-target="#acquisitionRequestModal" th:disabled="${isInactiveMember}">
+            <span class="acquisition-hero-action-mark" aria-hidden="true">+</span>
+            <span th:text="#{member.acquisition.submit}">Submit Request</span>
+        </button>
     </header>
-    <div th:if="${success}" class="member-alert is-success" th:text="${success}"></div>
+
     <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
-    <section class="member-form-card" aria-labelledby="acquisition-form-title">
-        <div class="member-form-heading"><span><i class="bi bi-journal-plus"></i></span><div><h2 id="acquisition-form-title" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2><p th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p></div></div>
-        <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}" th:object="${acquisitionRequest}" method="post" novalidate>
-            <div class="member-form-grid">
-                <div class="member-form-field"><label for="title"><span th:text="#{book.title}">Book Title</span> <span aria-hidden="true">*</span></label><input type="text" id="title" class="validate-field" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" th:field="*{title}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}"><div id="titleFeedback" class="member-field-error" th:text="${#fields.hasErrors('title') ? #fields.errors('title')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="author"><span th:text="#{book.author}">Author</span> <span aria-hidden="true">*</span></label><input type="text" id="author" th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'" th:field="*{author}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}"><div id="authorFeedback" class="member-field-error" th:text="${#fields.hasErrors('author') ? #fields.errors('author')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="isbn">ISBN</label><input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" th:placeholder="#{member.acquisition.isbnPlaceholder}"><div id="isbnFeedback" class="member-field-error" th:text="${#fields.hasErrors('isbn') ? #fields.errors('isbn')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="publisher" th:text="#{book.publisher}">Publisher</label><input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" th:placeholder="#{member.acquisition.publisherPlaceholder}"><div id="publisherFeedback" class="member-field-error" th:text="${#fields.hasErrors('publisher') ? #fields.errors('publisher')[0] : ''}"></div></div>
-                <div class="member-form-field"><label for="publicationYear" th:text="#{book.publicationYear}">Publication Year</label><input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.acquisition.yearPlaceholder}"><div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div></div>
-                <div class="member-form-field member-form-field--full"><label for="requestReason"><span th:text="#{member.acquisition.reason}">Request Reason</span> <span aria-hidden="true">*</span></label><textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" th:placeholder="#{validation.charactersRange(10,1000)}"></textarea><div class="member-field-support"><span id="requestReasonCount" aria-live="polite">0/1000</span></div><div id="requestReasonFeedback" class="member-field-error" th:text="${#fields.hasErrors('requestReason') ? #fields.errors('requestReason')[0] : ''}"></div></div>
-                <div class="member-form-field member-form-field--full"><label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label><input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://..."><div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div></div>
-            </div>
-            <div class="member-form-actions"><button type="submit" class="member-primary-action" th:text="#{member.acquisition.submit}">Submit Request</button></div>
-        </form>
-    </section>
-    <section class="member-request-history" aria-labelledby="request-history-title">
-        <div class="member-request-history-heading"><h2 id="request-history-title" th:text="#{member.acquisition.mine}">My Requests</h2><span th:text="#{member.acquisition.count(${myAcquisitionRequests.totalElements})}">0 requests</span></div>
-        <div class="member-request-list" th:if="${myAcquisitionRequests.totalElements > 0}">
-            <article class="member-request-item" th:each="request : ${myAcquisitionRequests.content}">
-                <div><h3 th:text="${request.title}">Book Title</h3><p><span th:text="${request.author}">Author</span><span th:if="${request.publisher != null}" th:text="${' · ' + request.publisher}"></span></p></div>
-                <p class="member-request-isbn" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></p>
-                <div class="member-request-meta"><span class="request-status" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}" th:text="${request.status.name() == 'PENDING' ? #messages.msg('request.status.pending') : (request.status.name() == 'APPROVED' ? #messages.msg('request.status.approved') : #messages.msg('request.status.rejected'))}">Pending</span><time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time></div>
-                <p class="member-request-decision" th:if="${request.status.name() == 'REJECTED'}"><strong th:text="#{member.acquisition.rejectionReason}">Rejection reason:</strong> <span th:text="${request.decisionNote}"></span></p>
+
+    <!-- My Requests History Section -->
+    <section class="member-request-history member-reference-list" aria-labelledby="request-history-title">
+        <div class="member-request-history-heading member-reference-list__header">
+            <h2 id="request-history-title" th:text="#{member.acquisition.mine}">My Requests</h2>
+            <span class="member-reference-pill" th:text="#{member.acquisition.count(${myAcquisitionRequests.totalElements})}">0 requests</span>
+        </div>
+        <div class="member-request-list member-reference-list__body" th:if="${myAcquisitionRequests.totalElements > 0}">
+            <article class="member-request-item member-reference-list__item" th:each="request : ${myAcquisitionRequests.content}">
+                <div class="member-request-copy">
+                    <h3 th:text="${request.title}">Book Title</h3>
+                    <p class="member-request-details">
+                        <span th:text="${request.author}">Author</span>
+                        <span th:if="${request.publisher != null and !#strings.isEmpty(#strings.trim(request.publisher))}" th:text="${' · ' + request.publisher}"></span>
+                        <span class="member-request-isbn" th:if="${request.isbn != null and !#strings.isEmpty(#strings.trim(request.isbn))}" th:text="${' · ISBN: ' + request.isbn}"></span>
+                    </p>
+                </div>
+                <div class="member-request-meta">
+                    <span class="request-status member-reference-pill"
+                          th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}"
+                          th:text="${#messages.msg('request.status.' + #strings.toLowerCase(request.status.name()))}">Pending</span>
+                    <time th:text="${#temporals.format(request.createdDate, 'dd/MM/yyyy HH:mm')}"></time>
+                </div>
+                <p class="member-request-decision"
+                   th:if="${request.decisionNote != null and (request.status.name() == 'REJECTED' or request.status.name() == 'APPROVED')}">
+                    <strong th:text="${request.status.name() == 'REJECTED' ? #messages.msg('member.acquisition.rejectionReason') : #messages.msg('member.acquisition.approvalNote')}">Decision:</strong>
+                    <span th:text="${request.decisionNote}"></span>
+                </p>
+                <div class="member-request-actions" th:if="${request.status.name() == 'PENDING'}">
+                    <button type="button" class="member-ui-button member-ui-button--secondary acquisition-modal-trigger acquisition-edit-trigger"
+                            data-toggle="modal" data-target="#acquisitionRequestModal"
+                            th:data-request-id="${request.requestId}"
+                            th:data-title="${request.title}" th:data-author="${request.author}"
+                            th:data-isbn="${request.isbn}" th:data-publisher="${request.publisher}"
+                            th:data-publication-year="${request.publicationYear}"
+                            th:data-request-reason="${request.requestReason}"
+                            th:data-reference-url="${request.referenceUrl}"
+                            th:text="#{common.edit}">Edit</button>
+                    <form th:action="@{/member/interaction/acquisition-requests/{id}/cancel(id=${request.requestId})}" method="post"
+                          onsubmit="return confirm(this.dataset.confirmMessage);"
+                          th:data-confirm-message="#{member.acquisition.cancelConfirm}">
+                        <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="member-ui-button member-ui-button--danger-outline"
+                                th:text="#{member.acquisition.cancel}">Cancel request</button>
+                    </form>
+                </div>
             </article>
         </div>
         <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}" th:text="#{member.acquisition.empty}">You have not submitted any requests.</div>
         <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}" th:aria-label="#{member.acquisition.pagination}">
-            <a th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}"><i class="bi bi-chevron-left"></i></a>
+            <a class="member-page-control" th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
             <span th:text="${(myAcquisitionRequests.number + 1) + ' / ' + myAcquisitionRequests.totalPages}">1 / 1</span>
-            <a th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}"><i class="bi bi-chevron-right"></i></a>
+            <a class="member-page-control" th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
         </nav>
     </section>
-    <script th:inline="javascript">
-        const acquisitionForm=document.getElementById('acquisitionRequestForm'),currentYear=new Date().getFullYear();
-        const acquisitionI18n={required:/*[[#{validation.fieldRequired}]]*/'{0} is required.',range:/*[[#{validation.fieldRange}]]*/'{0} must contain {1}-{2} characters.',letters:/*[[#{validation.fieldLetters}]]*/'{0} must include letters.',year:/*[[#{validation.yearRange}]]*/'Publication year must be between 1000 and {0}.',url:/*[[#{validation.httpUrl}]]*/'Reference link must be a valid HTTP or HTTPS URL.',title:/*[[#{book.title}]]*/'Book Title',author:/*[[#{book.author}]]*/'Author',publisher:/*[[#{book.publisher}]]*/'Publisher',reason:/*[[#{member.acquisition.reason}]]*/'Request Reason'};
-        function setFieldError(input,id,message){input.classList.add('is-invalid');document.getElementById(id).textContent=message}function clearFieldError(input,id){input.classList.remove('is-invalid');document.getElementById(id).textContent=''}function hasLetter(value){return /\p{L}/u.test(value)}
-        function formatMessage(template,...values){return values.reduce((text,value,index)=>text.replace('{'+index+'}',value),template)}
-        function validateText(input,id,label,min,max,optional){const value=input.value.trim().replace(/\s+/g,' ');input.value=value;if(optional&&value===''){clearFieldError(input,id);return true}let message='';if(value==='')message=formatMessage(acquisitionI18n.required,label);else if(value.length<min||value.length>max)message=formatMessage(acquisitionI18n.range,label,min,max);else if(!hasLetter(value))message=formatMessage(acquisitionI18n.letters,label);if(message){setFieldError(input,id,message);return false}clearFieldError(input,id);return true}
-        function updateReasonCount(){const reason=document.getElementById('requestReason'),count=document.getElementById('requestReasonCount');count.textContent=reason.value.length+'/1000';count.classList.toggle('is-near-limit',reason.value.length>=900&&reason.value.length<1000);count.classList.toggle('is-limit-reached',reason.value.length>=1000)}
-        ['title','author','publisher','publicationYear','requestReason','referenceUrl'].forEach(function(id){const input=document.getElementById(id);input.addEventListener('input',function(){clearFieldError(input,id+'Feedback');if(id==='requestReason')updateReasonCount()})});
-        acquisitionForm.addEventListener('submit',function(event){let firstInvalid=null;function check(valid,input){if(!valid)firstInvalid=firstInvalid||input}const title=document.getElementById('title'),author=document.getElementById('author'),publisher=document.getElementById('publisher'),year=document.getElementById('publicationYear'),reason=document.getElementById('requestReason'),url=document.getElementById('referenceUrl');check(validateText(title,'titleFeedback',acquisitionI18n.title,2,255,false),title);check(validateText(author,'authorFeedback',acquisitionI18n.author,2,255,false),author);check(validateText(publisher,'publisherFeedback',acquisitionI18n.publisher,1,255,true),publisher);check(validateText(reason,'requestReasonFeedback',acquisitionI18n.reason,10,1000,false),reason);if(year.value!==''&&(Number(year.value)<1000||Number(year.value)>currentYear)){setFieldError(year,'publicationYearFeedback',formatMessage(acquisitionI18n.year,currentYear));firstInvalid=firstInvalid||year}if(url.value.trim()!==''){try{const parsed=new URL(url.value.trim());if(!['http:','https:'].includes(parsed.protocol))throw new Error()}catch(e){setFieldError(url,'referenceUrlFeedback',acquisitionI18n.url);firstInvalid=firstInvalid||url}}updateReasonCount();if(firstInvalid){event.preventDefault();firstInvalid.focus()}});updateReasonCount();
-    </script>
+
+    <!-- Modal Form Gửi Đề Xuất Bổ Sung Sách -->
+    <div class="modal fade acquisition-request-modal member-standard-dialog"
+         id="acquisitionRequestModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="acquisitionRequestModalLabel"
+         aria-hidden="true"
+         th:attr="data-reopen=${reopenAcquisitionModal == true}">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="acquisition-modal-header-copy">
+                        <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
+                        <p th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p>
+                    </div>
+                </div>
+                <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}"
+                      th:data-create-url="@{/member/interaction/acquisition-requests}"
+                      th:data-edit-request-id="${editAcquisitionRequestId}"
+                      th:object="${acquisitionRequest}" method="post" novalidate>
+                    <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
+                    <div class="modal-body">
+                        <div th:if="${error}" class="member-alert acquisition-inline-alert is-error" role="alert" th:text="${error}"></div>
+                        
+                        <div class="member-form-grid">
+                            <!-- 1. Tên sách * -->
+                            <div class="member-form-field">
+                                <label for="title"><span th:text="#{book.title}">Book Title</span> <span class="required-star">*</span></label>
+                                <input type="text" id="title" class="validate-field" th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" th:field="*{title}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}">
+                                <div id="titleFeedback" class="member-field-error" th:text="${#fields.hasErrors('title') ? #fields.errors('title')[0] : ''}"></div>
+                            </div>
+                            
+                            <!-- 2. Tác giả * -->
+                            <div class="member-form-field">
+                                <label for="author"><span th:text="#{book.author}">Author</span> <span class="required-star">*</span></label>
+                                <input type="text" id="author" th:classappend="${#fields.hasErrors('author')} ? 'is-invalid'" th:field="*{author}" required minlength="2" maxlength="255" th:placeholder="#{validation.charactersRange(2,255)}">
+                                <div id="authorFeedback" class="member-field-error" th:text="${#fields.hasErrors('author') ? #fields.errors('author')[0] : ''}"></div>
+                            </div>
+                            
+                            <!-- 3. ISBN -->
+                            <div class="member-form-field">
+                                <label for="isbn">ISBN</label>
+                                <input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" th:placeholder="#{member.acquisition.isbnPlaceholder}">
+                                <div id="isbnFeedback" class="member-field-error" th:text="${#fields.hasErrors('isbn') ? #fields.errors('isbn')[0] : ''}"></div>
+                            </div>
+                            
+                            <!-- 4. Nhà xuất bản -->
+                            <div class="member-form-field">
+                                <label for="publisher" th:text="#{book.publisher}">Publisher</label>
+                                <input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" th:placeholder="#{member.acquisition.publisherPlaceholder}">
+                                <div id="publisherFeedback" class="member-field-error" th:text="${#fields.hasErrors('publisher') ? #fields.errors('publisher')[0] : ''}"></div>
+                            </div>
+                            
+                            <!-- 5. Năm xuất bản -->
+                            <div class="member-form-field">
+                                <label for="publicationYear" th:text="#{book.publicationYear}">Publication Year</label>
+                                <input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.acquisition.yearPlaceholder}">
+                                <div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div>
+                            </div>
+
+                            <!-- 6. Liên kết tham khảo -->
+                            <div class="member-form-field member-form-field--reference">
+                                <label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label>
+                                <input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://...">
+                                <div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div>
+                            </div>
+                            
+                            <!-- 7. Lý do đề xuất * -->
+                            <div class="member-form-field member-form-field--full">
+                                <label for="requestReason"><span th:text="#{member.acquisition.reason}">Request Reason</span> <span class="required-star">*</span></label>
+                                <textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" th:placeholder="#{validation.charactersRange(10,1000)}"></textarea>
+                                <div class="member-field-support">
+                                    <span id="requestReasonCount" aria-live="polite">0/1000</span>
+                                </div>
+                                <div id="requestReasonFeedback" class="member-field-error" th:text="${#fields.hasErrors('requestReason') ? #fields.errors('requestReason')[0] : ''}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                        <button type="submit" class="member-ui-button member-ui-button--primary" th:text="#{member.acquisition.submit}">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            const acquisitionPageSuccess = /*[[${success}]]*/ null;
+            const acquisitionForm = document.getElementById('acquisitionRequestForm');
+            const acquisitionModal = document.getElementById('acquisitionRequestModal');
+            const acquisitionModalTitle = document.getElementById('acquisitionRequestModalLabel');
+            const currentYear = new Date().getFullYear();
+            const acquisitionI18n = {
+                required: /*[[#{validation.fieldRequired}]]*/'{0} is required.',
+                range: /*[[#{validation.fieldRange}]]*/'{0} must contain {1}-{2} characters.',
+                letters: /*[[#{validation.fieldLetters}]]*/'{0} must include letters.',
+                year: /*[[#{validation.yearRange}]]*/'Publication year must be between 1000 and {0}.',
+                url: /*[[#{validation.httpUrl}]]*/'Reference link must be a valid HTTP or HTTPS URL.',
+                title: /*[[#{book.title}]]*/'Book Title',
+                author: /*[[#{book.author}]]*/'Author',
+                publisher: /*[[#{book.publisher}]]*/'Publisher',
+                reason: /*[[#{member.acquisition.reason}]]*/'Request Reason',
+                isbn: /*[[#{validation.acquisition.isbnInvalid}]]*/'ISBN is invalid.'
+            };
+
+            function setFieldError(input, id, message) {
+                if (input) input.classList.add('is-invalid');
+                const feedback = document.getElementById(id);
+                if (feedback) feedback.textContent = message;
+            }
+
+            function clearFieldError(input, id) {
+                if (input) input.classList.remove('is-invalid');
+                const feedback = document.getElementById(id);
+                if (feedback) feedback.textContent = '';
+            }
+
+            function hasLetter(value) {
+                return /\p{L}/u.test(value);
+            }
+
+            function formatMessage(template, ...values) {
+                return values.reduce((text, value, index) => text.replace('{' + index + '}', value), template);
+            }
+
+            function isValidIsbn(rawValue) {
+                const isbn = rawValue.replace(/[-\s]/g, '').toUpperCase();
+                if (isbn === '') return true;
+                if (/^\d{9}[\dX]$/.test(isbn)) {
+                    let sum = 0;
+                    for (let i = 0; i < 10; i++) sum += (10 - i) * (isbn[i] === 'X' ? 10 : Number(isbn[i]));
+                    return sum % 11 === 0;
+                }
+                if (/^\d{13}$/.test(isbn)) {
+                    let sum = 0;
+                    for (let i = 0; i < 12; i++) sum += Number(isbn[i]) * (i % 2 === 0 ? 1 : 3);
+                    return (10 - sum % 10) % 10 === Number(isbn[12]);
+                }
+                return false;
+            }
+
+            function validateText(input, id, label, min, max, optional) {
+                if (!input) return true;
+                const value = input.value.trim().replace(/\s+/g, ' ');
+                input.value = value;
+                if (optional && value === '') {
+                    clearFieldError(input, id);
+                    return true;
+                }
+                let message = '';
+                if (value === '') message = formatMessage(acquisitionI18n.required, label);
+                else if (value.length < min || value.length > max) message = formatMessage(acquisitionI18n.range, label, min, max);
+                else if (!hasLetter(value)) message = formatMessage(acquisitionI18n.letters, label);
+                if (message) {
+                    setFieldError(input, id, message);
+                    return false;
+                }
+                clearFieldError(input, id);
+                return true;
+            }
+
+            function updateReasonCount() {
+                const reason = document.getElementById('requestReason');
+                const count = document.getElementById('requestReasonCount');
+                if (!reason || !count) return;
+                count.textContent = reason.value.length + '/1000';
+                count.classList.toggle('is-near-limit', reason.value.length >= 900 && reason.value.length < 1000);
+                count.classList.toggle('is-limit-reached', reason.value.length >= 1000);
+            }
+
+            ['title', 'author', 'isbn', 'publisher', 'publicationYear', 'requestReason', 'referenceUrl'].forEach(function(id) {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('input', function() {
+                        clearFieldError(input, id + 'Feedback');
+                        if (id === 'requestReason') updateReasonCount();
+                    });
+                }
+            });
+
+            if (acquisitionForm) {
+                acquisitionForm.addEventListener('submit', function(event) {
+                    let firstInvalid = null;
+                    function check(valid, input) {
+                        if (!valid) firstInvalid = firstInvalid || input;
+                    }
+                    const title = document.getElementById('title');
+                    const author = document.getElementById('author');
+                    const publisher = document.getElementById('publisher');
+                    const isbn = document.getElementById('isbn');
+                    const year = document.getElementById('publicationYear');
+                    const reason = document.getElementById('requestReason');
+                    const url = document.getElementById('referenceUrl');
+
+                    check(validateText(title, 'titleFeedback', acquisitionI18n.title, 2, 255, false), title);
+                    check(validateText(author, 'authorFeedback', acquisitionI18n.author, 2, 255, false), author);
+                    check(validateText(publisher, 'publisherFeedback', acquisitionI18n.publisher, 1, 255, true), publisher);
+                    check(validateText(reason, 'requestReasonFeedback', acquisitionI18n.reason, 10, 1000, false), reason);
+
+                    if (isbn && !isValidIsbn(isbn.value)) {
+                        setFieldError(isbn, 'isbnFeedback', acquisitionI18n.isbn);
+                        firstInvalid = firstInvalid || isbn;
+                    }
+
+                    if (year && year.value !== '' && (Number(year.value) < 1000 || Number(year.value) > currentYear)) {
+                        setFieldError(year, 'publicationYearFeedback', formatMessage(acquisitionI18n.year, currentYear));
+                        firstInvalid = firstInvalid || year;
+                    }
+
+                    if (url && url.value.trim() !== '') {
+                        try {
+                            const parsed = new URL(url.value.trim());
+                            if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+                        } catch (e) {
+                            setFieldError(url, 'referenceUrlFeedback', acquisitionI18n.url);
+                            firstInvalid = firstInvalid || url;
+                        }
+                    }
+
+                    updateReasonCount();
+                    if (firstInvalid) {
+                        event.preventDefault();
+                        firstInvalid.focus();
+                    }
+                });
+            }
+
+            updateReasonCount();
+
+            document.addEventListener('DOMContentLoaded', function() {
+                if (acquisitionPageSuccess && window.AppFeedback) {
+                    window.AppFeedback.success(acquisitionPageSuccess);
+                }
+
+                // Handle Modal triggers
+                document.querySelectorAll('.acquisition-modal-trigger').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (btn.classList.contains('acquisition-edit-trigger')) {
+                            acquisitionForm.action = acquisitionForm.dataset.createUrl + '/' + btn.dataset.requestId + '/edit';
+                            document.getElementById('title').value = btn.dataset.title || '';
+                            document.getElementById('author').value = btn.dataset.author || '';
+                            document.getElementById('isbn').value = btn.dataset.isbn || '';
+                            document.getElementById('publisher').value = btn.dataset.publisher || '';
+                            document.getElementById('publicationYear').value = btn.dataset.publicationYear || '';
+                            document.getElementById('requestReason').value = btn.dataset.requestReason || '';
+                            document.getElementById('referenceUrl').value = btn.dataset.referenceUrl || '';
+                            if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.editRequest}]]*/ 'Edit request';
+                            updateReasonCount();
+                        } else {
+                            acquisitionForm.reset();
+                            acquisitionForm.action = acquisitionForm.dataset.createUrl;
+                            if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.newRequest}]]*/ 'Submit a new request';
+                            updateReasonCount();
+                        }
+                        if (window.jQuery && acquisitionModal) {
+                            window.jQuery(acquisitionModal).modal('show');
+                        }
+                    });
+                });
+
+                if (acquisitionModal && acquisitionModal.dataset.reopen === 'true') {
+                    if (acquisitionForm.dataset.editRequestId) {
+                        acquisitionForm.action = acquisitionForm.dataset.createUrl + '/' + acquisitionForm.dataset.editRequestId + '/edit';
+                        if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.editRequest}]]*/ 'Edit request';
+                    }
+                    if (window.jQuery) {
+                        window.jQuery(acquisitionModal).modal('show');
+                    }
+                }
+            });
+        </script>
+    </th:block>
 </div>
-</body></html>
+</body>
+</html>

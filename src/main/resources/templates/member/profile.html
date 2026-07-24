@@ -5,149 +5,158 @@
 <head>
     <title th:text="#{member.profile.title}">My Profile</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/member/profile.css}" />
-  </head>
+</head>
 
 <body>
-<div layout:fragment="content" class="container mt-4 mb-5">
-    <h2 class="page-title mb-4" th:text="#{member.profile.heading}">My Profile</h2>
+<div layout:fragment="content" class="container member-page profile-page member-palette-page">
 
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm u-background-color-f0fff4-color-2f855a-85044379" role="alert">
+    <!-- Hero Header -->
+    <header class="member-page-header member-dashboard-hero profile-hero">
+        <div class="profile-hero-copy">
+            <span class="member-page-eyebrow" th:text="#{nav.myAccount}">MY ACCOUNT</span>
+            <h1 class="member-page-title" th:text="#{member.profile.heading}">My Profile</h1>
+            <p class="member-page-description" th:text="#{member.profile.description}">Manage your personal information, avatar, and security settings.</p>
+        </div>
+        <a th:href="@{/}" class="notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.backHome}">Back to Home</span></a>
+    </header>
+
+    <!-- Alert Messages -->
+    <div th:if="${successMessage}" class="member-notifications-alert is-success app-alert--success mb-4" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
-        <button type="button" class="close u-color-2f855a-3ab9db54" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
+    <div th:if="${errorMessage}" class="member-notifications-alert is-error app-alert--danger mb-4" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
-        <button type="button" class="close u-color-c53030-c575d87d" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </div>
-    <div th:if="${passwordSuccess}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm u-background-color-f0fff4-color-2f855a-85044379" role="alert">
+    <div th:if="${passwordSuccess}" class="member-notifications-alert is-success app-alert--success mb-4" role="alert">
         <i class="bi bi-shield-check me-2"></i><span th:text="${passwordSuccess}"></span>
-        <button type="button" class="close u-color-2f855a-3ab9db54" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     </div>
-    <div th:if="${passwordError}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm u-background-color-fff5f5-color-c53030-0e7ed3fe" role="alert">
-        <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
-        <button type="button" class="close u-color-c53030-c575d87d" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-    </div>
+    <!-- Membership Overview -->
+    <section class="membership-overview mb-4" aria-labelledby="membershipOverviewTitle">
+        <div class="membership-overview-header">
+            <h2 id="membershipOverviewTitle" class="profile-section-title" th:text="#{member.profile.membershipOverview}">Membership Overview</h2>
+        </div>
+        <div class="membership-overview-grid">
+            <div class="membership-overview-item">
+                <span class="profile-stat-label" th:text="#{member.profile.activeLoans}">Active Loans</span>
+                <strong class="profile-stat-value" th:text="${activeBorrowsCount}">0</strong>
+                <small th:text="${activeBorrowsCount == 0 ? 'No active loans' : 'Currently borrowed'}">No active loans</small>
+            </div>
+            <div class="membership-overview-item">
+                <span class="profile-stat-label" th:text="#{member.profile.tier}">Membership Tier</span>
+                <strong class="profile-stat-value profile-stat-value--tier"
+                            th:text="${membership.tier == null ? #messages.msg('tier.standard') : (membership.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (membership.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (membership.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (membership.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : membership.tier.tierName))))}">Regular</strong>
+                <small>Active membership</small>
+            </div>
+            <div class="membership-overview-item">
+                <span class="profile-stat-label" th:text="#{member.profile.borrowLimit}">Borrowing Limit</span>
+                <strong class="profile-stat-value" th:text="#{book.count(${membership.tier != null ? membership.tier.borrowLimit : 3})}">3 books</strong>
+                <small th:text="${(membership.tier != null ? membership.tier.borrowLimit : 3) + ' available'}">3 available</small>
+            </div>
+        </div>
+    </section>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-4 mb-3 mb-md-0">
-            <div class="card card-stat-classic p-3 h-100">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase stat-label mb-1 d-block" th:text="#{member.profile.activeLoans}">Active Loans</span>
-                        <h2 class="mb-0 stat-value" th:text="${activeBorrowsCount}">0</h2>
-                    </div>
-                    <i class="bi bi-book fs-1 member-profile-i-color-05"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3 mb-md-0">
-            <div class="card card-stat-classic p-3 h-100 member-profile-div-border-left-color-06">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase stat-label mb-1 d-block" th:text="#{member.profile.tier}">Membership Tier</span>
-                        <h2 class="mb-0 stat-value member-profile-h2-font-size-07"
-                            th:text="${membership.tier == null ? #messages.msg('tier.standard') : (membership.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (membership.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (membership.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (membership.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : membership.tier.tierName))))}">Regular</h2>
-                    </div>
-                    <i class="bi bi-person-badge fs-1 member-profile-i-color-08"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-3 mb-md-0">
-            <div class="card card-stat-classic p-3 h-100 member-profile-div-border-left-color-09">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase stat-label mb-1 d-block" th:text="#{member.profile.borrowLimit}">Borrowing Limit</span>
-                        <h2 class="mb-0 stat-value" th:text="#{book.count(${membership.tier != null ? membership.tier.borrowLimit : 3})}">3 books</h2>
-                    </div>
-                    <i class="bi bi-exclamation-circle fs-1 member-profile-i-color-10"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Main Grid -->
     <div class="row g-4">
+        <!-- Left Column: Avatar & Security -->
         <div class="col-lg-4">
-            <div class="card card-profile-classic mb-4">
-                <div class="card-body text-center p-4 u-background-color-fdfbf7-71083b05">
+            <div class="profile-card mb-4">
+                <div class="card-body text-center p-4">
                     <div class="avatar-container-classic mb-3">
-                        <div th:if="${member?.avatar == null}" id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow w-100 h-100 u-background-color-8b5a2b-font-size-3rem-font-family-playfair-display-seri-21f7ac93"
-
-                             th:text="${member != null ? #strings.substring(member.fullName, 0, 1).toUpperCase() : 'M'}">M</div>
-                        <img th:if="${member?.avatar != null}" id="avatarPreview" th:src="${member.avatar}" class="rounded-circle border border-3 border-white shadow w-100 h-100 u-object-fit-cover-fd3ff4b2">
-                        <img th:if="${member?.avatar == null}" id="avatarPreview" src="" class="rounded-circle border border-3 border-white shadow d-none w-100 h-100 u-object-fit-cover-fd3ff4b2">
+                        <div id="avatarPlaceholder"
+                             class="profile-avatar-placeholder"
+                             th:hidden="${member?.avatar != null and !#strings.isEmpty(member?.avatar)}"
+                             th:text="${member != null and member.fullName != null and !#strings.isEmpty(#strings.trim(member.fullName)) ? #strings.substring(#strings.trim(member.fullName), 0, 1).toUpperCase() : 'M'}">M</div>
+                        <img id="avatarPreview"
+                             th:src="${member?.avatar != null and !#strings.isEmpty(member?.avatar) ? member.avatar : ''}"
+                             th:alt="#{member.profile.avatarAlt}"
+                             class="profile-avatar-image"
+                             th:hidden="${member?.avatar == null or #strings.isEmpty(member?.avatar)}"
+                             data-avatar-image
+                             data-avatar-fallback="avatarPlaceholder"
+                             data-profile-avatar-preview>
 
                         <label for="avatarUpload" class="btn btn-camera-classic rounded-circle d-flex align-items-center justify-content-center m-0 shadow-sm" th:title="#{member.profile.changeAvatar}">
-                            <i class="bi bi-camera-fill u-font-size-0-85rem-4908cb0a"></i>
+                            <i class="bi bi-camera-fill"></i>
                         </label>
                     </div>
-                    <h4 class="fw-bold mb-1 font-playfair u-color-2c1e16-5ab7ae80" th:text="${member?.fullName}">Member Name</h4>
+                    <p id="avatarError" class="profile-field-error mb-3"
+                       th:classappend="${avatarError == null} ? ' d-none'"
+                       th:text="${avatarError != null ? avatarError : #messages.msg('validation.avatarType')}">Invalid profile image.</p>
+                    <h4 class="fw-bold mb-1 profile-name" th:text="${member?.fullName}">Member Name</h4>
                     <p class="text-muted small mb-3" th:text="${member?.email}">email@example.com</p>
 
-                    <div class="d-flex justify-content-center mb-2 u-gap-12px-58cf3fe5">
-                        <span class="badge badge-classic-status" th:text="#{member.profile.reader}">Library Member</span>
-                        <span th:if="${member?.status?.name() == 'Active'}" class="badge badge-classic-status badge-classic-success" th:text="#{account.status.active}">Active</span>
-                        <span th:if="${member?.status?.name() != 'Active'}" class="badge badge-classic-status text-danger border-danger"
-                              th:text="${member?.status?.name() == 'Inactive' ? #messages.msg('account.status.inactive') : (member?.status?.name() == 'Blocked' ? #messages.msg('account.status.blocked') : member?.status)}">Status</span>
+                    <div class="d-flex justify-content-center mb-3 profile-status-badges">
+                        <span class="badge-classic-status member-reference-pill" th:text="#{member.profile.reader}">Library Member</span>
+                        <span th:if="${member?.status?.name() == 'Active'}" class="badge-classic-status badge-classic-success member-reference-pill" th:text="#{account.status.active}">Active</span>
+                        <span th:if="${member?.status?.name() != 'Active'}" class="badge-classic-status badge-classic-danger member-reference-pill"
+                              th:text="${member?.status?.name() == 'Inactive' ? #messages.msg('member.account.status.restricted') : (member?.status?.name() == 'Blocked' ? #messages.msg('account.status.blocked') : member?.status)}">Status</span>
                     </div>
-                    <hr class="member-profile-hr-border-top-17">
+                    <hr class="my-3 border-hairline">
 
                     <div class="d-flex justify-content-between text-start small mt-2 px-1">
                         <span class="text-muted fw-medium" th:text="#{member.profile.readerTier}">Member tier:</span>
-                        <span class="fw-bold font-playfair member-profile-span-color-font-size-18"
+                        <span class="fw-bold profile-tier-text"
                               th:text="${membership.tier == null ? #messages.msg('tier.standard') : (membership.tier.tierName == 'Regular' ? #messages.msg('tier.regular') : (membership.tier.tierName == 'Silver' ? #messages.msg('tier.silver') : (membership.tier.tierName == 'Gold' ? #messages.msg('tier.gold') : (membership.tier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : membership.tier.tierName))))}">Regular</span>
                     </div>
                 </div>
             </div>
 
-            <div class="card card-profile-classic" th:if="${#authentication.principal.attributes == null}">
-                <div class="card-body p-4 u-background-color-fdfbf7-71083b05">
-                    <h6 class="fw-bold mb-3 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.security}">Account Security</h6>
-                    <button class="btn btn-classic-outline w-100 fw-bold" data-toggle="modal" data-target="#changePasswordModal" th:text="#{member.profile.changePassword}">Change Password</button>
+            <!-- Password Card (Local Auth) -->
+            <div class="profile-card mb-4" th:if="${#authentication.principal.attributes == null}">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3 profile-section-title" th:text="#{member.profile.security}">Account Security</h6>
+                    <button type="button" class="member-ui-button member-ui-button--secondary w-100" data-toggle="modal" data-target="#changePasswordModal" th:disabled="${isInactiveMember}" th:text="#{member.profile.changePassword}">Change Password</button>
                 </div>
             </div>
 
-            <div class="card card-profile-classic" th:if="${#authentication.principal.attributes != null}">
-                <div class="card-body p-4 text-center u-background-color-fdfbf7-71083b05">
-                    <i class="bi bi-google mb-2 d-block member-profile-i-font-size-color-20"></i>
-                    <h6 class="fw-bold mb-1 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.googleAccount}">Google Account</h6>
+            <!-- Google Auth Card -->
+            <div class="profile-card mb-4" th:if="${#authentication.principal.attributes != null}">
+                <div class="card-body p-4 text-center">
+                    <i class="bi bi-google mb-2 d-block fs-2 text-danger"></i>
+                    <h6 class="fw-bold mb-1 profile-section-title" th:text="#{member.profile.googleAccount}">Google Account</h6>
                     <p class="text-muted small mb-0 fst-italic" th:text="#{member.profile.googleDescription}">Your account signs in through Google.</p>
                 </div>
             </div>
         </div>
 
+        <!-- Right Column: Details Form -->
         <div class="col-lg-8">
-            <div class="card card-profile-classic h-100">
-                <div class="card-header-classic px-4">
-                    <h5 class="fw-bold mb-0 font-playfair u-color-4a3b32-1ba01220" th:text="#{member.profile.details}">Account Details</h5>
+            <div class="profile-card h-100">
+                <div class="profile-card-header px-4 py-3 border-bottom">
+                    <h5 class="fw-bold mb-0 profile-section-title" th:text="#{member.profile.details}">Account Details</h5>
                 </div>
-                <div class="card-body-classic">
+                <div class="card-body p-4">
                     <form id="profileForm" th:action="@{/member/profile/update}" method="post" enctype="multipart/form-data" class="m-0 needs-validation" novalidate>
-                        <input type="file" id="avatarUpload" name="avatarFile" accept="image/*" class="d-none">
+                        <input type="file" id="avatarUpload" name="avatarFile"
+                               accept="image/jpeg,image/png,image/webp,image/gif" class="d-none"
+                               th:data-size-error="#{validation.avatarMaxSize}"
+                               th:data-type-error="#{validation.avatarType}">
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.fullName}">Full Name</label>
-                                <input type="text" name="fullName" class="form-control form-control-classic py-2" th:classappend="${fullNameError} ? 'is-invalid' : ''" th:value="${member?.fullName}" minlength="2" maxlength="50" required th:data-msg-required="#{validation.fullNameRequired}" th:data-msg-length="#{validation.fullNameMax}">
+                                <label class="form-label text-muted small fw-bold" th:text="#{member.profile.fullName}">Full Name</label>
+                                <input type="text" name="fullName" class="form-control" th:classappend="${fullNameError} ? 'is-invalid' : ''" th:value="${member?.fullName}" minlength="2" maxlength="50" required th:readonly="${isInactiveMember}" th:data-msg-required="#{validation.fullNameRequired}" th:data-msg-length="#{validation.fullNameMax}">
                                 <div class="invalid-feedback" th:text="${fullNameError != null ? fullNameError : #messages.msg('validation.fullNameRequired')}">Please enter a valid full name.</div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.username}">Username</label>
-                                <input type="text" name="username" class="form-control form-control-classic py-2" th:classappend="${usernameError} ? 'is-invalid' : ''" th:value="${failedUsername != null ? failedUsername : #authentication.name}" required minlength="3" maxlength="100" pattern="^[a-zA-Z0-9_.]+$" th:data-msg-required="#{validation.usernameRequired}" th:data-msg-pattern="#{validation.usernameFormat}">
+                                <label class="form-label text-muted small fw-bold" th:text="#{member.profile.username}">Username</label>
+                                <input type="text" name="username" class="form-control" th:classappend="${usernameError} ? 'is-invalid' : ''" th:value="${failedUsername != null ? failedUsername : #authentication.name}" required minlength="3" maxlength="100" pattern="^[a-zA-Z0-9_.]+$" th:readonly="${isInactiveMember}" th:data-msg-required="#{validation.usernameRequired}" th:data-msg-pattern="#{validation.usernameFormat}">
                                 <div class="invalid-feedback" th:text="${usernameError != null ? usernameError : #messages.msg('validation.usernameRequired')}">Please enter a valid username.</div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.email}">Email Address</label>
-                                <input type="email" name="email" class="form-control form-control-classic py-2 bg-light text-muted" th:classappend="${emailError} ? 'is-invalid' : ''" th:value="${member?.email}" required th:data-msg-required="#{validation.emailRequired}" th:data-msg-type="#{validation.email}" readonly>
+                                <label class="form-label text-muted small fw-bold" th:text="#{member.profile.email}">Email Address</label>
+                                <input type="email" name="email" class="form-control" th:classappend="${emailError} ? 'is-invalid' : ''" th:value="${member?.email}" required th:data-msg-required="#{validation.emailRequired}" th:data-msg-type="#{validation.email}" readonly>
                                 <div class="invalid-feedback" th:text="${emailError != null ? emailError : #messages.msg('validation.emailRequired')}">Please enter a valid email.</div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.phone}">Phone Number</label>
-                                <input type="tel" name="phone" class="form-control form-control-classic py-2" th:classappend="${phoneError} ? 'is-invalid' : ''" th:value="${member?.phone}" pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" required th:data-msg-required="#{validation.phoneRequired}" th:data-msg-pattern="#{backend.profile.phoneFormat}">
+                                <label class="form-label text-muted small fw-bold" th:text="#{member.profile.phone}">Phone Number</label>
+                                <input type="tel" name="phone" class="form-control" th:classappend="${phoneError} ? 'is-invalid' : ''" th:value="${member?.phone}" pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" required th:readonly="${isInactiveMember}" th:data-msg-required="#{validation.phoneRequired}" th:data-msg-pattern="#{backend.profile.phoneFormat}">
                                 <div class="invalid-feedback" th:text="${phoneError != null ? phoneError : #messages.msg('validation.phoneRequired')}">Please enter a valid phone number.</div>
                             </div>
 
-                            <div class="col-12 mt-3 text-end">
-                                <button type="submit" id="saveProfileBtn" class="btn btn-classic-primary fw-bold px-4 shadow-sm">
+                            <div class="col-12 mt-4 text-end">
+                                <button type="submit" id="saveProfileBtn" class="member-ui-button member-ui-button--primary px-4" th:disabled="${isInactiveMember}">
                                     <span id="saveProfileText" th:text="#{member.profile.save}">Save Changes</span>
                                     <span id="saveProfileSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 </button>
@@ -157,61 +166,86 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content modal-content-classic shadow-lg">
-                    <div class="modal-header modal-header-classic">
-                        <h5 class="modal-title fw-bold font-playfair u-color-4a3b32-1ba01220"><i class="bi bi-shield-lock-fill text-muted me-2"></i><span th:text="#{member.profile.passwordTitle}">Change Secure Password</span></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    </div>
-                    <form id="changePasswordForm" th:action="@{/member/change-password}" method="post" class="m-0 needs-validation" novalidate>
-                        <div class="modal-body p-4 u-background-color-fdfbf7-71083b05">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.currentPassword}">Current Password</label>
-                                <input type="password" name="oldPassword" class="form-control form-control-classic py-2" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.newPassword}">New Password</label>
-                                <input type="password" name="newPassword" class="form-control form-control-classic py-2" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
-                                <input type="password" name="confirmPassword" class="form-control form-control-classic py-2" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-0 p-3 u-background-color-fdfbf7-71083b05">
-                            <button type="button" class="btn btn-light rounded px-3 fw-bold small member-profile-button-background-21" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                            <button type="submit" id="savePasswordBtn" class="btn btn-classic-primary fw-bold px-4 shadow-sm">
-                                <i class="bi bi-shield-check me-1" id="savePasswordIcon"></i>
-                                <span id="savePasswordText" th:text="#{member.profile.updatePassword}">Update Password</span>
-                                <span id="savePasswordSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            </button>
-                        </div>
-                    </form>
+    <!-- Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-classic shadow-lg border-0">
+                <div class="modal-header border-bottom px-4 py-3">
+                    <h5 class="modal-title fw-bold profile-section-title"><i class="bi bi-shield-lock-fill text-muted me-2"></i><span th:text="#{member.profile.passwordTitle}">Change Secure Password</span></h5>
                 </div>
+                <form id="changePasswordForm" th:action="@{/member/change-password}" method="post" class="m-0 needs-validation" novalidate
+                      th:data-password-mismatch="#{backend.password.mismatch}">
+                    <div class="modal-body p-4">
+                        <div th:if="${passwordError}" class="member-notifications-alert is-error mb-3" role="alert">
+                            <i class="bi bi-shield-x me-2"></i><span th:text="${passwordError}"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label text-muted small fw-bold" th:text="#{member.profile.currentPassword}">Current Password</label>
+                            <input id="oldPassword" type="password" name="oldPassword" class="form-control" required>
+                            <div class="invalid-feedback" th:text="#{validation.passwordRequired}">Password is required.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label text-muted small fw-bold" th:text="#{member.profile.newPassword}">New Password</label>
+                            <input id="newPassword" type="password" name="newPassword" class="form-control" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
+                            <div class="invalid-feedback" th:text="#{validation.passwordMin}">Password is invalid.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label text-muted small fw-bold" th:text="#{member.profile.confirmPassword}">Confirm New Password</label>
+                            <input id="confirmPassword" type="password" name="confirmPassword" class="form-control" minlength="6" maxlength="50" pattern="^\S+$" th:title="#{validation.passwordNoSpaces}" required>
+                            <div id="confirmPasswordFeedback" class="invalid-feedback" th:text="#{backend.password.mismatch}">Passwords do not match.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top p-3">
+                        <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                        <button type="submit" id="savePasswordBtn" class="member-ui-button member-ui-button--primary">
+                            <i class="bi bi-shield-check me-1" id="savePasswordIcon"></i>
+                            <span id="savePasswordText" th:text="#{member.profile.updatePassword}">Update Password</span>
+                            <span id="savePasswordSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-
     </div>
+
 </div>
 
+<th:block layout:fragment="scripts">
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fileInput = document.getElementById('avatarUpload');
         const avatarPreview = document.getElementById('avatarPreview');
         const avatarPlaceholder = document.getElementById('avatarPlaceholder');
+        const avatarError = document.getElementById('avatarError');
 
         if(fileInput) {
             fileInput.addEventListener('change', function(event) {
                 const file = event.target.files[0];
+                fileInput.setCustomValidity('');
+                if (avatarError) avatarError.classList.add('d-none');
                 if (file) {
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                    const validationMessage = file.size > 5 * 1024 * 1024
+                        ? fileInput.dataset.sizeError
+                        : (!allowedTypes.includes(file.type) ? fileInput.dataset.typeError : '');
+                    if (validationMessage) {
+                        fileInput.setCustomValidity(validationMessage);
+                        if (avatarError) {
+                            avatarError.textContent = validationMessage;
+                            avatarError.classList.remove('d-none');
+                        }
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        if(avatarPlaceholder) avatarPlaceholder.classList.add('d-none');
+                        if(avatarPlaceholder) {
+                            avatarPlaceholder.hidden = true;
+                        }
                         if(avatarPreview) {
                             avatarPreview.src = e.target.result;
-                            avatarPreview.classList.remove('d-none');
+                            avatarPreview.hidden = false;
                         }
                     }
                     reader.readAsDataURL(file);
@@ -245,8 +279,10 @@
                 } else {
                     const btn = document.getElementById('saveProfileBtn');
                     const spinner = document.getElementById('saveProfileSpinner');
-                    btn.disabled = true;
-                    spinner.classList.remove('d-none');
+                    if (btn && spinner) {
+                        btn.disabled = true;
+                        spinner.classList.remove('d-none');
+                    }
                 }
                 profileForm.classList.add('was-validated');
             });
@@ -256,17 +292,19 @@
         const changePasswordForm = document.getElementById('changePasswordForm');
         if (changePasswordForm) {
             changePasswordForm.addEventListener('submit', function(event) {
-                const newPass = document.querySelector('input[name="newPassword"]').value;
-                const confirmPass = document.querySelector('input[name="confirmPassword"]').value;
-                const confirmInput = document.querySelector('input[name="confirmPassword"]');
-                let isValid = changePasswordForm.checkValidity();
+                const newPassInput = changePasswordForm.querySelector('input[name="newPassword"]');
+                const confirmInput = changePasswordForm.querySelector('input[name="confirmPassword"]');
+                const confirmFeedback = document.getElementById('confirmPasswordFeedback');
+                const mismatchMessage = changePasswordForm.dataset.passwordMismatch;
 
-                if (newPass !== confirmPass) {
-                    confirmInput.setCustomValidity("Passwords do not match");
-                    isValid = false;
-                } else {
-                    confirmInput.setCustomValidity("");
+                confirmInput.setCustomValidity('');
+
+                if (newPassInput.value !== confirmInput.value) {
+                    confirmInput.setCustomValidity(mismatchMessage);
+                    if (confirmFeedback) confirmFeedback.textContent = mismatchMessage;
                 }
+
+                const isValid = changePasswordForm.checkValidity();
 
                 if (!isValid) {
                     event.preventDefault();
@@ -275,15 +313,30 @@
                     const btn = document.getElementById('savePasswordBtn');
                     const spinner = document.getElementById('savePasswordSpinner');
                     const icon = document.getElementById('savePasswordIcon');
-                    btn.disabled = true;
-                    spinner.classList.remove('d-none');
-                    icon.classList.add('d-none');
+                    if (btn && spinner) {
+                        btn.disabled = true;
+                        spinner.classList.remove('d-none');
+                        if (icon) icon.classList.add('d-none');
+                    }
                 }
                 changePasswordForm.classList.add('was-validated');
             });
+
+            const clearPasswordMismatch = function() {
+                const newPassInput = changePasswordForm.querySelector('input[name="newPassword"]');
+                const confirmInput = changePasswordForm.querySelector('input[name="confirmPassword"]');
+                if (newPassInput.value === confirmInput.value) confirmInput.setCustomValidity('');
+            };
+            changePasswordForm.querySelector('input[name="newPassword"]').addEventListener('input', clearPasswordMismatch);
+            changePasswordForm.querySelector('input[name="confirmPassword"]').addEventListener('input', clearPasswordMismatch);
+        }
+
+        if (document.querySelector('#changePasswordModal .member-notifications-alert.is-error') && window.jQuery) {
+            window.jQuery('#changePasswordModal').modal('show');
         }
     });
 </script>
+</th:block>
 
 </body>
 </html>

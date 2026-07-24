@@ -1,49 +1,52 @@
 <!DOCTYPE html>
-<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{layout/admin_base}">
+<html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
 
 <head>
     <title th:text="#{admin.staff.title}">Staff Account Management</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/librarian-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/admin/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/staff-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
+    <script defer th:src="@{/js/admin-account-create.js}"></script>
 </head>
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='staff'"
-        class="member-management-page librarian-management-page">
-        <header class="member-page-header">
+        class="member-management-page librarian-management-page accounts-page admin-member-list-page admin-staff-list-page">
+        <header class="member-page-header admin-member-list-hero">
             <div>
+                <span class="member-page-eyebrow" th:text="#{admin.staff.eyebrow}">STAFF MANAGEMENT</span>
                 <h1 class="member-page-title" th:text="#{admin.staff.heading}">Staff List</h1>
                 <p class="member-page-description" th:text="#{admin.staff.description}">Staff account information</p>
             </div>
             <div class="member-page-actions">
                 <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
                     data-bs-target="#createStaffAccountModal">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i>
                     <span th:text="#{admin.accounts.create}">Create Account</span>
                 </button>
             </div>
         </header>
 
-        <div class="modal fade text-start" id="createStaffAccountModal" tabindex="-1"
+        <div class="modal fade text-start account-standard-modal" id="createStaffAccountModal" tabindex="-1"
             aria-labelledby="createStaffAccountModalLabel" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header member-modal-header">
-                        <h5 class="modal-title member-modal-title-accent"
-                            id="createStaffAccountModalLabel">
-                            <i class="bi bi-person-plus-fill me-2 text-classic"></i><span th:text="#{admin.staff.create}">Create Staff Account</span>
+                        <h5 class="modal-title member-modal-title-accent" id="createStaffAccountModalLabel">
+                            <i class="bi bi-person-plus-fill me-2 text-classic"></i><span
+                                th:text="#{admin.staff.create}">Create Staff Account</span>
                         </h5>
                     </div>
                     <div class="modal-body member-modal-body">
-                        <th:block th:replace="~{admin/create-account :: createAccountForm('staff', true)}"></th:block>
+                        <th:block th:replace="~{admin/create-staff-account :: createStaffAccountForm}"></th:block>
                     </div>
                 </div>
             </div>
         </div>
 
-        <th:block th:replace="~{admin/create-account :: createAccountValidation}"></th:block>
         <script th:if="${openCreateAccountModal}">
             document.addEventListener("DOMContentLoaded", function () {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById("createStaffAccountModal")).show();
@@ -51,48 +54,67 @@
         </script>
 
         <!-- Alerts -->
-        <div class="alert alert-warning shadow-sm border-0" th:if="${param.notFound != null}">
-            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{admin.accounts.notFound}">Account not found.</span>
+        <div class="alert alert-warning" th:if="${param.notFound != null}">
+            <i class="bi bi-exclamation-circle me-2"></i><span th:text="#{admin.accounts.notFound}">Account not
+                found.</span>
         </div>
-        <div class="alert alert-danger shadow-sm border-0" th:if="${error != null}">
+        <div class="alert alert-danger" th:if="${error != null}">
             <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${error}">Error</span>
         </div>
-        <div class="alert alert-success shadow-sm border-0" th:if="${success != null}">
+        <div class="alert alert-success" th:if="${success != null}">
             <i class="bi bi-check-circle me-2"></i><span th:text="${success}">Operation completed successfully.</span>
         </div>
 
         <section class="member-data-card">
             <div class="member-data-card-body">
                 <div class="member-summary-chips" th:aria-label="#{admin.staff.summary}">
-                    <span th:text="#{admin.staff.librarianCount(${staffSummary != null ? staffSummary['librarian'] : 0})}">0 librarians</span>
-                    <span th:text="#{admin.staff.adminCount(${staffSummary != null ? staffSummary['admin'] : 0})}">0 admins</span>
-                    <span th:text="#{admin.staff.activeCount(${staffSummary != null ? staffSummary['active'] : 0})}">0 active</span>
-                    <span th:text="#{admin.staff.inactiveCount(${staffSummary != null ? staffSummary['inactive'] : 0})}">0 inactive</span>
-                    <span th:text="#{admin.staff.blockedCount(${staffSummary != null ? staffSummary['blocked'] : 0})}">0 blocked</span>
+                    <span class="app-number"
+                        th:text="#{admin.staff.librarianCount(${@displayNumber.count(staffSummary != null ? staffSummary['librarian'] : 0)})}">0
+                        librarians</span>
+                    <span class="app-number"
+                        th:text="#{admin.staff.adminCount(${@displayNumber.count(staffSummary != null ? staffSummary['admin'] : 0)})}">0
+                        admins</span>
+                    <span class="app-number"
+                        th:text="#{admin.staff.activeCount(${@displayNumber.count(staffSummary != null ? staffSummary['active'] : 0)})}">0
+                        active</span>
+                    <span class="app-number"
+                        th:text="#{admin.staff.inactiveCount(${@displayNumber.count(staffSummary != null ? staffSummary['inactive'] : 0)})}">0
+                        inactive</span>
+                    <span class="app-number"
+                        th:text="#{admin.staff.blockedCount(${@displayNumber.count(staffSummary != null ? staffSummary['blocked'] : 0)})}">0
+                        blocked</span>
                 </div>
                 <!-- Search & Filter -->
                 <div class="member-toolbar">
-                    <form class="member-search-form" method="get" th:action="@{/admin/staff}"
-                        data-auto-filter-form data-focus-key="adminStaffFilterFocus">
-                        <div class="input-group member-search-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input class="form-control border-start-0 ps-0" type="text" name="keyword" data-auto-search
-                                th:value="${keyword}"
-                                th:placeholder="#{admin.staff.searchPlaceholder}">
+                    <form class="member-search-form" method="get" th:action="@{/admin/staff}" data-auto-filter-form
+                        data-focus-key="adminStaffFilterFocus">
+                        <div class="member-search-group">
+                            <div class="member-keyword-control">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
+                                </span>
+                                <input class="form-control" type="search" name="keyword" data-auto-search
+                                    th:value="${keyword}" th:placeholder="#{admin.staff.searchPlaceholder}">
+                            </div>
                             <select class="form-select member-filter-select" name="staffType" data-auto-submit
                                 th:aria-label="#{admin.staff.filterType}">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStaffType)}" th:text="#{admin.staff.allTypes}">All Types</option>
-                                <option value="Librarian" th:selected="${selectedStaffType == 'Librarian'}" th:text="#{role.librarian}">Librarian</option>
-                                <option value="Admin" th:selected="${selectedStaffType == 'Admin'}">Admin</option>
+                                <option value="" th:selected="${#strings.isEmpty(selectedStaffType)}"
+                                    th:text="#{admin.staff.allTypes}">All Types</option>
+                                <option value="Librarian" th:selected="${selectedStaffType == 'Librarian'}"
+                                    th:text="#{role.librarian}">Librarian</option>
+                                <option value="Admin" th:selected="${selectedStaffType == 'Admin'}"
+                                    th:text="#{role.admin}">Admin</option>
                             </select>
                             <select class="form-select member-filter-select" name="status" data-auto-submit
                                 th:aria-label="#{admin.accounts.filterStatus}">
-                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}" th:text="#{common.allStatuses}">All Statuses</option>
-                                <option value="Active" th:selected="${selectedStatus == 'Active'}" th:text="#{account.status.active}">Active</option>
-                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}" th:text="#{account.status.inactive}">Inactive</option>
-                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}" th:text="#{account.status.blocked}">Blocked</option>
+                                <option value="" th:selected="${#strings.isEmpty(selectedStatus)}"
+                                    th:text="#{common.allStatuses}">All Statuses</option>
+                                <option value="Active" th:selected="${selectedStatus == 'Active'}"
+                                    th:text="#{account.status.active}">Active</option>
+                                <option value="Inactive" th:selected="${selectedStatus == 'Inactive'}"
+                                    th:text="#{account.status.inactive}">Inactive</option>
+                                <option value="Blocked" th:selected="${selectedStatus == 'Blocked'}"
+                                    th:text="#{account.status.blocked}">Blocked</option>
                             </select>
                             <a class="btn member-search-button text-nowrap" th:href="@{/admin/staff}">
                                 <i class="bi bi-arrow-clockwise"></i>
@@ -104,6 +126,14 @@
 
                 <div class="table-responsive member-table-wrap">
                     <table class="table table-hover align-middle member-table">
+                        <colgroup>
+                            <col class="staff-col-index">
+                            <col class="staff-col-username">
+                            <col class="staff-col-user">
+                            <col class="staff-col-role">
+                            <col class="staff-col-status">
+                            <col class="staff-col-actions">
+                        </colgroup>
                         <thead class="table-light text-uppercase small text-muted">
                             <tr>
                                 <th class="ps-3" th:text="#{common.number}">No.</th>
@@ -117,20 +147,21 @@
                         <tbody>
                             <tr th:each="staff, iterStat : ${staffPage.content}"
                                 th:with="account=${staff.user != null ? accountByUserId[staff.user.id] : null}">
-                                <td class="ps-3 fw-bold"
-                                    th:text="${staffPage.number * staffPage.size + iterStat.index + 1}">1</td>
-                                <td>
+                                <td class="ps-3 fw-bold app-number" th:data-label="#{common.number}"
+                                    th:text="${@displayNumber.count(staffPage.number * staffPage.size + iterStat.index + 1)}">
+                                    1</td>
+                                <td th:data-label="#{member.profile.username}">
                                     <span class="fw-bold text-classic"
                                         th:text="${account != null ? account.username : #messages.msg('librarian.staff.noAccount')}">
                                         username
                                     </span>
-                                    <div class="small text-muted"
-                                        th:text="${account != null ? 'ID: ' + account.accountId : 'ID: N/A'}">
-                                        ID: 1
+                                    <div class="small text-muted app-code-number"
+                                        th:text="${account != null and account.accountId != null ? #messages.msg('common.accountIdValue', account.accountId) : #messages.msg('common.accountIdMissing')}">
+                                        Account ID: 1
                                     </div>
                                 </td>
 
-                                <td>
+                                <td th:data-label="#{admin.staff.information}">
                                     <div th:if="${staff.user != null}">
                                         <div class="fw-bold" th:text="${staff.user.fullName}">Staff name</div>
                                         <div class="small text-muted">
@@ -139,14 +170,14 @@
                                         </div>
                                         <div class="small text-muted" th:if="${staff.user.phone}">
                                             <i class="bi bi-telephone me-1"></i>
-                                            <span th:text="${staff.user.phone}">phone</span>
+                                            <span class="app-phone-number" th:text="${staff.user.phone}">phone</span>
                                         </div>
                                     </div>
                                     <div th:unless="${staff.user != null}" class="fst-italic text-muted small">
                                         <span th:text="#{admin.staff.noUserInfo}">No user information</span>
                                     </div>
                                 </td>
-                                <td>
+                                <td th:data-label="#{admin.staff.type}">
                                     <span class="staff-type-badge"
                                         th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}"
                                         th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
@@ -154,7 +185,7 @@
                                     </span>
                                 </td>
 
-                                <td>
+                                <td th:data-label="#{common.status}">
                                     <span class="status-badge"
                                         th:if="${staff.user != null && staff.user.status != null}" th:classappend="${
           staff.user.status.name() == 'Active' ? 'status-active' :
@@ -165,12 +196,13 @@
                                     </span>
                                     <span class="status-badge status-inactive"
                                         th:if="${staff.user == null || staff.user.status == null}">
-                                        N/A
+                                        —
                                     </span>
                                 </td>
 
-                                <td class="text-end pe-3 member-actions">
-                                    <div th:if="${account != null}">
+                                <td class="text-end pe-3 member-actions" th:data-label="#{common.actions}">
+                                    <div th:if="${account != null}"
+                                        th:classappend="${account.accountId == 1} ? ' staff-actions--reserved-delete' : ''">
                                         <button type="button" class="member-icon-action account-action-tooltip"
                                             data-bs-toggle="modal"
                                             th:data-bs-target="${'#updateStaffModal' + account.accountId}"
@@ -179,35 +211,144 @@
                                             th:aria-label="#{admin.accounts.update}">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
+
                                         <button type="button"
-                                            th:if="${account.accountId != 1}"
-                                            class="member-icon-action member-icon-action-danger account-action-tooltip"
+                                            th:if="${staff.user != null and staff.user.email != null and !#strings.isEmpty(staff.user.email)}"
+                                            class="member-icon-action account-action-tooltip"
                                             data-bs-toggle="modal"
-                                            th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
-                                            th:data-bs-title="#{admin.accounts.delete}" data-bs-custom-class="delete-account-tooltip"
-                                            th:aria-label="#{admin.accounts.delete}">
-                                            <i class="bi bi-trash"></i>
+                                            th:data-bs-target="${'#resetPasswordStaffModal' + account.accountId}"
+                                            th:data-bs-title="#{admin.accounts.sendReset}"
+                                            data-bs-custom-class="reset-password-tooltip"
+                                            th:aria-label="#{admin.accounts.sendReset}">
+                                            <i class="bi bi-key"></i>
                                         </button>
 
-                                        <!-- Update Modal -->
-                                    <div class="modal text-start member-form-modal"
-                                            th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
-                                            aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
-                                            th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
-                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-                                                <div class="modal-content border-0 shadow">
-                                                    <form method="post" class="staff-update-form" novalidate
-                                                        th:action="@{/admin/accounts/edit/{id}(id=${account.accountId})}"
-                                                        th:attr="data-validation-url=@{/admin/accounts/edit/{id}/validate(id=${account.accountId},source='staff')}">
+                                        <div class="modal fade text-start account-standard-modal"
+                                            th:if="${staff.user != null and staff.user.email != null and !#strings.isEmpty(staff.user.email)}"
+                                            th:id="${'resetPasswordStaffModal' + account.accountId}" tabindex="-1"
+                                            th:aria-labelledby="${'resetPasswordStaffModalLabel' + account.accountId}"
+                                            aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <form method="post"
+                                                        th:action="@{/admin/member-list/{id}/send-password-reset(id=${account.accountId})}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
 
                                                         <div class="modal-header member-modal-header">
-                                                            <h5
-                                                                class="modal-title member-modal-title-accent">
+                                                            <h5 class="modal-title fw-bold u-color-8b5a2b-d7f13118"
+                                                                th:id="${'resetPasswordStaffModalLabel' + account.accountId}">
+                                                                <i class="bi bi-key-fill me-2"></i>
+                                                                <span th:text="#{admin.accounts.resetConfirmTitle}">
+                                                                    Confirm Password Reset Link
+                                                                </span>
+                                                            </h5>
+                                                        </div>
+
+                                                        <div class="modal-body member-modal-body">
+                                                            <p class="mb-3"
+                                                                th:text="#{admin.accounts.staffResetConfirmMessage}">
+                                                                The password reset link will be sent to the staff
+                                                                member's current email and remain valid for 24 hours.
+                                                            </p>
+                                                            <div class="account-info-panel">
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{member.profile.username}">
+                                                                            Username
+                                                                        </div>
+                                                                        <div class="fw-bold"
+                                                                            th:text="${account.username}">
+                                                                            username
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{common.accountId}">
+                                                                            Account ID
+                                                                        </div>
+                                                                        <div class="fw-bold app-code-number"
+                                                                            th:text="${account.accountId != null ? account.accountId : '—'}">
+                                                                            id
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{member.profile.fullName}">
+                                                                            Full Name
+                                                                        </div>
+                                                                        <div class="fw-bold"
+                                                                            th:text="${staff.user.fullName}">
+                                                                            full name
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{admin.accounts.resetEmail}">
+                                                                            Reset Email
+                                                                        </div>
+                                                                        <div>
+                                                                            <i
+                                                                                class="bi bi-envelope me-1 text-classic"></i>
+                                                                            <span
+                                                                                th:text="${staff.user.email}">email</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-footer member-modal-footer">
+                                                            <button type="button"
+                                                                class="btn member-modal-secondary"
+                                                                data-bs-dismiss="modal"
+                                                                th:text="#{common.cancel}">Cancel</button>
+                                                            <button type="submit"
+                                                                class="btn member-modal-primary">
+                                                                <i class="bi bi-send me-1"></i>
+                                                                <span th:text="#{admin.accounts.confirmSend}">
+                                                                    Send Link
+                                                                </span>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" th:if="${account.accountId != 1}"
+                                            class="member-icon-action member-icon-action-danger account-action-tooltip"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="${'#deleteStaffModal' + account.accountId}"
+                                            th:data-bs-title="#{admin.accounts.delete}"
+                                            data-bs-custom-class="delete-account-tooltip"
+                                            th:aria-label="#{admin.accounts.delete}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+
+                                        <!-- Update Modal -->
+                                        <div class="modal text-start member-form-modal"
+                                            th:id="${'updateStaffModal' + account.accountId}" tabindex="-1"
+                                            aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
+                                            th:attr="data-reopen-edit=${editAccountId != null and editAccountId == account.accountId}">
+                                            <div
+                                                class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                                                <div class="modal-content border-0 shadow">
+                                                    <form method="post" class="staff-update-form" novalidate
+                                                        th:action="@{/admin/member-list/edit/{id}(id=${account.accountId})}"
+                                                        th:attr="data-validation-url=@{/admin/member-list/edit/{id}/validate(id=${account.accountId},source='staff')}">
+                                                        <input type="hidden" th:if="${_csrf != null}"
+                                                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                        <input type="hidden" name="source" value="staff">
+
+                                                        <div class="modal-header member-modal-header">
+                                                            <h5 class="modal-title member-modal-title-accent">
                                                                 <i
-                                                                    class="bi bi-person-lines-fill me-2 text-classic"></i><span th:text="#{admin.staff.update}">Update Staff Account</span>
+                                                                    class="bi bi-person-lines-fill me-2 text-classic"></i><span
+                                                                    th:text="#{admin.staff.update}">Update Staff
+                                                                    Account</span>
                                                             </h5>
                                                         </div>
 
@@ -217,9 +358,13 @@
                                                             <div class="row g-3">
                                                                 <div class="col-md-6 order-md-1">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{member.profile.fullName}">Full Name</span> <span class="text-danger">*</span></label>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"><span
+                                                                            th:text="#{admin.staff.fullName}">Staff Full
+                                                                            Name</span> <span
+                                                                            class="text-danger">*</span></label>
                                                                     <input class="form-control" name="fullName"
-                                                                        th:data-label="#{member.profile.fullName}" maxlength="50"
+                                                                        th:data-label="#{admin.staff.fullName}"
+                                                                        minlength="2" maxlength="50"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['fullName'] : (staff.user != null ? staff.user.fullName : '')}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['fullName'] != null} ? 'is-invalid'"
                                                                         required>
@@ -227,118 +372,148 @@
                                                                         data-error-for="fullName"
                                                                         th:data-default-message="#{validation.fullNameRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['fullName'] : ''}">
-                                                                        <span th:text="#{validation.fullNameRequired}">Full name is required.</span>
+                                                                        <span
+                                                                            th:text="#{validation.fullNameRequired}">Full
+                                                                            name is required.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-4">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">
-                                                                        Email <span class="text-danger">*</span>
+                                                                        <span th:text="#{common.email}">Email</span>
+                                                                        <span class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="email"
-                                                                        type="email" data-label="Email"
+                                                                        type="email" th:data-label="#{common.email}"
+                                                                        maxlength="255"
                                                                         pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['email'] : (staff.user != null ? staff.user.email : '')}"
+                                                                        onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['email'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback" data-error-for="email"
                                                                         th:data-default-message="#{validation.emailRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['email'] : ''}">
-                                                                        <span th:text="#{validation.email}">Invalid email.</span>
+                                                                        <span th:text="#{validation.email}">Invalid
+                                                                            email.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-3">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{member.profile.phone}">Phone Number</span> <span class="text-danger">*</span>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"><span
+                                                                            th:text="#{admin.staff.phone}">Staff Phone
+                                                                            Number</span> <span
+                                                                            class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="phone"
-                                                                        th:data-label="#{member.profile.phone}" required
-                                                                        pattern="^(?!0{10}$)0[0-9]{9}$" minlength="10"
-                                                                        inputmode="numeric"
+                                                                        th:data-label="#{admin.staff.phone}" required
+                                                                        pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
+                                                                        maxlength="12" inputmode="tel"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['phone'] : (staff.user != null ? staff.user.phone : '')}"
+                                                                        onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['phone'] != null} ? 'is-invalid'">
                                                                     <div class="invalid-feedback" data-error-for="phone"
                                                                         th:data-default-message="#{validation.phoneRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['phone'] : ''}">
-                                                                        <span th:text="#{validation.phone}">Invalid phone number.</span>
+                                                                        <span th:text="#{validation.phone}">Invalid
+                                                                            phone number.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-2">
                                                                     <label
                                                                         class="form-label fw-bold small text-muted text-uppercase">
-                                                                        Username <span class="text-danger">*</span>
+                                                                        <span
+                                                                            th:text="#{member.profile.username}">Username</span>
+                                                                        <span class="text-danger">*</span>
                                                                     </label>
                                                                     <input class="form-control" name="username"
-                                                                        data-label="Username"
-                                                                        pattern="[a-zA-Z0-9_]{3,20}"
+                                                                        th:data-label="#{member.profile.username}"
+                                                                        pattern="[a-zA-Z0-9_]{3,20}" minlength="3"
+                                                                        maxlength="20"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
+                                                                        onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="username"
                                                                         th:data-default-message="#{validation.usernameRequired}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['username'] : ''}">
-                                                                        <span th:text="#{validation.usernameRequired}">Username is required.</span>
+                                                                        <span
+                                                                            th:text="#{validation.usernameRequired}">Username
+                                                                            is required.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-5">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase" th:text="#{admin.staff.type}">Staff Type</label>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"
+                                                                        th:text="#{admin.staff.type}">Staff Type</label>
                                                                     <div class="member-readonly-field"
-                                                                        th:if="${account.accountId == 1}"
-                                                                        role="textbox" aria-readonly="true">
-                                                                        Admin
+                                                                        th:if="${account.accountId == 1}" role="textbox"
+                                                                        aria-readonly="true">
+                                                                        <span th:text="#{role.admin}">Admin</span>
                                                                     </div>
                                                                     <input type="hidden" name="staffType" value="Admin"
                                                                         th:if="${account.accountId == 1}">
                                                                     <select class="form-select form-control"
                                                                         th:unless="${account.accountId == 1}"
-                                                                        name="staffType" th:data-label="#{admin.staff.type}"
-                                                                        required
+                                                                        name="staffType"
+                                                                        th:data-label="#{admin.staff.type}" required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['staffType'] != null} ? 'is-invalid'">
                                                                         <option value="Admin"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Admin' : staff.staffType == 'Admin'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Admin' : staff.staffType == 'Admin'}"
+                                                                            th:text="#{role.admin}">
                                                                             Admin</option>
                                                                         <option value="Librarian"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Librarian' : staff.staffType == 'Librarian'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['staffType'] == 'Librarian' : staff.staffType == 'Librarian'}"
+                                                                            th:text="#{role.librarian}">
                                                                             Librarian</option>
                                                                     </select>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="staffType"
                                                                         th:data-default-message="#{admin.staff.invalidType}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['staffType'] : ''}">
-                                                                        <span th:text="#{admin.staff.invalidType}">Please select a staff type.</span>
+                                                                        <span
+                                                                            th:text="#{admin.staff.invalidType}">Please
+                                                                            select a staff type.</span>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 order-md-6">
                                                                     <label
-                                                                        class="form-label fw-bold small text-muted text-uppercase"><span th:text="#{common.status}">Status</span> <span class="text-danger">*</span></label>
+                                                                        class="form-label fw-bold small text-muted text-uppercase"><span
+                                                                            th:text="#{common.status}">Status</span>
+                                                                        <span class="text-danger">*</span></label>
                                                                     <div class="member-readonly-field"
-                                                                        th:if="${account.accountId == 1}"
-                                                                        role="textbox" aria-readonly="true">
-                                                                        <span th:text="#{account.status.active}">Active</span>
+                                                                        th:if="${account.accountId == 1}" role="textbox"
+                                                                        aria-readonly="true">
+                                                                        <span
+                                                                            th:text="#{account.status.active}">Active</span>
                                                                     </div>
                                                                     <input type="hidden" name="status" value="Active"
                                                                         th:if="${account.accountId == 1}">
                                                                     <select class="form-select form-control"
                                                                         th:unless="${account.accountId == 1}"
-                                                                        name="status" th:data-label="#{common.status}" required
+                                                                        name="status" th:data-label="#{common.status}"
+                                                                        required
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['status'] != null} ? 'is-invalid'">
                                                                         <option value="Active"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Active' : account.status == 'Active'}"
+                                                                            th:text="#{account.status.active}">
                                                                             Active</option>
                                                                         <option value="Inactive"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Inactive' : account.status == 'Inactive'}"
+                                                                            th:text="#{account.status.inactive}">
                                                                             Inactive</option>
                                                                         <option value="Blocked"
-                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}">
+                                                                            th:selected="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['status'] == 'Blocked' : account.status == 'Blocked'}"
+                                                                            th:text="#{account.status.blocked}">
                                                                             Blocked</option>
                                                                     </select>
                                                                     <div class="invalid-feedback"
                                                                         data-error-for="status"
                                                                         th:data-default-message="#{validation.status}"
                                                                         th:text="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null ? editFieldErrors['status'] : ''}">
-                                                                        <span th:text="#{validation.status}">Please select a status.</span>
+                                                                        <span th:text="#{validation.status}">Please
+                                                                            select a status.</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -346,8 +521,10 @@
 
                                                         <div class="modal-footer member-modal-footer">
                                                             <button type="button" class="btn btn-secondary"
-                                                                data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                                                            <button type="submit" class="btn btn-classic" th:text="#{common.saveChanges}">Save Changes</button>
+                                                                data-bs-dismiss="modal"
+                                                                th:text="#{common.cancel}">Cancel</button>
+                                                            <button type="submit" class="btn btn-classic"
+                                                                th:text="#{common.saveChanges}">Save Changes</button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -355,14 +532,13 @@
                                         </div>
 
                                         <!-- Delete Modal -->
-                                        <div class="modal fade text-start"
-                                            th:if="${account.accountId != 1}"
+                                        <div class="modal fade text-start" th:if="${account.accountId != 1}"
                                             th:id="${'deleteStaffModal' + account.accountId}" tabindex="-1"
                                             aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
                                             <div class="modal-dialog modal-dialog-centered">
                                                 <div class="modal-content border-0 shadow">
                                                     <form method="post"
-                                                        th:action="@{/admin/accounts/delete/{id}(id=${account.accountId})}">
+                                                        th:action="@{/admin/member-list/delete/{id}(id=${account.accountId})}">
                                                         <input type="hidden" th:if="${_csrf != null}"
                                                             th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                                                         <input type="hidden" name="source" value="staff">
@@ -370,18 +546,25 @@
                                                         <div class="modal-header member-modal-header">
                                                             <h5 class="modal-title member-modal-title-accent">
                                                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                                                <span th:text="#{admin.accounts.deleteConfirmTitle}">Confirm Account Deletion</span>
+                                                                <span
+                                                                    th:text="#{admin.accounts.staffDeleteConfirmTitle}">Confirm
+                                                                    Staff Account Deactivation</span>
                                                             </h5>
                                                         </div>
 
                                                         <div class="modal-body member-modal-body">
                                                             <p class="mb-3">
-                                                                <span th:text="#{admin.accounts.deleteConfirmMessage}">Are you sure you want to delete this account? This action cannot be undone.</span>
+                                                                <span
+                                                                    th:text="#{admin.accounts.staffDeleteConfirmMessage}">The
+                                                                    staff account will be set to inactive and will no
+                                                                    longer be able to log into the system.</span>
                                                             </p>
                                                             <div class="p-3 bg-light rounded border">
                                                                 <div class="row g-3">
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Username:</div>
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{member.profile.username}">
+                                                                            Username</div>
                                                                         <div class="fw-bold mb-1"
                                                                             th:text="${account.username}">
                                                                             username
@@ -389,15 +572,19 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Account ID:</div>
-                                                                        <div class="fw-bold"
-                                                                            th:text="${account.accountId}">
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{common.accountId}">Account ID
+                                                                        </div>
+                                                                        <div class="fw-bold app-code-number"
+                                                                            th:text="${account.accountId != null ? account.accountId : '—'}">
                                                                             id
                                                                         </div>
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted" th:text="#{member.profile.fullName}">Full Name:</div>
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{admin.staff.fullName}">Staff Full
+                                                                            Name:</div>
                                                                         <div class="fw-bold"
                                                                             th:text="${staff.user != null ? staff.user.fullName : #messages.msg('librarian.members.noName')}">
                                                                             full name
@@ -405,7 +592,8 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted">Email:</div>
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{common.email}">Email</div>
                                                                         <div>
                                                                             <i
                                                                                 class="bi bi-envelope me-1 text-classic"></i>
@@ -417,11 +605,13 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted" th:text="#{member.profile.phone}">Phone Number:</div>
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{admin.staff.phone}">Staff Phone
+                                                                            Number:</div>
                                                                         <div>
                                                                             <i
                                                                                 class="bi bi-telephone me-1 text-classic"></i>
-                                                                            <span
+                                                                            <span class="app-phone-number"
                                                                                 th:text="${staff.user != null and staff.user.phone != null ? staff.user.phone : #messages.msg('common.noPhone')}">
                                                                                 phone
                                                                             </span>
@@ -429,9 +619,10 @@
                                                                     </div>
 
                                                                     <div class="col-md-6">
-                                                                        <div class="small text-muted" th:text="#{admin.staff.type}">Staff Type</div>
-                                                                        <span
-                                                                            class="staff-type-badge"
+                                                                        <div class="small text-muted"
+                                                                            th:text="#{admin.staff.type}">Staff Type
+                                                                        </div>
+                                                                        <span class="staff-type-badge"
                                                                             th:text="${staff.staffType == 'Librarian' ? #messages.msg('role.librarian') : (staff.staffType == 'Admin' ? #messages.msg('role.admin') : staff.staffType)}"
                                                                             th:classappend="${staff.staffType == 'Admin' ? 'staff-type-admin' : (staff.staffType == 'Librarian' ? 'staff-type-librarian' : 'staff-type-other')}">
                                                                             Librarian
@@ -442,9 +633,13 @@
                                                         </div>
 
                                                         <div class="modal-footer member-modal-footer">
-                                                            <button type="button" class="btn btn-light member-update-cancel"
-                                                                data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                                                            <button type="submit" class="btn btn-danger" th:text="#{admin.accounts.confirmDelete}">Delete Account</button>
+                                                            <button type="button"
+                                                                class="btn btn-light member-update-cancel"
+                                                                data-bs-dismiss="modal"
+                                                                th:text="#{common.cancel}">Cancel</button>
+                                                            <button type="submit" class="btn btn-danger"
+                                                                th:text="#{admin.accounts.confirmDeactivate}">Deactivate
+                                                                Account</button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -452,13 +647,14 @@
                                         </div>
                                     </div>
                                     <div th:if="${account == null}">
-                                        <span class="fst-italic text-muted small" th:text="#{librarian.staff.noAccount}">No account</span>
+                                        <span class="fst-italic text-muted small"
+                                            th:text="#{librarian.staff.noAccount}">No account</span>
                                     </div>
                                 </td>
                             </tr>
 
                             <tr th:if="${#lists.isEmpty(staffPage.content)}">
-                                <td colspan="6" class="text-center text-muted py-5">
+                                <td colspan="6" class="text-center text-muted py-5 member-empty-cell">
                                     <i class="bi bi-person-badge fs-2 d-block mb-2"></i>
                                     <span th:text="#{admin.staff.empty}">No staff found.</span>
                                 </td>
@@ -476,7 +672,8 @@
                             <!-- First page -->
                             <li class="page-item" th:classappend="${staffPage.first ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/staff(page=0, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}" th:text="#{common.first}">First</a>
+                                    th:href="@{/admin/staff(page=0, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}"
+                                    th:text="#{common.first}">First</a>
                             </li>
 
                             <!-- Previous page -->
@@ -516,7 +713,8 @@
                             <!-- Last page -->
                             <li class="page-item" th:classappend="${staffPage.last ? 'disabled' : ''}">
                                 <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a"
-                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}" th:text="#{common.last}">Last</a>
+                                    th:href="@{/admin/staff(page=${staffPage.totalPages - 1}, keyword=${keyword}, status=${selectedStatus}, staffType=${selectedStaffType})}"
+                                    th:text="#{common.last}">Last</a>
                             </li>
                         </ul>
                     </nav>
@@ -533,6 +731,13 @@
                     button.addEventListener("click", function () {
                         tooltip.hide();
                     });
+                });
+
+                document.querySelectorAll(".member-form-modal").forEach(function (modalEl) {
+                    if (modalEl.getAttribute("data-reopen-edit") === "true") {
+                        const bsModal = new bootstrap.Modal(modalEl);
+                        bsModal.show();
+                    }
                 });
             });
         </script>
@@ -626,8 +831,8 @@
                         if (fullName === "") {
                             errors.fullName = /*[[#{validation.fullNameRequired}]]*/ "Full name is required.";
                         }
-                        if (fullName.length > 50) {
-                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name cannot exceed 50 characters.";
+                        if (fullName !== "" && (fullName.length < 2 || fullName.length > 50)) {
+                            errors.fullName = /*[[#{validation.fullNameMax}]]*/ "Full name must be between 2 and 50 characters.";
                         } else if (fullName !== "" && !/^[\p{L}]+(?:\s+[\p{L}]+)*$/u.test(fullName)) {
                             errors.fullName = /*[[#{validation.fullNameLetters}]]*/ "Full name may contain only letters and spaces.";
                         } else if (fullName !== "" && !/^[\p{L}]{1,15}(?:\s+[\p{L}]{1,15}){0,7}$/u.test(fullName)) {
@@ -644,13 +849,15 @@
                         }
                         if (email === "") {
                             errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
+                        } else if (email.length > 255) {
+                            errors.email = /*[[#{validation.emailMax}]]*/ "Email cannot exceed 255 characters.";
                         } else if (!/^[A-Za-z0-9]+(?:[._%+\-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(email)) {
                             errors.email = /*[[#{validation.email}]]*/ "Invalid email format.";
                         }
                         if (phone === "") {
                             errors.phone = /*[[#{validation.phoneRequired}]]*/ "Phone number is required.";
-                        } else if (!/^(?!0{10}$)0\d{9}$/.test(phone)) {
-                            errors.phone = /*[[#{validation.phone}]]*/ "Phone number must contain exactly 10 digits, start with 0, and cannot be all zeros.";
+                        } else if (!/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$/.test(phone)) {
+                            errors.phone = /*[[#{backend.profile.phoneFormat}]]*/ "Invalid Vietnamese phone number.";
                         }
                         if (form.elements.staffType.value === "") {
                             errors.staffType = /*[[#{admin.staff.invalidType}]]*/ "Invalid staff type.";

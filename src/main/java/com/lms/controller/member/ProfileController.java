@@ -4,7 +4,6 @@ import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.entity.User;
 import com.lms.entity.Member;
-import com.lms.repository.BorrowDetailRepository;
 import com.lms.service.MemberFavoriteService;
 import com.lms.service.MembershipService;
 import com.lms.service.ProfileService;
@@ -32,17 +31,14 @@ public class ProfileController extends LocalizedControllerSupport {
     private final ProfileService profileService;
     private final MemberFavoriteService memberFavoriteService;
     private final MembershipService membershipService;
-    private final BorrowDetailRepository borrowDetailRepository;
 
     // Inject ProfileService xử lý logic cốt lõi giống như bên Thủ thư
     public ProfileController(ProfileService profileService,
                              MemberFavoriteService memberFavoriteService,
-                             MembershipService membershipService,
-                             BorrowDetailRepository borrowDetailRepository) {
+                             MembershipService membershipService) {
         this.profileService = profileService;
         this.memberFavoriteService = memberFavoriteService;
         this.membershipService = membershipService;
-        this.borrowDetailRepository = borrowDetailRepository;
     }
 
     // UC-4.1: View Profile
@@ -59,15 +55,13 @@ public class ProfileController extends LocalizedControllerSupport {
         }
         Member membership = membershipService.getMemberByUsername(username);
         model.addAttribute("membership", membership);
-        model.addAttribute("activeBorrowsCount",
-                borrowDetailRepository.countActiveBorrowedBooks(membership.getMemberId()));
+        model.addAttribute("activeBorrowsCount", profileService.countActiveBorrows(username));
         return "member/profile";
     }
 
     // UC-4.2: Update Profile Information
     @PostMapping("/profile/update")
     public String updateProfile(@RequestParam String fullName,
-                                @RequestParam String email,
                                 @RequestParam String phone,
                                 @RequestParam(required = false) String username,
                                 @RequestParam(required = false) org.springframework.web.multipart.MultipartFile avatarFile,
@@ -78,6 +72,7 @@ public class ProfileController extends LocalizedControllerSupport {
         }
 
         String currentUsername = principal.getName();
+        User currentUser = profileService.getProfile(currentUsername);
         String newUsername = currentUsername;
 
         if (username != null) {
@@ -86,9 +81,9 @@ public class ProfileController extends LocalizedControllerSupport {
                 redirectAttributes.addFlashAttribute("usernameError", message("validation.usernameRequired"));
                 User tempUser = new User();
                 tempUser.setFullName(fullName);
-                tempUser.setEmail(email);
+                tempUser.setEmail(currentUser.getEmail());
                 tempUser.setPhone(phone);
-                tempUser.setAvatar(profileService.getProfile(currentUsername).getAvatar());
+                tempUser.setAvatar(currentUser.getAvatar());
                 redirectAttributes.addFlashAttribute("member", tempUser);
                 redirectAttributes.addFlashAttribute("failedUsername", username);
                 return "redirect:/member/profile";
@@ -96,7 +91,7 @@ public class ProfileController extends LocalizedControllerSupport {
         }
 
         try {
-            String currentEmail = profileService.getProfile(currentUsername).getEmail();
+            String currentEmail = currentUser.getEmail();
             profileService.updateProfile(currentUsername, newUsername, fullName, currentEmail, phone, avatarFile);
             
             // Cập nhật lại thông tin trong phiên đăng nhập (Session/SecurityContext) để thanh điều hướng đồng bộ ngay lập tức
@@ -142,7 +137,7 @@ public class ProfileController extends LocalizedControllerSupport {
             // Preserve user input on error
             User tempUser = new User();
             tempUser.setFullName(fullName);
-            tempUser.setEmail(email);
+            tempUser.setEmail(currentUser.getEmail());
             tempUser.setPhone(phone);
             try {
                 tempUser.setAvatar(profileService.getProfile(currentUsername).getAvatar());

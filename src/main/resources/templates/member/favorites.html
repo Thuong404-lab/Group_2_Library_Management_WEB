@@ -8,9 +8,9 @@
   </head>
 
 <body>
-    <div layout:fragment="content" class="container favorites-page">
-        <div class="member-page-header">
-            <div>
+    <div layout:fragment="content" class="container favorites-page member-palette-page">
+        <div class="member-page-header member-dashboard-hero favorites-hero">
+            <div class="favorites-hero-copy">
                 <span class="member-page-eyebrow" th:text="#{member.favorites.eyebrow}">PERSONAL COLLECTION</span>
                 <h1 class="favorites-title">
                     <span th:text="#{member.favorites.heading}">Favorite Books</span>
@@ -19,17 +19,27 @@
                     <span th:text="#{member.favorites.description}">Books you saved to read later</span>
                 </p>
             </div>
-            <a th:href="@{/books}" class="member-primary-action">
+            <a th:href="@{/books}" class="member-primary-action favorites-hero-action member-ui-button member-ui-button--inverse">
+                <i class="bi bi-compass" aria-hidden="true"></i>
                 <span th:text="#{member.favorites.explore}">Explore More</span>
             </a>
         </div>
 
-        <div class="favorite-card">
-                <div class="member-table-wrap">
-                    <table class="favorite-table">
+        <div class="favorite-card member-reference-list">
+                <div class="member-table-wrap member-reference-list__body">
+                    <table class="favorite-table member-reference-table">
+                        <colgroup>
+                            <col class="favorite-book-column">
+                            <col class="favorite-author-column">
+                            <col class="favorite-status-column">
+                            <col class="favorite-actions-column">
+                        </colgroup>
                         <thead>
                             <tr>
-                                <th th:text="#{book.title}">Book Title</th><th th:text="#{book.author}">Author</th><th th:text="#{common.status}">Status</th><th class="favorite-action-column" th:text="#{common.actions}">Actions</th>
+                                <th th:text="#{book.title}">Book Title</th>
+                                <th th:text="#{book.author}">Author</th>
+                                <th th:text="#{common.status}">Status</th>
+                                <th class="favorite-action-column" th:text="#{common.actions}">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -38,7 +48,7 @@
                                 <div class="d-flex align-items-center">
                                     <img th:src="${favorite.book.coverImageUrl != null and !#strings.isEmpty(favorite.book.coverImageUrl) ? favorite.book.coverImageUrl : 'https://picsum.photos/seed/' + favorite.book.bookId + '/100/150'}"
                                          class="favorite-cover shadow-sm"
-                                         alt="Book"
+                                         th:alt="${favorite.book.title}"
                                          >
 
                                     <div>
@@ -48,7 +58,7 @@
                                             Book title
                                         </h6>
 
-                                        <span class="badge genre-badge"
+                                        <span class="badge genre-badge member-reference-pill"
                                               th:text="${favorite.book.genre != null ? favorite.book.genre.genreName : #messages.msg('book.genre.uncategorized')}">
                                             Genre
                                         </span>
@@ -68,7 +78,7 @@
                             </td>
 
                             <td>
-                                <span class="badge status-badge"
+                                <span class="badge status-badge member-reference-pill"
                                       th:classappend="${availableFavoriteBookIds != null and availableFavoriteBookIds.contains(favorite.book.bookId)} ? '' : ' unavailable'"
                                       th:text="${availableFavoriteBookIds != null and availableFavoriteBookIds.contains(favorite.book.bookId) ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">
                                     Available
@@ -80,8 +90,8 @@
                                     <form th:action="@{'/member/interaction/favorites/' + ${favorite.book.bookId} + '/remove'}"
                                           method="post">
                                         <button type="submit"
-                                                class="btn btn-sm btn-outline-danger u-width-110px-d76d1bd5"
-                                               >
+                                                class="btn btn-sm btn-outline-danger favorite-remove-action member-ui-button member-ui-button--danger-outline"
+                                                th:disabled="${isInactiveMember}">
                                             <span th:text="#{member.favorites.remove}">Remove</span>
                                         </button>
                                     </form>
@@ -90,8 +100,8 @@
                         </tr>
 
                         <tr th:if="${favorites == null || favorites.totalElements == 0}">
-                            <td colspan="4" class="text-center text-muted py-5">
-                                <i class="bi bi-heart fs-2 d-block mb-2 u-color-8b5a2b-d7f13118"></i>
+                            <td colspan="4" class="favorite-empty-state">
+                                <i class="bi bi-heart" aria-hidden="true"></i>
                                 <span th:text="#{member.favorites.empty}">You have no favorite books yet.</span>
                             </td>
                         </tr>
@@ -101,35 +111,43 @@
                      th:with="startPage=${favorites.totalPages <= 10 ? 0 : (favorites.number < 9 ? 0 : (favorites.number - 8 > favorites.totalPages - 10 ? favorites.totalPages - 10 : favorites.number - 8))}, endPage=${startPage + 9 < favorites.totalPages ? startPage + 9 : favorites.totalPages - 1}">
                     <ul class="pagination justify-content-center mb-0">
                         <li class="page-item" th:classappend="${favorites.first} ? 'disabled'">
-                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=0)}"
+                            <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=0)}"
                                th:text="#{pagination.first}">First</a>
                         </li>
                         <li class="page-item" th:classappend="${favorites.first} ? 'disabled'">
-                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.number - 1})}"
-                              ><i class="bi bi-chevron-left"></i></a>
+                            <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.number - 1})}"
+                               th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
                         </li>
                         <li class="page-item disabled" th:if="${startPage > 0}">
-                            <span class="page-link page-link-classic">…</span>
+                            <span class="page-link page-link-classic">&hellip;</span>
                         </li>
                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
                             th:classappend="${i == favorites.number ? 'active' : ''}">
-                            <a class="page-link page-link-classic" th:href="@{/member/favorites(page=${i})}"
+                            <a class="page-link page-link-classic member-page-control" th:href="@{/member/favorites(page=${i})}"
                                th:text="${i + 1}">1</a>
                         </li>
                         <li class="page-item disabled" th:if="${endPage < favorites.totalPages - 1}">
-                            <span class="page-link page-link-classic">…</span>
+                            <span class="page-link page-link-classic">&hellip;</span>
                         </li>
                         <li class="page-item" th:classappend="${favorites.last} ? 'disabled'">
-                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.number + 1})}"
-                              ><i class="bi bi-chevron-right"></i></a>
+                            <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.number + 1})}"
+                               th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
                         </li>
                         <li class="page-item" th:classappend="${favorites.last} ? 'disabled'">
-                            <a class="page-link page-link-classic u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.totalPages - 1})}"
+                            <a class="page-link page-link-classic member-page-control u-color-8b5a2b-border-color-rgba-139-90-43-0-2-0da3cc4a" th:href="@{/member/favorites(page=${favorites.totalPages - 1})}"
                                th:text="#{pagination.last}">Last</a>
                         </li>
                     </ul>
                 </nav>
         </div>
     </div>
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            var favoritePageSuccess = /*[[${success}]]*/ null;
+            var favoritePageError = /*[[${error}]]*/ null;
+            if (favoritePageSuccess) window.AppFeedback.success(favoritePageSuccess);
+            if (favoritePageError) window.AppFeedback.error(favoritePageError);
+        </script>
+    </th:block>
 </body>
 </html>

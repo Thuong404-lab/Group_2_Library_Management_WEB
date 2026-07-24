@@ -17,13 +17,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.lms.dto.request.MemberReviewSubmitRequest;
 import com.lms.dto.request.MemberReviewUpdateRequest;
-import com.lms.exception.ResourceNotFoundException;
-import com.lms.exception.ValidationException;
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.lms.dto.request.MemberBookAcquisitionRequest;
 import com.lms.service.MemberBookAcquisitionService;
+import com.lms.util.AcquisitionRequestPolicy;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
 
@@ -170,7 +169,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
         try {
             memberReviewService.submitReview(principal.getName(), request);
-            flash.addFlashAttribute("reviewSubmittedSuccess", true);
+            flash.addFlashAttribute("success", message("backend.review.submitted"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
             flash.addFlashAttribute("reviewRequest", request);
@@ -234,7 +233,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
         }
         model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                principal.getName(), PageRequest.of(Math.max(0, page), PAGE_SIZE)));
+                principal.getName(), PageRequest.of(Math.max(0, page), AcquisitionRequestPolicy.PAGE_SIZE)));
 
         return "member/book-acquisition-request";
     }
@@ -248,8 +247,9 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("reopenAcquisitionModal", true);
             model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
+                    principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
 
@@ -260,10 +260,56 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
         } catch (ApplicationException e) {
             model.addAttribute("error", e.getMessage());
+            model.addAttribute("reopenAcquisitionModal", true);
             model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                    principal.getName(), PageRequest.of(0, PAGE_SIZE)));
+                    principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
             return "member/book-acquisition-request";
         }
+    }
+
+    @PostMapping("/acquisition-requests/{id}/edit")
+    public String updateBookAcquisitionRequest(
+            @PathVariable("id") Integer requestId,
+            @Valid @ModelAttribute("acquisitionRequest") MemberBookAcquisitionRequest request,
+            BindingResult bindingResult,
+            @RequestParam(defaultValue = "0") int page,
+            Principal principal,
+            RedirectAttributes flash) {
+        if (bindingResult.hasErrors()) {
+            flash.addFlashAttribute("acquisitionRequest", request);
+            flash.addFlashAttribute("editAcquisitionRequestId", requestId);
+            flash.addFlashAttribute("reopenAcquisitionModal", true);
+            flash.addFlashAttribute("error", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return acquisitionRequestRedirect(page);
+        }
+        try {
+            memberBookAcquisitionService.updatePendingRequest(principal.getName(), requestId, request);
+            flash.addFlashAttribute("success", message("backend.acquisition.updated"));
+        } catch (ApplicationException exception) {
+            flash.addFlashAttribute("acquisitionRequest", request);
+            flash.addFlashAttribute("editAcquisitionRequestId", requestId);
+            flash.addFlashAttribute("reopenAcquisitionModal", true);
+            flash.addFlashAttribute("error", exception.getMessage());
+        }
+        return acquisitionRequestRedirect(page);
+    }
+
+    @PostMapping("/acquisition-requests/{id}/cancel")
+    public String cancelBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               Principal principal,
+                                               RedirectAttributes flash) {
+        try {
+            memberBookAcquisitionService.cancelPendingRequest(principal.getName(), requestId);
+            flash.addFlashAttribute("success", message("backend.acquisition.cancelled"));
+        } catch (ApplicationException exception) {
+            flash.addFlashAttribute("error", exception.getMessage());
+        }
+        return acquisitionRequestRedirect(page);
+    }
+
+    private String acquisitionRequestRedirect(int page) {
+        return "redirect:/member/interaction/acquisition-requests/new?page=" + Math.max(0, page);
     }
 
     @GetMapping("/favorites")
@@ -278,6 +324,17 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             RedirectAttributes flash,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             @RequestHeader(value = "Referer", required = false) String referer) {
+
+        if (principal == null) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(favoriteJson(false, message("error.unauthorized.message")));
+            }
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                    .location(URI.create("/login"))
+                    .build();
+        }
 
         try {
             memberFavoriteService.addToFavorites(principal.getName(), bookId);
@@ -301,19 +358,41 @@ public class MemberInteractionController extends LocalizedControllerSupport {
     }
 
     @PostMapping("/favorites/{bookId}/remove")
-    public String removeFromFavorites(
+    public Object removeFromFavorites(
             @PathVariable("bookId") Integer bookId,
             Principal principal,
-            RedirectAttributes flash) {
+            RedirectAttributes flash,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
+            @RequestHeader(value = "Referer", required = false) String referer) {
+
+        if (principal == null) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                        .body(favoriteJson(false, message("error.unauthorized.message")));
+            }
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                    .location(URI.create("/login"))
+                    .build();
+        }
 
         try {
             memberFavoriteService.removeFromFavorites(principal.getName(), bookId);
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity.ok(favoriteJson(false, message("backend.favorite.removed")));
+            }
             flash.addFlashAttribute("success", message("backend.favorite.removed"));
         } catch (ApplicationException e) {
+            if (isAjax(requestedWith)) {
+                return org.springframework.http.ResponseEntity.status(e.getStatus())
+                        .body(favoriteJson(false, e.getMessage()));
+            }
             flash.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/member/favorites";
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.SEE_OTHER)
+                .location(URI.create(localRedirectTarget(referer)))
+                .build();
     }
 
     private boolean isAjax(String requestedWith) {
@@ -363,7 +442,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
 
     private Map<String, Object> favoriteJson(boolean favorite, String message) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("success", favorite);
+        body.put("success", true);
         body.put("favorite", favorite);
         body.put("message", message);
         return body;

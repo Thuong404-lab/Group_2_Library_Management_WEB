@@ -1,6 +1,7 @@
 package com.lms.service.impl;
 
-import com.lms.dto.request.AdminAccountCreateRequest;
+import com.lms.dto.request.AdminMemberAccountCreateRequest;
+import com.lms.dto.request.AdminStaffAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.entity.Member;
@@ -17,6 +18,7 @@ import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
+import com.lms.repository.MemberAccountDeletionRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.RoleRepository;
@@ -33,6 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataAccessException;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -71,6 +74,7 @@ public class AccountServiceImpl implements AccountService {
     private final RoleRepository roleRepository;
     private final StaffRepository staffRepository;
     private final AuditLogService auditLogService;
+    private final MemberAccountDeletionRepository memberAccountDeletionRepository;
 
     public AccountServiceImpl(MemberAccountRepository memberAccountRepository,
             StaffAccountRepository staffAccountRepository,
@@ -80,7 +84,8 @@ public class AccountServiceImpl implements AccountService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             StaffRepository staffRepository,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            MemberAccountDeletionRepository memberAccountDeletionRepository) {
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
@@ -90,6 +95,7 @@ public class AccountServiceImpl implements AccountService {
         this.roleRepository = roleRepository;
         this.staffRepository = staffRepository;
         this.auditLogService = auditLogService;
+        this.memberAccountDeletionRepository = memberAccountDeletionRepository;
     }
 
     @Override
@@ -117,45 +123,43 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void createAccount(AdminAccountCreateRequest request) {
-        Map<String, String> errors = validateAccountCreate(request);
+    public void createMemberAccount(AdminMemberAccountCreateRequest request) {
+        Map<String, String> errors = validateMemberAccountCreate(request);
         if (!errors.isEmpty()) {
             throw new AccountFormValidationException(errors);
         }
 
-        String fullName = trim(request.getFullName());
-        String email = trim(request.getEmail());
-        String phone = trim(request.getPhone());
         String username = trim(request.getUsername());
-        String roleName = normalizeRole(request.getAccountType());
-        String status = "Active";
-
-        MembershipTier selectedTier = null;
-        if ("MEMBER".equals(roleName)) {
-            selectedTier = membershipTierRepository.findAll().stream()
-                    .filter(tier -> "Regular".equalsIgnoreCase(tier.getTierName()))
-                    .findFirst()
-                    .orElseThrow(() -> new AccountFormValidationException(
-                            Map.of("tierId", messages.get("backend.account.regularTierNotFound"))));
-        }
-
-        Role role = roleRepository.findByNameIgnoreCase(roleName)
+        MembershipTier defaultTier = membershipTierRepository.findFirstByOrderByConditionAscTierIdAsc()
+                .orElseThrow(() -> new AccountFormValidationException(
+                        Map.of("_global", messages.get("backend.account.regularTierNotFound"))));
+        Role role = roleRepository.findByNameIgnoreCase(canonicalRoleName("MEMBER"))
                 .orElseThrow(() -> new DataProcessingException(
-                        messages.get("backend.account.roleNotFound", roleName)));
+                        messages.get("backend.account.roleNotFound", canonicalRoleName("MEMBER"))));
+        User user = createUser(request.getFullName(), request.getEmail(), request.getPhone());
 
-        User user = new User();
-        user.setFullName(fullName);
-        user.setEmail(email);
-        user.setPhone(phone);
-        user.setStatus(toUserStatus(status));
-        userRepository.save(user);
+        persistMemberAccount(user, defaultTier, username, request.getPassword(), role);
+        auditLogService.log(
+                ActionType.CREATE_ACCOUNT,
+                messages.get("backend.account.audit.created", username, "MEMBER"));
+    }
 
-        if ("MEMBER".equals(roleName)) {
-            createMemberAccount(user, selectedTier, username, request.getPassword(), status, role);
-        } else {
-            createStaffAccount(user, roleName, username, request.getPassword(), status, role);
+    @Override
+    @Transactional
+    public void createStaffAccount(AdminStaffAccountCreateRequest request) {
+        Map<String, String> errors = validateStaffAccountCreate(request);
+        if (!errors.isEmpty()) {
+            throw new AccountFormValidationException(errors);
         }
 
+        String username = trim(request.getUsername());
+        String roleName = normalizeRole(request.getStaffType());
+        Role role = roleRepository.findByNameIgnoreCase(canonicalRoleName(roleName))
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", canonicalRoleName(roleName))));
+        User user = createUser(request.getFullName(), request.getEmail(), request.getPhone());
+
+        persistStaffAccount(user, roleName, username, request.getPassword(), role);
         auditLogService.log(
                 ActionType.CREATE_ACCOUNT,
                 messages.get("backend.account.audit.created", username, roleName));
@@ -210,10 +214,7 @@ public class AccountServiceImpl implements AccountService {
             }
         }
 
-        if (!staffSource
-                && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
-            errors.put("tierId", messages.get("validation.tier"));
-        } else if (staffSource && !"Admin".equals(request.getStaffType())
+        if (staffSource && !"Admin".equals(request.getStaffType())
                 && !"Librarian".equals(request.getStaffType())) {
             errors.put("staffType", messages.get("backend.account.invalidStaffType"));
         }
@@ -258,14 +259,64 @@ public class AccountServiceImpl implements AccountService {
         MemberAccount account = memberAccountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountFormValidationException(
                         Map.of("_global", messages.get("backend.account.notFound"))));
-        account.setStatus("Inactive");
-        if (account.getMember() != null && account.getMember().getUser() != null) {
-            account.getMember().getUser().setStatus(UserStatus.Inactive);
+        Member member = account.getMember();
+        User user = member == null ? null : member.getUser();
+        if (member == null || user == null) {
+            throw new AccountFormValidationException(
+                    Map.of("_global", messages.get("backend.account.incompleteMemberData")));
         }
-        memberAccountRepository.save(account);
-        auditLogService.log(
-                ActionType.DEACTIVATE_ACCOUNT,
-                messages.get("backend.account.audit.deactivatedMember", account.getUsername()));
+        if (memberAccountDeletionRepository.hasActiveBusiness(member.getMemberId())) {
+            throw new AccountFormValidationException(
+                    Map.of("_global", messages.get("backend.member.deleteHasHistory")));
+        }
+
+        String username = account.getUsername();
+        try {
+            memberAccountDeletionRepository.deleteAggregate(
+                    account.getId(), member.getMemberId(), user.getId());
+        } catch (DataAccessException exception) {
+            throw new AccountFormValidationException(
+                    Map.of("_global", messages.get("backend.member.deleteConflict")));
+        }
+        auditLogService.log(ActionType.DELETE_ACCOUNT,
+                messages.get("backend.account.audit.deletedMember", username));
+    }
+
+    @Override
+    @Transactional
+    public void deactivateAccount(Integer accountId, String source, Integer currentAccountId) {
+        if ("staff".equalsIgnoreCase(source)) {
+            StaffAccount account = staffAccountRepository.findById(accountId)
+                    .orElseThrow(() -> new AccountFormValidationException(
+                            Map.of("_global", messages.get("backend.account.notFound"))));
+            account.setStatus("Inactive");
+            if (account.getStaff() != null && account.getStaff().getUser() != null) {
+                account.getStaff().getUser().setStatus(UserStatus.Inactive);
+            }
+            staffAccountRepository.save(account);
+            auditLogService.log(ActionType.UPDATE_ACCOUNT,
+                    messages.get("backend.account.audit.deactivatedStaff", account.getUsername()));
+        } else {
+            MemberAccount account = memberAccountRepository.findById(accountId)
+                    .orElseThrow(() -> new AccountFormValidationException(
+                            Map.of("_global", messages.get("backend.account.notFound"))));
+            account.setStatus("Inactive");
+            if (account.getMember() != null && account.getMember().getUser() != null) {
+                account.getMember().getUser().setStatus(UserStatus.Inactive);
+            }
+            memberAccountRepository.save(account);
+            auditLogService.log(ActionType.UPDATE_ACCOUNT,
+                    messages.get("backend.account.audit.statusChanged", account.getUsername(), "Active", "Inactive"));
+        }
+    }
+
+    @Override
+    public boolean checkMemberDeletability(Integer accountId) {
+        MemberAccount account = memberAccountRepository.findById(accountId).orElse(null);
+        if (account == null || account.getMember() == null) {
+            return false;
+        }
+        return !memberAccountDeletionRepository.hasActiveBusiness(account.getMember().getMemberId());
     }
 
     @Override
@@ -280,61 +331,97 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Map<String, String> validateAccountCreate(AdminAccountCreateRequest request) {
+    public String getStaffEmail(Integer accountId) {
+        StaffAccount account = staffAccountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.account.staffNotFound")));
+        if (account.getUser() == null || account.getUser().getEmail() == null
+                || account.getUser().getEmail().isBlank()) {
+            throw new ValidationException(messages.get("backend.account.staffResetEmailMissing"));
+        }
+        return account.getUser().getEmail().trim();
+    }
+
+    @Override
+    public Map<String, String> validateMemberAccountCreate(AdminMemberAccountCreateRequest request) {
+        Map<String, String> errors = validateCreateFields(
+                request.getFullName(), request.getEmail(), request.getPhone(),
+                request.getUsername(), request.getPassword());
+        if (membershipTierRepository.findFirstByOrderByConditionAscTierIdAsc().isEmpty()) {
+            errors.put("_global", messages.get("backend.account.regularTierNotFound"));
+        }
+        return errors;
+    }
+
+    @Override
+    public Map<String, String> validateStaffAccountCreate(AdminStaffAccountCreateRequest request) {
+        Map<String, String> errors = validateCreateFields(
+                request.getFullName(), request.getEmail(), request.getPhone(),
+                request.getUsername(), request.getPassword());
+        String staffType = normalizeRole(request.getStaffType());
+        if (!"ADMIN".equals(staffType) && !"LIBRARIAN".equals(staffType)) {
+            errors.put("staffType", messages.get("backend.account.invalidStaffType"));
+        }
+        return errors;
+    }
+
+    private Map<String, String> validateCreateFields(String rawFullName,
+            String rawEmail,
+            String rawPhone,
+            String rawUsername,
+            String rawPassword) {
         Map<String, String> errors = new LinkedHashMap<>();
-        String fullName = trim(request.getFullName());
-        String email = trim(request.getEmail());
-        String phone = trim(request.getPhone());
-        String username = trim(request.getUsername());
-        String password = request.getPassword() == null ? "" : request.getPassword();
-        String roleName = normalizeRole(request.getAccountType());
+        String fullName = trim(rawFullName);
+        String email = trim(rawEmail);
+        String phone = trim(rawPhone);
+        String username = trim(rawUsername);
+        String password = rawPassword == null ? "" : rawPassword;
 
         validateFullName(fullName, errors);
         validateEmail(email, errors);
         validatePhone(phone, errors);
         validateUsername(username, errors);
-
-        if (password.isBlank()) {
-            errors.put("password", messages.get("backend.account.passwordRequired"));
-        } else if (password.length() < 6) {
-            errors.put("password", messages.get("validation.passwordMin"));
-        }
-
-        if (!"MEMBER".equals(roleName) && !"ADMIN".equals(roleName) && !"LIBRARIAN".equals(roleName)) {
-            errors.put("accountType", messages.get("backend.account.invalidAccountType"));
-        }
-
-        if (!isValidStatus(request.getStatus())) {
-            errors.put("status", messages.get("validation.status"));
-        }
+        validatePassword(password, errors);
 
         if (!errors.containsKey("username")
                 && (memberAccountRepository.existsByUsername(username)
                         || staffAccountRepository.existsByUsername(username))) {
             errors.put("username", messages.get("backend.account.usernameExists"));
         }
-
         if (!errors.containsKey("email") && userRepository.existsByEmail(email)) {
             errors.put("email", messages.get("backend.account.emailUsed"));
         }
-
         if (!errors.containsKey("phone") && userRepository.existsByPhone(phone)) {
             errors.put("phone", messages.get("backend.account.phoneUsed"));
         }
-
-        if ("MEMBER".equals(roleName)
-                && (request.getTierId() == null || !membershipTierRepository.existsById(request.getTierId()))) {
-            errors.put("tierId", messages.get("validation.tier"));
-        }
-
         return errors;
     }
 
-    private void createMemberAccount(User user,
+    private void validatePassword(String password, Map<String, String> errors) {
+        if (password.isBlank()) {
+            errors.put("password", messages.get("backend.account.passwordRequired"));
+        } else if (password.length() < 6) {
+            errors.put("password", messages.get("validation.passwordMin"));
+        } else if (password.length() > 50) {
+            errors.put("password", messages.get("validation.passwordMax"));
+        } else if (password.chars().anyMatch(Character::isWhitespace)) {
+            errors.put("password", messages.get("validation.passwordNoSpaces"));
+        }
+    }
+
+    private User createUser(String fullName, String email, String phone) {
+        User user = new User();
+        user.setFullName(trim(fullName));
+        user.setEmail(trim(email));
+        user.setPhone(trim(phone));
+        user.setStatus(UserStatus.Active);
+        userRepository.save(user);
+        return user;
+    }
+
+    private void persistMemberAccount(User user,
             MembershipTier tier,
             String username,
             String password,
-            String status,
             Role role) {
         Member member = new Member();
         member.setUser(user);
@@ -345,16 +432,15 @@ public class AccountServiceImpl implements AccountService {
         account.setMember(member);
         account.setUsername(username);
         account.setPasswordHash(passwordEncoder.encode(password));
-        account.setStatus(status);
+        account.setStatus("Active");
         account.getRoles().add(role);
         memberAccountRepository.save(account);
     }
 
-    private void createStaffAccount(User user,
+    private void persistStaffAccount(User user,
             String roleName,
             String username,
             String password,
-            String status,
             Role role) {
         Staff staff = new Staff();
         staff.setUser(user);
@@ -365,7 +451,7 @@ public class AccountServiceImpl implements AccountService {
         account.setStaff(staff);
         account.setUsername(username);
         account.setPasswordHash(passwordEncoder.encode(password));
-        account.setStatus(status);
+        account.setStatus("Active");
         account.getRoles().add(role);
         staffAccountRepository.save(account);
     }
@@ -399,6 +485,8 @@ public class AccountServiceImpl implements AccountService {
         user.setPhone(trim(request.getPhone()));
 
         account.setUsername(trim(request.getUsername()));
+        account.setStatus(normalizeStatus(request.getStatus()));
+        user.setStatus(toUserStatus(normalizeStatus(request.getStatus())));
         userRepository.save(user);
         memberAccountRepository.save(account);
 
@@ -471,6 +559,8 @@ public class AccountServiceImpl implements AccountService {
     private void validateEmail(String email, Map<String, String> errors) {
         if (email.isEmpty()) {
             errors.put("email", messages.get("validation.emailRequired"));
+        } else if (email.length() > 255) {
+            errors.put("email", messages.get("validation.emailMax"));
         } else if (!email.matches(EMAIL_PATTERN)) {
             errors.put("email", messages.get("validation.email"));
         }
@@ -508,6 +598,11 @@ public class AccountServiceImpl implements AccountService {
 
     private String normalizeRole(String role) {
         return trim(role).toUpperCase();
+    }
+
+    private String canonicalRoleName(String role) {
+        String normalized = normalizeRole(role);
+        return normalized.startsWith("ROLE_") ? normalized : "ROLE_" + normalized;
     }
 
     private String normalizeStatus(String status) {

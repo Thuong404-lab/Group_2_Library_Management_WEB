@@ -16,26 +16,29 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     private final String passwordHash;
     private final String status;
     private final Integer accountId; // Can be MemberAccount.id or StaffAccount.id
+    private final boolean inactiveAccessAllowed;
     
     private final Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
     public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId, Collection<? extends GrantedAuthority> authorities) {
+        this(user, username, passwordHash, status, accountId, true, authorities);
+    }
+
+    public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId,
+                             boolean inactiveAccessAllowed,
+                             Collection<? extends GrantedAuthority> authorities) {
         this.user = user;
         this.username = username;
         this.passwordHash = passwordHash;
         this.status = status;
         this.accountId = accountId;
+        this.inactiveAccessAllowed = inactiveAccessAllowed;
         this.authorities = authorities;
     }
 
     public CustomUserDetails(User user, String username, String passwordHash, String status, Integer accountId, Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes) {
-        this.user = user;
-        this.username = username;
-        this.passwordHash = passwordHash;
-        this.status = status;
-        this.accountId = accountId;
-        this.authorities = authorities;
+        this(user, username, passwordHash, status, accountId, authorities);
         this.attributes = attributes;
     }
 
@@ -69,7 +72,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isAccountNonLocked() {
-        return "Active".equalsIgnoreCase(status);
+        return !"Blocked".equalsIgnoreCase(status);
     }
 
     @Override
@@ -93,7 +96,8 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 
     @Override
     public boolean isEnabled() {
-        return "Active".equalsIgnoreCase(status);
+        return "Active".equalsIgnoreCase(status)
+                || (inactiveAccessAllowed && "Inactive".equalsIgnoreCase(status));
     }
 
     @Override

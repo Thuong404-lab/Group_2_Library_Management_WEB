@@ -23,29 +23,77 @@ public class LibrarianDashboardController {
     @GetMapping("/dashboard")
     public String viewDashboard(
             @RequestParam(defaultValue = "0") int bookPage,
+            @RequestParam(defaultValue = "0") int shelfPage,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String tab,
             Model model,
             @RequestParam(defaultValue = "0") int reviewPage,
             @RequestParam(defaultValue = "0") int requestPage,
             @RequestParam(required = false, defaultValue = "") String section,
+            @RequestParam(required = false, defaultValue = "") String subsection,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if ("notifications".equalsIgnoreCase(section)) {
+        String normalizedSection = section == null ? "" : section.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("notifications".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/notifications/new";
         }
-        if ("reviews".equalsIgnoreCase(section)) {
+        if ("reviews".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/reviews";
         }
-        if ("acquisition".equalsIgnoreCase(section)) {
+        if ("acquisition".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/acquisition-requests";
         }
-        if ("reports".equalsIgnoreCase(section) || "statistics".equalsIgnoreCase(section)) {
+        if ("reports".equals(normalizedSection) || "statistics".equals(normalizedSection)) {
             return "redirect:/librarian/reports";
         }
-        if ("users".equalsIgnoreCase(section)) {
+        if ("users".equals(normalizedSection)) {
             return "redirect:/librarian/members";
         }
-        model.mergeAttributes(dashboardService.getDashboardData(bookPage, reviewPage, requestPage));
+        if ("books".equals(normalizedSection)) {
+            String normalizedSubsection = "storage".equalsIgnoreCase(subsection) ? "storage" : "inventory";
+            String normalizedTab = "categories".equalsIgnoreCase(tab) || "audit".equalsIgnoreCase(tab)
+                    ? tab.toLowerCase(java.util.Locale.ROOT)
+                    : "";
+            return "redirect:/librarian/books?subsection=" + normalizedSubsection
+                    + (normalizedTab.isEmpty() ? "" : "&tab=" + normalizedTab);
+        }
+        if (!"books".equals(normalizedSection)) {
+            normalizedSection = "overview";
+        }
+        String normalizedSubsection = subsection == null
+                ? ""
+                : subsection.trim().toLowerCase(java.util.Locale.ROOT);
+        if (!"inventory".equals(normalizedSubsection) && !"storage".equals(normalizedSubsection)) {
+            normalizedSubsection = "";
+        }
+        String effectiveBookCondition = "audit".equalsIgnoreCase(tab) ? bookCondition : "";
+        model.mergeAttributes(dashboardService.getDashboardData(
+                bookPage, shelfPage, reviewPage, requestPage, keyword, effectiveBookCondition));
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("dashboardSection", normalizedSection);
+        model.addAttribute("dashboardSubsection", normalizedSubsection);
         addCurrentUser(model, userDetails);
         return "librarian/dashboard";
+    }
+
+    @GetMapping("/books")
+    public String viewBooks(
+            @RequestParam(defaultValue = "0") int bookPage,
+            @RequestParam(defaultValue = "0") int shelfPage,
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String tab,
+            @RequestParam(required = false, defaultValue = "inventory") String subsection,
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String effectiveBookCondition = "audit".equalsIgnoreCase(tab) ? bookCondition : "";
+        model.addAllAttributes(dashboardService.getBookManagementData(
+                Math.max(0, bookPage), Math.max(0, shelfPage), keyword, effectiveBookCondition,
+                subsection, tab));
+        model.addAttribute("staffPrefix", "/librarian");
+        model.addAttribute("keyword", keyword);
+        addCurrentUser(model, userDetails);
+        return "librarian/books";
     }
 
     @GetMapping("/users")
@@ -68,10 +116,9 @@ public class LibrarianDashboardController {
 
         LibrarianListViewData data = dashboardService.getLibrarianList(page, keyword, status);
         model.addAttribute("staffPage", data.staffPage());
-        model.addAttribute("accountByUserId", data.accountByUserId());
         model.addAttribute("librarianSummary", data.summaryCounts());
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("selectedStatus", status);
+        model.addAttribute("keyword", data.keyword());
+        model.addAttribute("selectedStatus", data.selectedStatus());
         addCurrentUser(model, userDetails);
         return "librarian/librarian-list";
     }

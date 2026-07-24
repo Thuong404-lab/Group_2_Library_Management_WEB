@@ -33,6 +33,61 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
 
     List<Borrow> findByMember_MemberIdOrderByBorrowDateDesc(Integer memberId);
 
+    Page<Borrow> findByMember_MemberIdAndBorrowDateGreaterThanEqualAndBorrowDateLessThanOrderByBorrowDateDesc(
+            Integer memberId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
+    @Query(value = """
+            select distinct b.*
+            from dbo.Borrows b
+            left join dbo.BorrowDetails bd on bd.borrow_id = b.borrow_id
+            left join dbo.Books book on book.book_id = bd.book_id
+            left join dbo.BookItems item on item.book_item_id = bd.book_item_id
+            where b.member_id = :memberId
+              and b.borrow_date >= :startDate
+              and b.borrow_date < :endDate
+              and (:status = ''
+                   or upper(b.status) = upper(:status)
+                   or (:status = 'BORROWED' and upper(b.status) = 'ACTIVE')
+                   or (:status = 'WAITING_PICKUP' and upper(b.status) = 'APPROVED')
+                   or (:status = 'CANCELED' and upper(b.status) = 'CANCELLED'))
+              and (:keyword = ''
+                   or convert(varchar(20), b.borrow_id) = :keyword
+                   or book.title collate Latin1_General_100_CI_AI
+                        like concat('%', :keyword, '%') collate Latin1_General_100_CI_AI
+                   or item.barcode collate Latin1_General_100_CI_AI
+                        like concat('%', :keyword, '%') collate Latin1_General_100_CI_AI)
+            order by b.borrow_date desc
+            """,
+            countQuery = """
+            select count(distinct b.borrow_id)
+            from dbo.Borrows b
+            left join dbo.BorrowDetails bd on bd.borrow_id = b.borrow_id
+            left join dbo.Books book on book.book_id = bd.book_id
+            left join dbo.BookItems item on item.book_item_id = bd.book_item_id
+            where b.member_id = :memberId
+              and b.borrow_date >= :startDate
+              and b.borrow_date < :endDate
+              and (:status = ''
+                   or upper(b.status) = upper(:status)
+                   or (:status = 'BORROWED' and upper(b.status) = 'ACTIVE')
+                   or (:status = 'WAITING_PICKUP' and upper(b.status) = 'APPROVED')
+                   or (:status = 'CANCELED' and upper(b.status) = 'CANCELLED'))
+              and (:keyword = ''
+                   or convert(varchar(20), b.borrow_id) = :keyword
+                   or book.title collate Latin1_General_100_CI_AI
+                        like concat('%', :keyword, '%') collate Latin1_General_100_CI_AI
+                   or item.barcode collate Latin1_General_100_CI_AI
+                        like concat('%', :keyword, '%') collate Latin1_General_100_CI_AI)
+            """,
+            nativeQuery = true)
+    Page<Borrow> searchMemberBorrowHistory(
+            @Param("memberId") Integer memberId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("keyword") String keyword,
+            @Param("status") String status,
+            Pageable pageable);
+
 
     // --- BỔ SUNG ĐẦY ĐỦ CÁC PHƯƠNG THỨC PHÂN TRANG (PAGINATION) THEO CHUẨN JPA ---
 
@@ -41,6 +96,8 @@ public interface BorrowRepository extends JpaRepository<Borrow, Integer> {
 
     // 1b. Lấy toàn bộ theo trạng thái (không phân trang) - dùng cho scheduled job
     List<Borrow> findAllByStatus(String status);
+    List<Borrow> findByStatusIgnoreCase(String status);
+    List<Borrow> findByStatusInIgnoreCase(List<String> statuses);
 
     // 2. Phân trang lọc theo từ khóa tìm kiếm (Keyword: fullName, email, phone hoặc borrowId)
     @Query("SELECT b FROM Borrow b WHERE " +

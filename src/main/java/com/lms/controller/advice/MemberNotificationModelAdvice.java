@@ -1,6 +1,8 @@
 package com.lms.controller.advice;
 
 import com.lms.service.MemberNotificationService;
+import com.lms.config.InactiveMemberInterceptor;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,11 +22,13 @@ public class MemberNotificationModelAdvice {
     @ModelAttribute
     public void addMemberNotificationData(Model model,
                                           Principal principal,
-                                          Authentication authentication) {
+                                          Authentication authentication,
+                                          HttpServletRequest request) {
 
         model.addAttribute("latestNotifications", null);
         model.addAttribute("showNotificationBell", false);
         model.addAttribute("unreadNotificationCount", 0L);
+        model.addAttribute("isInactiveMember", false);
 
         if (principal == null || authentication == null) {
             return;
@@ -39,6 +43,11 @@ public class MemberNotificationModelAdvice {
         }
 
         model.addAttribute("showNotificationBell", true);
+        
+        Object inactiveAttribute = request.getAttribute(InactiveMemberInterceptor.INACTIVE_MEMBER_ATTRIBUTE);
+        if (inactiveAttribute instanceof Boolean isInactive) {
+            model.addAttribute("isInactiveMember", isInactive);
+        }
 
         model.addAttribute(
                 "latestNotifications",

@@ -8,7 +8,7 @@
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='statistics'" class="report-page">
-    <header class="report-page-header">
+    <header class="report-page-header report-page-hero">
         <div class="report-page-heading">
             <span class="app-page-eyebrow" th:text="#{librarian.report.eyebrow}">OPERATIONS OVERVIEW</span>
             <h1 class="app-page-title" th:text="#{librarian.report.heading}">Reports and Statistics</h1>
@@ -35,52 +35,116 @@
                 <p class="app-section-description" th:text="#{librarian.report.periodHint}">Select start and end dates.</p>
             </div>
         </div>
-        <form class="report-filter-form" method="get" th:action="@{/librarian/reports}">
+        <form class="report-filter-form" method="get" th:action="@{/librarian/reports}" data-report-date-filter>
             <div class="report-filter-field">
                     <label for="reportFromDate" th:text="#{librarian.report.fromDate}">From Date</label>
-                <input id="reportFromDate" type="date" name="fromDate" th:value="${fromDate}" th:max="${maxDate}">
+                <input id="reportFromDate" type="date" name="fromDate" th:value="${fromDate}" th:max="${maxDate}" required>
             </div>
             <div class="report-filter-field">
                     <label for="reportToDate" th:text="#{librarian.report.toDate}">To Date</label>
-                <input id="reportToDate" type="date" name="toDate" th:value="${toDate}" th:max="${maxDate}">
+                <input id="reportToDate" type="date" name="toDate" th:value="${toDate}" th:max="${maxDate}" required>
+                <small class="report-filter-field-error" data-date-error hidden th:text="#{common.dateRangeInvalid}">Start date must not be later than end date.</small>
             </div>
                 <button class="report-action report-action-primary report-filter-submit" type="submit" th:text="#{librarian.report.view}">View Report</button>
         </form>
     </section>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
+                const from = form.querySelector('[name="fromDate"]');
+                const to = form.querySelector('[name="toDate"]');
+                const error = form.querySelector('[data-date-error]');
+                function sync() {
+                    to.min = from.value || '';
+                    if (from.value && to.value && from.value <= to.value) {
+                        error.hidden = true;
+                        from.classList.remove('is-invalid');
+                        to.classList.remove('is-invalid');
+                    }
+                }
+                from.addEventListener('change', sync);
+                to.addEventListener('change', sync);
+                form.addEventListener('submit', function (event) {
+                    if (from.value && to.value && from.value > to.value) {
+                        event.preventDefault();
+                        error.hidden = false;
+                        from.classList.add('is-invalid');
+                        to.classList.add('is-invalid');
+                    }
+                });
+                sync();
+            });
+        });
+    </script>
+
+    <div class="report-section-heading">
+        <h2 class="app-section-title" th:text="#{librarian.report.currentActivity}">Current activity</h2>
+        <p class="app-section-description" th:text="#{librarian.report.currentActivityHint}">Current values are not affected by the selected period.</p>
+    </div>
     <section class="report-stat-grid" th:aria-label="#{librarian.report.activityMetrics}">
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-journal-arrow-up" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{admin.dashboard.activeLoans}">Active Loans</p><strong class="report-stat-value" th:text="${activeBorrows}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{admin.dashboard.activeLoans}">Active Loans</p><strong class="report-stat-value" th:text="${activeBorrows ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card">
-            <span class="report-stat-icon"><i class="bi bi-bookmark-clock" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{librarian.report.pendingReservations}">Pending Reservations</p><strong class="report-stat-value" th:text="${pendingReservations}">0</strong></div>
+            <span class="report-stat-icon"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
+            <div><p class="report-stat-label" th:text="#{librarian.report.pendingReservations}">Pending approval</p><strong class="report-stat-value" th:text="${pendingReservationRequests ?: 0}">0</strong></div>
+        </article>
+        <article class="report-stat-card app-card">
+            <span class="report-stat-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
+            <div><p class="report-stat-label" th:text="#{librarian.report.depositPaidReservations}">Deposit paid</p><strong class="report-stat-value" th:text="${depositPaidReservations ?: 0}">0</strong></div>
+        </article>
+        <article class="report-stat-card app-card">
+            <span class="report-stat-icon"><i class="bi bi-bag-check" aria-hidden="true"></i></span>
+            <div><p class="report-stat-label" th:text="#{librarian.report.readyReservations}">Ready for pickup</p><strong class="report-stat-value" th:text="${readyReservations ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card report-stat-card-danger">
             <span class="report-stat-icon"><i class="bi bi-exclamation-circle" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{loan.status.overdue}">Overdue</p><strong class="report-stat-value" th:text="${overdueDetails}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{loan.status.overdue}">Overdue</p><strong class="report-stat-value" th:text="${overdueDetails ?: 0}">0</strong></div>
         </article>
         <article class="report-stat-card app-card">
             <span class="report-stat-icon"><i class="bi bi-people" aria-hidden="true"></i></span>
-            <div><p class="report-stat-label" th:text="#{admin.dashboard.members}">Members</p><strong class="report-stat-value" th:text="${totalMembers}">0</strong></div>
+            <div><p class="report-stat-label" th:text="#{librarian.report.registeredMembers}">Registered members</p><strong class="report-stat-value" th:text="${totalMembers ?: 0}">0</strong></div>
         </article>
     </section>
 
     <section class="report-finance-grid" th:aria-label="#{librarian.report.revenueMetrics}">
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Total Revenue</p>
-            <strong class="report-finance-value"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+        <article class="report-finance-card report-finance-card--revenue app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Collected fee revenue</p>
+            </div>
+            <strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
         </article>
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.transactionCount}">Transactions</p>
+        <article class="report-finance-card report-finance-card--refund app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.totalRefunds}">Refunded cash flow</p>
+            </div>
+            <strong class="report-finance-value report-finance-value--money report-refund-value"><span th:text="${#numbers.formatDecimal(report.totalRefunds, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
+            <small class="report-metric-hint" th:text="#{librarian.report.refundHint}">Shown separately and not deducted from fee revenue.</small>
+        </article>
+        <article class="report-finance-card report-finance-card--transactions app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.transactionCount}">Transactions</p>
+            </div>
             <strong class="report-finance-value" th:text="${report.totalTransactions}">0</strong>
         </article>
-        <article class="report-finance-card app-card">
-            <p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average / Transaction</p>
-            <strong class="report-finance-value"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></strong>
+        <article class="report-finance-card report-finance-card--average app-card">
+            <div class="report-finance-heading">
+                <span class="report-finance-icon"><i class="bi bi-calculator" aria-hidden="true"></i></span>
+                <p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average / Transaction</p>
+            </div>
+            <strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong>
         </article>
     </section>
+
+    <p class="report-generated-at">
+        <span th:text="#{librarian.report.generatedAt}">Generated at</span>:
+        <time th:datetime="${report.generatedAt}" th:text="${#temporals.format(report.generatedAt, 'dd/MM/yyyy HH:mm')}">--</time>
+    </p>
 
     <section class="report-table-grid">
         <article class="app-card report-table-card">
@@ -91,14 +155,14 @@
                 </div>
                 <i class="bi bi-cash-coin report-card-icon" aria-hidden="true"></i>
             </header>
-            <div class="app-table-wrap">
+            <div class="app-table-wrap report-responsive-table-wrap">
                 <table class="app-table report-table">
                     <thead><tr><th th:text="#{transaction.type}">Transaction Type</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{transaction.amount}">Amount</th></tr></thead>
                     <tbody>
                     <tr th:each="item : ${report.transactionBreakdown}">
-                        <td class="report-primary-cell" th:text="${item.label}">Borrowing Fee</td>
-                        <td class="report-number-column" th:text="${item.count}">0</td>
-                        <td class="report-number-column"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
+                        <td class="report-primary-cell" th:data-label="#{transaction.type}" th:text="${item.label}">Borrowing Fee</td>
+                        <td class="report-number-column" th:data-label="#{librarian.report.transactionCount}" th:text="${item.count}">0</td>
+                        <td class="report-number-column" th:data-label="#{transaction.amount}"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.report.empty}">No revenue data.</span></div></td></tr>
                     </tbody>
@@ -114,14 +178,14 @@
                 </div>
                 <i class="bi bi-calendar3 report-card-icon" aria-hidden="true"></i>
             </header>
-            <div class="app-table-wrap">
+            <div class="app-table-wrap report-responsive-table-wrap">
                 <table class="app-table report-table">
                     <thead><tr><th th:text="#{librarian.report.month}">Month</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{admin.dashboard.revenue}">Revenue</th></tr></thead>
                     <tbody>
                     <tr th:each="item : ${report.monthlyRevenueStats}">
-                        <td class="report-primary-cell" th:text="${item.label}">07/2026</td>
-                        <td class="report-number-column" th:text="${item.count}">0</td>
-                        <td class="report-number-column"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
+                        <td class="report-primary-cell" th:data-label="#{librarian.report.month}" th:text="${item.label}">07/2026</td>
+                        <td class="report-number-column" th:data-label="#{librarian.report.transactionCount}" th:text="${item.count}">0</td>
+                        <td class="report-number-column" th:data-label="#{admin.dashboard.revenue}"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(report.monthlyRevenueStats)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.report.empty}">No revenue data.</span></div></td></tr>
                     </tbody>

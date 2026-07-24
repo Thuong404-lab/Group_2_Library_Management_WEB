@@ -15,14 +15,10 @@ import java.util.Optional;
 public interface StaffRepository extends JpaRepository<Staff, Integer> {
 
         Optional<Staff> findByUserId(Integer userId);
-        Page<Staff> findByStaffTypeIgnoreCase(String staffType, Pageable pageable);
-        long countByStaffTypeIgnoreCase(String staffType);
 
-        @Query("SELECT COUNT(s) FROM Staff s " +
-                        "WHERE LOWER(s.staffType) = LOWER(:staffType) " +
-                        "AND s.user.status = :status")
-        long countByStaffTypeAndUserStatus(@Param("staffType") String staffType,
-                        @Param("status") UserStatus status);
+        Page<Staff> findByStaffTypeIgnoreCase(String staffType, Pageable pageable);
+
+        long countByStaffTypeIgnoreCase(String staffType);
 
         @Query("SELECT s " +
                         "FROM Staff s " +
@@ -40,25 +36,6 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
                         ")")
         Page<Staff> searchByStaffTypeAndKeyword(@Param("staffType") String staffType,
                         @Param("keyword") String keyword,
-                        Pageable pageable);
-
-        @Query("SELECT s " +
-                        "FROM Staff s " +
-                        "WHERE LOWER(s.staffType) = LOWER(:staffType) " +
-                        "AND (:status IS NULL OR s.user.status = :status) " +
-                        "AND (:keyword = '' " +
-                        "OR LOWER(s.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                        "OR LOWER(s.user.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                        "OR LOWER(s.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                        "OR EXISTS (" +
-                        "SELECT account.id FROM StaffAccount account " +
-                        "WHERE account.staff = s " +
-                        "AND LOWER(account.username) LIKE LOWER(CONCAT('%', :keyword, '%'))" +
-                        "))")
-        Page<Staff> searchLibrariansWithStatus(
-                        @Param("staffType") String staffType,
-                        @Param("keyword") String keyword,
-                        @Param("status") UserStatus status,
                         Pageable pageable);
 
         @Query("SELECT s " +

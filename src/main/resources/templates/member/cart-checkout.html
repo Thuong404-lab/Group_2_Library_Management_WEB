@@ -1,119 +1,147 @@
 <!DOCTYPE html>
 <html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
-    <title th:text="#{member.cart.checkoutTitle}">Xác nhận thanh toán phiếu mượn - LMW</title>
+    <title th:text="#{member.cart.checkoutTitle}">Confirm Loan Request - LMW</title>
     <link rel="stylesheet" th:href="@{/css/pages/member/cart.css}" />
-    <style>
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        .border-classic { border: 1px solid rgba(139, 90, 43, 0.15) !important; }
-        .payment-option-card {
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .payment-option-card:hover {
-            background-color: rgba(139, 90, 43, 0.02);
-        }
-        .payment-option-card.active {
-            border-color: #8b5a2b !important;
-            background-color: rgba(139, 90, 43, 0.05) !important;
-        }
-    </style>
 </head>
 <body>
-<div layout:fragment="content" class="container mt-5 mb-5 justify-content-center d-flex">
-    <div class="card border-classic shadow-sm p-4 bg-white rounded-3" style="max-width: 650px; width: 100%;">
-        <h4 class="font-playfair fw-bold text-center mb-4" style="color: #4a3b32;"><i class="bi bi-shield-check me-2" style="color: #8b5a2b;"></i><span th:text="#{member.cart.checkoutHeading}">Xác Nhận &amp; Thanh Toán</span></h4>
-
-        <!-- Thông báo Alert -->
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #e6f4ea; color: #137333;" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <span th:text="${successMessage}">Success notification</span>
+<div layout:fragment="content" class="container member-cart-page member-palette-page">
+    <!-- Hero Banner Header -->
+    <header class="member-dashboard-hero member-cart-hero">
+        <div class="member-cart-hero-copy">
+            <span th:text="#{member.cart.checkoutEyebrow}">FINAL REVIEW</span>
+            <h1 th:text="#{member.cart.checkoutHeading}">Confirm Loan Request</h1>
+            <p th:text="#{member.cart.checkoutDescription}">Review the selected books, borrowing period, and payment method before submitting your request.</p>
         </div>
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3" style="background-color: #fce8e6; color: #c5221f;" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <span th:text="${errorMessage}">Error notification</span>
-        </div>
+        <a th:href="@{/member/cart}" class="member-ui-button member-ui-button--inverse member-cart-hero-action">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            <span th:text="#{member.cart.backToEdit}">Back to edit</span>
+        </a>
+    </header>
 
-        <div class="alert alert-warning border-0 small mb-4" style="background-color:#fffbeb; color:#b45309;">
-            <i class="bi bi-info-circle-fill me-2"></i><span th:text="#{member.cart.checkoutNotice}">The service fee will be deducted directly from your wallet after you confirm.</span>
-        </div>
+    <!-- Global Notifications -->
+    <div th:if="${successMessage}" class="member-alert is-success" role="status" th:text="${successMessage}">Success notification</div>
+    <div th:if="${errorMessage}" class="member-alert is-error" role="alert" th:text="${errorMessage}">Error notification</div>
 
-        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.summary(${cartItems.size()})}">Selected books (0 books)</h6>
-        <div class="border-classic rounded p-3 bg-light mb-4 text-dark small" style="max-height: 180px; overflow-y: auto;">
-            <div th:each="item : ${cartItems}" class="d-flex justify-content-between py-1 border-bottom border-light">
-                <span class="fw-semibold text-truncate" style="max-width: 450px;" th:text="${item.title}">Book title</span>
-                <span class="text-muted font-monospace" th:text="#{member.cart.physicalBook}">Physical book</span>
-            </div>
-        </div>
+    <form th:action="@{/member/cart/submit}" method="post" id="cartSubmitForm" class="member-checkout-layout">
+        <input type="hidden" name="numberOfDays" th:value="${numberOfDays}">
+        <th:block th:each="id : ${selectedBookIds}">
+            <input type="hidden" name="selectedBookIds" th:value="${id}">
+        </th:block>
 
-        <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.cart.cashFlow}">Chi tiết giao dịch dòng tiền</h6>
-        <div class="p-3 bg-classic-soft rounded border-classic small text-dark mb-4" style="background-color: rgba(139, 90, 43, 0.03);">
-            <div class="d-flex justify-content-between mb-2">
-                <span th:text="#{member.cart.borrowingPeriod}">Borrowing period:</span>
-                <span class="fw-bold text-dark" th:text="#{member.cart.days(${numberOfDays})}">14 days</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-                <span th:text="#{member.cart.totalDeduction}">Total wallet deduction:</span>
-                <span class="fw-bold text-danger font-monospace fs-6"><span th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-            </div>
-            <hr class="my-2" style="border-top:1px dashed rgba(139, 90, 43, 0.2)">
-            <div class="d-flex justify-content-between mb-1 text-muted">
-                <span th:text="#{member.cart.balanceBefore}">Wallet balance (before):</span>
-                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-            </div>
-            <div class="d-flex justify-content-between text-success fw-bold">
-                <span th:text="#{member.cart.balanceAfter}">Estimated balance (after):</span>
-                <span class="font-monospace"><span th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></span>
-            </div>
-        </div>
-
-        <form th:action="@{/member/cart/submit}" method="post" id="cartSubmitForm">
-            <input type="hidden" name="numberOfDays" th:value="${numberOfDays}">
-
-            <th:block th:each="id : ${selectedBookIds}">
-                <input type="hidden" name="selectedBookIds" th:value="${id}">
-            </th:block>
-
-            <!-- PHƯƠNG THỨC THANH TOÁN -->
-            <h6 class="fw-bold small text-muted text-uppercase mb-2" th:text="#{member.borrowCreate.paymentMethod}">Phương thức thanh toán</h6>
-            <div class="d-flex flex-column gap-2 mb-4">
-                <div class="payment-option-card form-check p-3 rounded active" onclick="document.getElementById('payWallet').click();">
-                    <input class="form-check-input ms-1 me-3 cart-checkbox" type="radio" name="paymentMethod" id="payWallet" value="WALLET" checked>
-                    <label class="form-check-label fw-bold mb-0" for="payWallet" style="color: #4a3b32; cursor: pointer; user-select: none;">
-                        <i class="bi bi-wallet2 me-2 text-primary"></i><span th:text="#{member.borrowCreate.payWallet}">Trừ tiền trong ví</span>
-                    </label>
+        <!-- Left Column: Selected Books & Payment Method -->
+        <div class="member-checkout-books">
+            <!-- Selected Books Card -->
+            <section class="member-reference-list mb-4" aria-labelledby="checkout-books-header">
+                <div class="member-reference-list__header member-checkout-section-header">
+                    <h2 id="checkout-books-header" th:text="#{member.cart.summary(${cartItems.size()})}">Selected books (0 books)</h2>
+                    <span class="member-reference-pill" th:text="#{catalog.resultCount(${cartItems.size()})}">1 titles</span>
                 </div>
-                <div class="payment-option-card form-check p-3 rounded" onclick="document.getElementById('payBank').click();">
-                    <input class="form-check-input ms-1 me-3 cart-checkbox" type="radio" name="paymentMethod" id="payBank" value="BANK">
-                    <label class="form-check-label fw-bold mb-0" for="payBank" style="color: #4a3b32; cursor: pointer; user-select: none;">
-                        <i class="bi bi-bank me-2 text-info"></i><span th:text="#{member.borrowCreate.payBank}">Thanh toán qua ngân hàng</span>
-                    </label>
+                <div class="member-reference-list__body member-checkout-book-list">
+                    <article th:each="item : ${cartItems}" class="member-reference-list__item member-checkout-book">
+                        <img th:src="${item.coverImageUrl != null and !#strings.isEmpty(item.coverImageUrl) ? item.coverImageUrl : '/images/book-cover-placeholder.svg'}"
+                             class="member-checkout-book-cover" th:alt="${item.title}"
+                             onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
+
+                        <div class="member-checkout-book-copy">
+                            <h3 th:text="${item.title}">Book title</h3>
+                            <span th:text="${item.genre != null ? item.genre.genreName : #messages.msg('member.cart.defaultGenre')}">Uncategorized</span>
+                        </div>
+
+                        <span class="member-reference-pill member-checkout-book-type" th:text="#{member.cart.physicalBook}">Physical book</span>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Payment Method Card -->
+            <section class="member-reference-list" aria-labelledby="checkout-payment-header">
+                <div class="member-reference-list__header member-checkout-section-header">
+                    <h2 id="checkout-payment-header" th:text="#{member.borrowCreate.paymentMethod}">Payment method</h2>
+                </div>
+                <div class="member-reference-list__body p-3">
+                    <div class="d-flex flex-column gap-3">
+                        <label class="payment-option-card active" for="payWallet">
+                            <input class="form-check-input cart-checkbox me-3" type="radio" name="paymentMethod" id="payWallet" value="WALLET" checked>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-wallet2 text-primary fs-5" aria-hidden="true"></i>
+                                <div>
+                                    <strong class="d-block" th:text="#{member.borrowCreate.payWallet}">Pay with wallet</strong>
+                                    <small class="text-muted" th:text="#{member.cart.checkoutNotice}">The estimated fee is charged only after librarian approval.</small>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="payment-option-card" for="payBank">
+                            <input class="form-check-input cart-checkbox me-3" type="radio" name="paymentMethod" id="payBank" value="BANK">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-bank text-info fs-5" aria-hidden="true"></i>
+                                <div>
+                                    <strong class="d-block" th:text="#{member.borrowCreate.payBank}">Pay by bank transfer</strong>
+                                    <small class="text-muted" th:text="#{member.cart.checkout.bankDescription}">Reserve the selected copies and generate a secure PayOS QR payment.</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Sticky Transaction Summary & Confirm Action -->
+        <aside class="member-checkout-summary member-reference-list">
+            <div class="member-reference-list__header member-cart-summary-header">
+                <h2 th:text="#{member.cart.cashFlow}">Request Summary</h2>
+            </div>
+
+            <div class="member-reference-list__body member-checkout-summary-body">
+                <!-- Info Notice -->
+                <div class="member-checkout-notice">
+                    <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                    <p id="checkoutNoticeText" th:text="#{member.cart.checkout.walletNotice}">The estimated fee will be charged only after librarian approval.</p>
+                </div>
+
+                <!-- Transaction Details List -->
+                <dl class="member-checkout-payment-details">
+                    <div>
+                        <dt th:text="#{member.cart.borrowingPeriod}">Borrowing period:</dt>
+                        <dd th:text="#{member.cart.days(${numberOfDays})}">14 days</dd>
+                    </div>
+                    <div class="member-checkout-payment-total">
+                        <dt th:text="#{member.cart.totalDeduction}">Estimated borrowing fee:</dt>
+                        <dd><span th:text="${#numbers.formatDecimal(totalFee, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd>
+                    </div>
+                    <div>
+                        <dt th:text="#{member.cart.balanceBefore}">Current wallet balance:</dt>
+                        <dd><span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd>
+                    </div>
+                    <div class="member-checkout-balance-after" th:classappend="${afterBalance != null && afterBalance < 0} ? ' is-negative'">
+                        <dt th:text="#{member.cart.balanceAfter}">Estimated balance after approval:</dt>
+                        <dd><span th:text="${#numbers.formatDecimal(afterBalance, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></dd>
+                    </div>
+                </dl>
+
+                <!-- Insufficient Balance Alert -->
+                <div id="walletWarningCheckout" class="member-cart-wallet-error d-none">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    <span th:text="#{member.cart.checkout.walletWarning}">Insufficient wallet balance! Please top up or select Bank Transfer.</span>
+                </div>
+
+                <!-- Submit Actions -->
+                <div class="member-checkout-form">
+                    <div class="member-checkout-actions">
+                        <button type="submit" id="checkoutSubmitBtn" class="member-ui-button member-ui-button--primary member-checkout-submit">
+                            <i class="bi bi-wallet2 me-2" id="submitBtnIcon" aria-hidden="true"></i>
+                            <span id="submitBtnLabel" th:text="#{member.cart.checkout.confirmWallet}">Submit Loan Request</span>
+                        </button>
+                        <a th:href="@{/member/cart}" class="member-ui-button member-ui-button--secondary text-center" th:text="#{member.cart.backToEdit}">Back to edit</a>
+                    </div>
                 </div>
             </div>
-
-            <!-- Cảnh báo số dư ví không đủ -->
-            <div id="walletWarningCheckout" class="alert alert-danger border-0 small mb-3 d-none">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                <span th:text="#{member.cart.checkout.walletWarning}">Số dư ví không đủ để thanh toán! Vui lòng nạp thêm tiền hoặc chọn Thanh toán qua ngân hàng.</span>
-            </div>
-
-            <div class="d-flex gap-3">
-                <a href="/member/cart" class="btn btn-outline-classic flex-grow-1 py-2" th:text="#{member.cart.backToEdit}">Quay lại chỉnh sửa</a>
-                <button type="submit" id="checkoutSubmitBtn" class="btn btn-classic flex-grow-1 py-2 fw-bold">
-                    <i class="bi bi-wallet2 me-2" id="submitBtnIcon"></i><span id="submitBtnLabel" th:text="#{member.cart.checkoutHeading}">Xác Nhận &amp; Thanh Toán</span>
-                </button>
-            </div>
-        </form>
-    </div>
+        </aside>
+    </form>
 </div>
 
 <div layout:fragment="scripts">
     <script th:inline="javascript">
-        if (window.history.replaceState) {
-            window.history.replaceState(null, "", "/member/cart");
-        }
-
         window.addEventListener("pageshow", function (event) {
             var historyTraversal = event.persisted ||
                 (typeof window.performance != "undefined" &&
@@ -131,16 +159,19 @@
             const submitBtn = document.getElementById("checkoutSubmitBtn");
             const submitBtnIcon = document.getElementById("submitBtnIcon");
             const submitBtnLabel = document.getElementById("submitBtnLabel");
+            const submitForm = document.getElementById("cartSubmitForm");
+            const checkoutNotice = document.getElementById("checkoutNoticeText");
 
-            // Đọc cấu hình chuỗi ngôn ngữ an toàn từ Thymeleaf Messages
-            const textContinueBank = /*[[#{member.cart.checkout.continueBank}]]*/ "Tiếp tục thanh toán";
-            const textConfirmWallet = /*[[#{member.cart.checkout.confirmWallet}]]*/ "Xác nhận & Thanh toán";
+            const textContinueBank = /*[[#{member.cart.checkout.continueBank}]]*/ "Continue to Bank Payment";
+            const textConfirmWallet = /*[[#{member.cart.checkout.confirmWallet}]]*/ "Submit Loan Request";
+            const textProcessing = /*[[#{member.cart.checkout.processing}]]*/ "Processing...";
+            const textWalletNotice = /*[[#{member.cart.checkout.walletNotice}]]*/ "The estimated fee will be charged only after librarian approval.";
+            const textBankNotice = /*[[#{member.cart.checkout.bankNotice}]]*/ "Bank transfer is paid immediately after PayOS confirms payment.";
 
             function updateCheckoutUI() {
                 const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
                 const isBank = selectedMethod && selectedMethod.value === 'BANK';
 
-                // Cập nhật class active cho viền thẻ bao ngoài trực quan hơn
                 paymentMethods.forEach(method => {
                     const card = method.closest('.payment-option-card');
                     if (card) {
@@ -157,6 +188,7 @@
                     if (submitBtn) submitBtn.disabled = false;
                     if (submitBtnIcon) submitBtnIcon.className = "bi bi-bank me-2";
                     if (submitBtnLabel) submitBtnLabel.textContent = textContinueBank;
+                    if (checkoutNotice) checkoutNotice.textContent = textBankNotice;
                 } else {
                     if (walletBalance < totalFee) {
                         if (walletWarning) walletWarning.classList.remove("d-none");
@@ -167,6 +199,7 @@
                     }
                     if (submitBtnIcon) submitBtnIcon.className = "bi bi-wallet2 me-2";
                     if (submitBtnLabel) submitBtnLabel.textContent = textConfirmWallet;
+                    if (checkoutNotice) checkoutNotice.textContent = textWalletNotice;
                 }
             }
 
@@ -174,7 +207,13 @@
                 method.addEventListener("change", updateCheckoutUI);
             });
 
-            // Chạy kiểm tra ban đầu khi vừa tải trang
+            if (submitForm) {
+                submitForm.addEventListener("submit", function () {
+                    if (submitBtn) submitBtn.disabled = true;
+                    if (submitBtnLabel) submitBtnLabel.textContent = textProcessing;
+                });
+            }
+
             updateCheckoutUI();
         });
     </script>

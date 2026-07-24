@@ -66,7 +66,7 @@
                         <div>
                             <div class="font-weight-bold member-borrow-history-div-color-font-size-font-family-09" th:text="${item.bookTitle}">Borrowed book title</div>
                             <div class="text-muted small" th:text="${item.authorName}">Author</div>
-                            <div class="text-muted small mt-1"><span th:text="#{member.borrowHistory.loanCode}">Loan code:</span> <strong th:text="${item.borrowCode != null ? item.borrowCode : 'BOR-' + item.id}">BOR-2026-0042</strong></div>
+                            <div class="text-muted small mt-1"><span th:text="#{member.borrowHistory.loanCode}">Loan code:</span> <strong th:text="${item.borrowIdStr}">BOR-42</strong></div>
                         </div>
                     </div>
                 </div>
@@ -118,7 +118,7 @@
                         <!-- Đang mượn: Cho phép bấm gửi yêu cầu trả nhanh hoặc gia hạn -->
                         <div th:if="${item.status == 'Borrowed'}" class="d-flex justify-content-md-end gap-1">
                             <form th:action="@{/borrow/return/{detailId}(detailId=${item.id})}" method="post">
-                                <button type="submit" class="btn btn-sm btn-outline-primary u-font-size-0-75rem-8b511f07"><i class="bi bi-arrow-return-left"></i> <span th:text="#{loan.return.confirm}">Return Book</span></button>
+                                <button type="submit" class="btn btn-sm btn-outline-primary u-font-size-0-75rem-8b511f07" th:disabled="${isInactiveMember}"><i class="bi bi-arrow-return-left"></i> <span th:text="#{loan.return.confirm}">Return Book</span></button>
                             </form>
                         </div>
 

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <form th:fragment="createMemberAccountForm" method="post" th:action="@{/admin/member-list/create}"
+        id="createMemberAccountForm" class="admin-create-account-form" autocomplete="off" novalidate
+        th:attr="data-validation-url=@{/admin/member-list/create/validate},data-validation-unavailable-message=#{validation.unavailable}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <div class="alert alert-danger create-account-global-error" role="alert" aria-live="polite"
+            th:classappend="${fieldErrors == null or fieldErrors['_global'] == null} ? 'd-none'"
+            th:text="${fieldErrors != null ? fieldErrors['_global'] : ''}"></div>
+
+        <div class="account-form-grid">
+            <div>
+                <label for="createMemberFullName" class="form-label fw-bold small text-muted text-uppercase">
+                    <span th:text="#{member.profile.fullName}">Full Name</span> <span class="text-danger">*</span>
+                </label>
+                <input class="form-control validate-field" name="fullName" id="createMemberFullName" minlength="2"
+                    maxlength="50" required th:placeholder="#{admin.createAccount.fullNamePlaceholder}"
+                    th:value="${formValues != null ? formValues['fullName'] : ''}"
+                    th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
+                <div class="invalid-feedback" data-error-for="fullName"
+                    th:text="${fieldErrors != null ? fieldErrors['fullName'] : ''}"></div>
+            </div>
+
+            <div>
+                <label for="createMemberEmail" class="form-label fw-bold small text-muted text-uppercase">
+                    <span th:text="#{common.email}">Email</span> <span class="text-danger">*</span>
+                </label>
+                <input class="form-control validate-field" name="email" type="email" id="createMemberEmail"
+                    maxlength="255" required
+                    pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
+                    placeholder="email@example.com" autocomplete="off"
+                    th:value="${formValues != null ? formValues['email'] : ''}"
+                    th:classappend="${fieldErrors != null and fieldErrors['email'] != null} ? 'is-invalid'">
+                <div class="invalid-feedback" data-error-for="email"
+                    th:text="${fieldErrors != null ? fieldErrors['email'] : ''}"></div>
+            </div>
+
+            <div>
+                <label for="createMemberPhone" class="form-label fw-bold small text-muted text-uppercase">
+                    <span th:text="#{member.profile.phone}">Phone Number</span> <span class="text-danger">*</span>
+                </label>
+                <input class="form-control validate-field" name="phone" id="createMemberPhone" required
+                    pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$" maxlength="12" inputmode="tel"
+                    placeholder="0912345678" th:value="${formValues != null ? formValues['phone'] : ''}"
+                    th:classappend="${fieldErrors != null and fieldErrors['phone'] != null} ? 'is-invalid'">
+                <div class="invalid-feedback" data-error-for="phone"
+                    th:text="${fieldErrors != null ? fieldErrors['phone'] : ''}"></div>
+            </div>
+
+            <div>
+                <label for="createMemberUsername" class="form-label fw-bold small text-muted text-uppercase">
+                    <span th:text="#{member.profile.username}">Username</span> <span class="text-danger">*</span>
+                </label>
+                <input class="form-control validate-field" name="username" id="createMemberUsername" required
+                    pattern="[a-zA-Z0-9_]{3,20}" minlength="3" maxlength="20"
+                    th:placeholder="#{admin.createAccount.usernamePlaceholder}" autocomplete="new-password"
+                    th:value="${formValues != null ? formValues['username'] : ''}"
+                    th:classappend="${fieldErrors != null and fieldErrors['username'] != null} ? 'is-invalid'">
+                <div class="invalid-feedback" data-error-for="username"
+                    th:text="${fieldErrors != null ? fieldErrors['username'] : ''}"></div>
+            </div>
+
+            <div>
+                <label for="createMemberPassword" class="form-label fw-bold small text-muted text-uppercase">
+                    <span th:text="#{auth.password}">Password</span> <span class="text-danger">*</span>
+                </label>
+                <div class="position-relative">
+                    <input class="form-control validate-field pe-5" name="password" type="password"
+                        id="createMemberPassword" required minlength="6" maxlength="50" pattern="^\S+$"
+                        th:placeholder="#{admin.createAccount.passwordPlaceholder}" autocomplete="new-password">
+                    <button type="button"
+                        class="btn border-0 bg-transparent position-absolute h-100 px-3 z-3 create-password-toggle"
+                        th:aria-label="#{auth.password.show}" th:title="#{auth.password.show}"
+                        th:data-show-label="#{auth.password.show}" th:data-hide-label="#{auth.password.hide}">
+                        <i class="bi bi-eye-slash text-muted"></i>
+                    </button>
+                </div>
+                <div class="invalid-feedback" data-error-for="password"
+                    th:classappend="${fieldErrors != null and fieldErrors['password'] != null} ? 'd-block'"
+                    th:text="${fieldErrors != null ? fieldErrors['password'] : ''}"></div>
+            </div>
+        </div>
+
+        <div class="account-form-grid account-defaults-grid">
+            <div>
+                <label id="createMemberTierLabel" class="form-label fw-bold small text-muted text-uppercase"
+                    th:text="#{member.profile.tier}">Membership Tier</label>
+                <div class="member-readonly-field" role="textbox" aria-readonly="true"
+                    aria-labelledby="createMemberTierLabel" th:text="#{tier.regular}">Regular</div>
+            </div>
+            <div>
+                <label id="createMemberStatusLabel" class="form-label fw-bold small text-muted text-uppercase"
+                    th:text="#{common.status}">Status</label>
+                <div class="member-readonly-field" role="textbox" aria-readonly="true"
+                    aria-labelledby="createMemberStatusLabel" th:text="#{account.status.active}">Active</div>
+            </div>
+        </div>
+
+        <div class="modal-footer member-modal-footer account-create-actions">
+            <button class="btn member-modal-secondary" type="button" data-bs-dismiss="modal"
+                th:text="#{common.cancel}">Cancel</button>
+            <button class="btn member-modal-primary" type="submit" th:text="#{admin.accounts.create}">
+                Create Account
+            </button>
+        </div>
+    </form>
+</body>
+
+</html>

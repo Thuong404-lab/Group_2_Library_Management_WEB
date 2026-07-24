@@ -1,6 +1,8 @@
 package com.lms.repository;
 import com.lms.entity.BookItem;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,15 +14,56 @@ import java.util.Set;
 public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
     Optional<BookItem> findByBarcode(String barcode);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select item from BookItem item where item.barcode = :barcode")
+    Optional<BookItem> findByBarcodeForUpdate(@Param("barcode") String barcode);
+
     long countByStatusIgnoreCase(String status);
 
+    long countByBookConditionIgnoreCase(String bookCondition);
+
+    long countByBook_StatusIgnoreCase(String bookStatus);
+
+    long countByBook_StatusIgnoreCaseAndStatusIgnoreCase(String bookStatus, String itemStatus);
+
     long countByShelf_ShelfId(Integer shelfId);
+
+    @Query("select item.shelf.shelfId, count(item) from BookItem item where item.shelf is not null group by item.shelf.shelfId")
+    List<Object[]> countBookItemsByShelf();
+
+    @Query("select item.book.bookId, count(item) from BookItem item group by item.book.bookId")
+    List<Object[]> countBookItemsByBook();
 
     long countByBook_BookId(Integer bookId);
 
     long countByBook_BookIdAndStatusIgnoreCase(Integer bookId, String status);
 
     List<BookItem> findByBook_BookId(Integer bookId);
+
+    List<BookItem> findByBook_BookIdIn(List<Integer> bookIds);
+
+    List<BookItem> findByBook_BookIdOrderByBarcodeAsc(Integer bookId);
+
+    List<BookItem> findByBook_BookIdOrderByBookItemIdAsc(Integer bookId);
+
+    @Query("""
+            select item
+            from BookItem item
+            left join fetch item.shelf
+            where item.book.bookId in :bookIds
+            order by item.book.bookId asc, item.barcode asc
+            """)
+    List<BookItem> findByBookIdsWithShelf(@Param("bookIds") List<Integer> bookIds);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select item
+            from BookItem item
+            where item.book.bookId = :bookId
+              and lower(item.status) = 'available'
+            order by item.bookItemId asc
+            """)
+    List<BookItem> findAvailableByBookIdForUpdate(@Param("bookId") Integer bookId);
 
     Optional<BookItem> findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(Integer bookId, String status);
 

@@ -2,10 +2,8 @@ package com.lms.controller.librarian;
 import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
-import com.lms.entity.Shelf;
 import com.lms.service.StorageService;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -25,7 +23,7 @@ public class StorageController extends LocalizedControllerSupport {
 
     @GetMapping
     public String listStorageLocations() {
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 
     @GetMapping("/add")
@@ -43,21 +41,7 @@ public class StorageController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
-    }
-
-    @GetMapping("/edit/{id}")
-    public String showEditStorageLocation(@PathVariable Integer id, RedirectAttributes redirectAttributes,
-            Model model) {
-        return storageService.getStorageLocationById(id)
-                .map(shelf -> {
-                    model.addAttribute("shelf", shelf);
-                    return "librarian/storage-form";
-                })
-                .orElseGet(() -> {
-                    redirectAttributes.addFlashAttribute("error", message("backend.storage.notFound"));
-                    return "redirect:/librarian/dashboard?section=books&subsection=storage";
-                });
+        return "redirect:/librarian/books?subsection=storage";
     }
 
     @PostMapping("/update/{id}")
@@ -71,7 +55,7 @@ public class StorageController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 
     @PostMapping("/delete/{id}")
@@ -82,6 +66,6 @@ public class StorageController extends LocalizedControllerSupport {
         } catch (ApplicationException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/librarian/dashboard?section=books&subsection=storage";
+        return "redirect:/librarian/books?subsection=storage";
     }
 }

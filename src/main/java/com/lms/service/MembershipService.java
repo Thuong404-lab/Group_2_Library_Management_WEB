@@ -2,22 +2,31 @@ package com.lms.service;
 
 import com.lms.entity.MembershipTier;
 import com.lms.entity.Member;
+import com.lms.dto.request.MembershipTierUpdateRequest;
+
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public interface MembershipService {
     MembershipTier getBenefits(Integer memberId);
     Member getMembershipTier(Integer memberId);
     Member getMemberByUsername(String username);
 
-    // BỔ SUNG: Phục vụ tính toán tiến trình nâng hạng trên giao diện HTML mới
+    // Phục vụ tính toán tiến trình nâng hạng trên giao diện HTML
     List<MembershipTier> getAllTiers();
-    double getAccumulatedSpending(Member member);
+    BigDecimal getAccumulatedSpending(Member member);
     MembershipTier getNextTier(MembershipTier currentTier);
 
-    List<Member> getTopMembersBySpending(); // Lấy danh sách thành viên chi tiêu nhiều nhất làm bảng xếp hạng
+    List<Member> getTopMembersBySpending();
 
     // UC-22.3: Membership Tier Management (Admin)
     MembershipTier getTierById(Integer id);
-    void saveTier(MembershipTier tier);
+    int updateTier(MembershipTierUpdateRequest request);
     void deleteTier(Integer id);
+    void synchronizeMemberTier(Integer memberId);
+    int synchronizeAllMemberTiers();
+
+    /** Trả về Map<tierId, memberCount> — dùng để hiển thị số thành viên trong bảng admin */
+    Map<Integer, Long> getMemberCountByTier();
 }

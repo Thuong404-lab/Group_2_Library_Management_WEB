@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.UnauthorizedException;
@@ -70,15 +71,15 @@ public class FinancialController extends LocalizedControllerSupport {
     private final LocalizedMessageService localizedMessageService;
 
     public FinancialController(TransactionRepository transactionRepository,
-                               MemberNotificationRepository memberNotificationRepository,
-                               MemberRepository memberRepository,
-                               WalletRepository walletRepository,
-                               BorrowRepository borrowRepository,
-                               BorrowDetailRepository borrowDetailRepository,
-                               FinancialService financialService,
-                               PayOsPaymentRepository payOsPaymentRepository,
-                               PayOsPaymentFineItemRepository payOsPaymentFineItemRepository,
-                               LocalizedMessageService localizedMessageService) {
+            MemberNotificationRepository memberNotificationRepository,
+            MemberRepository memberRepository,
+            WalletRepository walletRepository,
+            BorrowRepository borrowRepository,
+            BorrowDetailRepository borrowDetailRepository,
+            FinancialService financialService,
+            PayOsPaymentRepository payOsPaymentRepository,
+            PayOsPaymentFineItemRepository payOsPaymentFineItemRepository,
+            LocalizedMessageService localizedMessageService) {
         this.transactionRepository = transactionRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.memberRepository = memberRepository;
@@ -98,8 +99,8 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @PostMapping("/fines/pay/{fineId}")
     public String payOverdueFine(@PathVariable Integer fineId,
-                                 Principal principal,
-                                 RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
 
         try {
@@ -131,8 +132,8 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @PostMapping("/fees/pay/{borrowId}")
     public String payBorrowingFee(@PathVariable Integer borrowId,
-                                  Principal principal,
-                                  RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
 
         try {
@@ -147,8 +148,8 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @PostMapping("/deposit/{reservationId}")
     public String payReservationDeposit(@PathVariable Integer reservationId,
-                                        Principal principal,
-                                        RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
 
         try {
@@ -163,8 +164,8 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @PostMapping("/deposit/{reservationId}/refund-request")
     public String requestReservationDepositRefund(@PathVariable Integer reservationId,
-                                                  Principal principal,
-                                                  RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
 
         try {
@@ -181,9 +182,9 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @GetMapping("/transactions")
     public String viewTransactionHistory(Principal principal,
-                                         @RequestParam(defaultValue = "0") int page,
-                                         @RequestParam(required = false) String type,
-                                         Model model) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String type,
+            Model model) {
         Member member = getCurrentMember(principal);
         Page<Transaction> transactionPage = financialService.getTransactionHistory(member.getMemberId(), page, type);
         List<Transaction> unpaidFines = getUnpaidFines(member.getMemberId());
@@ -210,7 +211,7 @@ public class FinancialController extends LocalizedControllerSupport {
     }
 
     private List<MemberTransactionHistoryRow> buildHistoryRows(List<Transaction> transactions,
-                                                                 List<PayOsPayment> payments) {
+            List<PayOsPayment> payments) {
         List<MemberTransactionHistoryRow> rows = new ArrayList<>();
         transactions.stream().map(this::toHistoryRow).forEach(rows::add);
         payments.stream().map(this::toHistoryRow).forEach(rows::add);
@@ -227,6 +228,8 @@ public class FinancialController extends LocalizedControllerSupport {
                 "#TXN-" + transaction.getTransactionId(),
                 transaction.getTransactionDate(),
                 transactionTypeMessageKey(transaction.getTransactionType()),
+                transactionDescription(transaction),
+                transactionDetail(transaction),
                 transaction.getAmount(),
                 transactionStatusMessageKey(transaction.getStatus()),
                 completed);
@@ -248,9 +251,70 @@ public class FinancialController extends LocalizedControllerSupport {
                 "#KQ-" + payment.getPaymentId(),
                 payment.getPaidAt() != null ? payment.getPaidAt() : payment.getCreatedAt(),
                 typeLabel,
+                kqPayDescription(payment.getPurpose()),
+                message("transaction.detail.kqpayOrder", payment.getOrderCode()),
                 amount,
                 "transaction.status.completed",
                 true);
+    }
+
+    private String transactionDescription(Transaction transaction) {
+        String transactionType = transaction.getTransactionType();
+        if (transactionType == null) {
+            return message("transaction.description.other");
+        }
+        String descriptionKey = switch (transactionType.trim().toUpperCase()) {
+            case "TOP_UP" -> "transaction.description.topUp";
+            case "BORROW_FEE" -> "transaction.description.borrowFee";
+            case "RENEWAL_FEE" -> "transaction.description.renewalFee";
+            case "DEPOSIT" -> "transaction.description.deposit";
+            case "FINE", "OVERDUE_FINE" -> "transaction.description.fine";
+            case "DAMAGE_FEE" -> "transaction.description.damageFee";
+            case "REFUND" -> "transaction.description.refund";
+            case "PAYMENT", "FEE" -> "transaction.description.payment";
+            default -> "transaction.description.other";
+        };
+        return message(descriptionKey);
+    }
+
+    private String transactionDetail(Transaction transaction) {
+        List<String> details = new ArrayList<>();
+        if (transaction.getBorrow() != null && transaction.getBorrow().getBorrowId() != null) {
+            details.add(message("transaction.detail.borrow", transaction.getBorrow().getBorrowId()));
+        }
+        if (transaction.getRenewalDays() != null && transaction.getRenewalDays() > 0) {
+            details.add(message("transaction.detail.renewalDays", transaction.getRenewalDays()));
+        }
+        if (transaction.getChannel() != null && !transaction.getChannel().isBlank()) {
+            details.add(message("transaction.detail.channel",
+                    message(transactionChannelMessageKey(transaction.getChannel()))));
+        }
+        if (transaction.getReferenceCode() != null && !transaction.getReferenceCode().isBlank()) {
+            details.add(message("transaction.detail.reference", transaction.getReferenceCode()));
+        }
+        return String.join(" · ", details);
+    }
+
+    private String kqPayDescription(String purpose) {
+        if (purpose == null) {
+            return message("transaction.description.kqpay");
+        }
+        return message(switch (purpose.trim().toUpperCase()) {
+            case "TOP_UP" -> "transaction.description.kqpayTopUp";
+            case "BORROW_FEE" -> "transaction.description.kqpayBorrowFee";
+            case "FINE" -> "transaction.description.kqpayFine";
+            case "FINE_BATCH" -> "transaction.description.kqpayFineBatch";
+            default -> "transaction.description.kqpay";
+        });
+    }
+
+    private String transactionChannelMessageKey(String channel) {
+        return switch (channel.trim().toUpperCase()) {
+            case "WALLET" -> "transaction.channel.wallet";
+            case "CASH" -> "transaction.channel.cash";
+            case "PAYOS", "KQPAY", "BANK" -> "transaction.channel.payos";
+            default -> "transaction.channel.system";
+        };
     }
 
     private String transactionTypeMessageKey(String transactionType) {
@@ -260,10 +324,14 @@ public class FinancialController extends LocalizedControllerSupport {
         return switch (transactionType.toUpperCase()) {
             case "TOP_UP" -> "transaction.type.topUp";
             case "BORROW_FEE" -> "transaction.type.borrowFee";
+            case "RENEWAL_FEE" -> "transaction.type.renewalFee";
             case "DEPOSIT" -> "transaction.type.deposit";
             case "FINE" -> "transaction.type.fine";
             case "DAMAGE_FEE" -> "transaction.type.damageFee";
             case "REFUND" -> "transaction.type.refund";
+            case "PAYMENT" -> "transaction.type.payment";
+            case "OVERDUE_FINE" -> "transaction.type.overdueFine";
+            case "FEE" -> "transaction.type.fee";
             default -> "transaction.type.other";
         };
     }
@@ -276,6 +344,7 @@ public class FinancialController extends LocalizedControllerSupport {
             case "COMPLETED", "PAID" -> "transaction.status.completed";
             case "FAILED" -> "transaction.status.failed";
             case "CANCELED", "CANCELLED" -> "transaction.status.canceled";
+            case "REFUNDED" -> "transaction.status.refunded";
             default -> "transaction.status.pending";
         };
     }
@@ -321,14 +390,14 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @GetMapping("/topup-notifications")
     public String viewTopupNotifications(Principal principal,
-                                         @RequestParam(defaultValue = "0") int page,
-                                         Model model) {
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
         Member member = getCurrentMember(principal);
         Page<MemberNotification> notificationPage = memberNotificationRepository
                 .findByMember_MemberIdAndNotification_EventTypeOrderByNotification_CreatedDateDesc(
-                member.getMemberId(),
-                NotificationEventType.TOP_UP_SUCCESS,
-                pageRequest(page, DEFAULT_PAGE_SIZE));
+                        member.getMemberId(),
+                        NotificationEventType.TOP_UP_SUCCESS,
+                        pageRequest(page, DEFAULT_PAGE_SIZE));
 
         model.addAttribute("notificationPage", notificationPage);
         model.addAttribute("notifications", notificationPage.getContent());
@@ -348,9 +417,9 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @PostMapping("/topup-notifications/{notificationId}/mark-read")
     public String markTopupNotificationAsRead(@PathVariable Integer notificationId,
-                                              @RequestParam(defaultValue = "0") int page,
-                                              Principal principal,
-                                              RedirectAttributes redirectAttributes) {
+            @RequestParam(defaultValue = "0") int page,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
         MemberNotificationId id = new MemberNotificationId(member.getMemberId(), notificationId);
         memberNotificationRepository.findById(id).ifPresent(memberNotification -> {
@@ -365,8 +434,8 @@ public class FinancialController extends LocalizedControllerSupport {
 
     @PostMapping("/topup-notifications/mark-all-read")
     public String markAllTopupNotificationsAsRead(@RequestParam(defaultValue = "0") int page,
-                                                  Principal principal,
-                                                  RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
         memberNotificationRepository.markUnreadNotificationsAsReadByEventType(
                 member.getMemberId(), NotificationEventType.TOP_UP_SUCCESS, LocalDateTime.now());
@@ -376,9 +445,9 @@ public class FinancialController extends LocalizedControllerSupport {
     }
 
     private void loadBorrowingFeeGroups(Integer memberId,
-                                        List<BorrowFeeViewData> pendingFees,
-                                        List<BorrowFeeViewData> payableFees,
-                                        List<BorrowFeeViewData> paidFees) {
+            List<BorrowFeeViewData> pendingFees,
+            List<BorrowFeeViewData> payableFees,
+            List<BorrowFeeViewData> paidFees) {
         List<Borrow> borrows = borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(memberId);
         for (Borrow borrow : borrows) {
             BorrowFeeViewData feeViewData = buildBorrowFeeViewData(memberId, borrow);
@@ -389,9 +458,9 @@ public class FinancialController extends LocalizedControllerSupport {
     }
 
     private void addToFeeGroup(BorrowFeeViewData feeViewData,
-                               List<BorrowFeeViewData> pendingFees,
-                               List<BorrowFeeViewData> payableFees,
-                               List<BorrowFeeViewData> paidFees) {
+            List<BorrowFeeViewData> pendingFees,
+            List<BorrowFeeViewData> payableFees,
+            List<BorrowFeeViewData> paidFees) {
         if ("Paid".equalsIgnoreCase(feeViewData.getPaymentStatus())) {
             paidFees.add(feeViewData);
         } else if ("Pending".equalsIgnoreCase(feeViewData.getBorrowStatus())) {

@@ -3,9 +3,7 @@ package com.lms.service.impl;
 import com.lms.entity.SystemLog;
 import com.lms.entity.SystemSetting;
 import com.lms.exception.ValidationException;
-import com.lms.entity.MembershipTier;
 import com.lms.enums.ActionType;
-import com.lms.repository.MembershipTierRepository;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.SystemLogRepository;
@@ -37,28 +35,20 @@ public class SystemServiceImpl implements SystemService {
 
     private final SystemSettingRepository systemSettingRepository;
     private final SystemLogRepository systemLogRepository;
-    private final MembershipTierRepository membershipTierRepository;
     private final MemberAccountRepository memberAccountRepository;
     private final StaffAccountRepository staffAccountRepository;
     private final AuditLogService auditLogService;
 
     public SystemServiceImpl(SystemSettingRepository systemSettingRepository,
-                             SystemLogRepository systemLogRepository,
-                             MembershipTierRepository membershipTierRepository,
-                             MemberAccountRepository memberAccountRepository,
-                             StaffAccountRepository staffAccountRepository,
-                             AuditLogService auditLogService) {
+            SystemLogRepository systemLogRepository,
+            MemberAccountRepository memberAccountRepository,
+            StaffAccountRepository staffAccountRepository,
+            AuditLogService auditLogService) {
         this.systemSettingRepository = systemSettingRepository;
         this.systemLogRepository = systemLogRepository;
-        this.membershipTierRepository = membershipTierRepository;
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.auditLogService = auditLogService;
-    }
-
-    @Override
-    public void restoreData(String backupFilePath) {
-        // TODO: Implement restore sau nếu cần
     }
 
     @Override
@@ -132,33 +122,38 @@ public class SystemServiceImpl implements SystemService {
     }
 
     @Override
-    public List<MembershipTier> getMembershipTiers() {
-        return membershipTierRepository.findAll(Sort.by("tierId").ascending());
-    }
-
-    @Override
     @Transactional
     public void updateBorrowingPolicies(Integer maxBorrowDays,
-                                        Integer maxRenewalDays,
-                                        Map<Integer, Integer> tierBorrowLimits,
-                                        Map<Integer, BigDecimal> tierSpendingConditions,
-                                        BigDecimal borrowFeePerBook,
-                                        BigDecimal finePerDay,
-                                        BigDecimal damageCompensationAmount,
-                                        Integer damageCompensationThreshold,
-                                        Integer overdueViolationLockLimit,
-                                        Integer bookDisposalConditionThreshold,
-                                        BigDecimal depositAmount) {
+            Integer maxRenewalDays,
+            Integer maxRenewalRequests,
+            Integer renewalRejectionCooldownHours,
+            Integer renewalApprovalTimeoutHours,
+            BigDecimal borrowFeePerBook,
+            BigDecimal minorDamageBorrowFee,
+            BigDecimal severeDamageBorrowFee,
+            BigDecimal finePerDay,
+            BigDecimal damageCompensationAmount,
+            Integer damageCompensationThreshold,
+            Integer overdueViolationLockLimit,
+            BigDecimal depositAmount) {
 
         validatePositive(maxBorrowDays, messages.get("backend.settings.maxBorrowDaysPositive"));
         validatePositive(maxRenewalDays, messages.get("backend.settings.maxRenewalDaysPositive"));
-        validateAndUpdateTiers(tierBorrowLimits, tierSpendingConditions);
+        validatePositive(maxRenewalRequests, messages.get("backend.settings.maxRenewalRequestsPositive"));
+        validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
+        validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
+        validateZeroOrPositive(minorDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
+        validateZeroOrPositive(severeDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
+        BigDecimal minimumGap = BigDecimal.valueOf(1000);
+        if (minorDamageBorrowFee.compareTo(borrowFeePerBook.subtract(minimumGap)) > 0
+                || severeDamageBorrowFee.compareTo(minorDamageBorrowFee.subtract(minimumGap)) > 0) {
+            throw new ValidationException(messages.get("backend.settings.conditionFeeOrder"));
+        }
         validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
-        validatePercentage(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
+        validateDamageThreshold(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
-        validatePercentage(bookDisposalConditionThreshold, messages.get("backend.settings.disposalThresholdRange"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
         saveOrUpdateSetting("Max_Borrow_Days",
@@ -169,13 +164,27 @@ public class SystemServiceImpl implements SystemService {
                 String.valueOf(maxRenewalDays),
                 messages.get("backend.settings.description.maxRenewalDays"));
 
-        saveOrUpdateSetting("Max_Books_Per_Member",
-                String.valueOf(tierBorrowLimits.values().stream().mapToInt(Integer::intValue).max().orElse(1)),
-                messages.get("backend.settings.description.maxBooks"));
+        saveOrUpdateSetting("MAX_RENEWAL_REQUESTS_PER_LOAN",
+                String.valueOf(maxRenewalRequests),
+                messages.get("backend.settings.description.maxRenewalRequests"));
+
+        saveOrUpdateSetting("RENEWAL_REJECTION_COOLDOWN_HOURS",
+                String.valueOf(renewalRejectionCooldownHours),
+                messages.get("backend.settings.description.renewalCooldown"));
+
+        saveOrUpdateSetting("RENEWAL_APPROVAL_TIMEOUT_HOURS",
+                String.valueOf(renewalApprovalTimeoutHours),
+                "Maximum hours to process a renewal request");
 
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
                 messages.get("backend.settings.description.borrowFee"));
+        saveOrUpdateSetting("Minor_Damage_Borrow_Fee",
+                minorDamageBorrowFee.toPlainString(),
+                messages.get("backend.settings.description.minorDamageBorrowFee"));
+        saveOrUpdateSetting("Severe_Damage_Borrow_Fee",
+                severeDamageBorrowFee.toPlainString(),
+                messages.get("backend.settings.description.severeDamageBorrowFee"));
 
         saveOrUpdateSetting("Fine_Per_Day",
                 finePerDay.toPlainString(),
@@ -193,10 +202,6 @@ public class SystemServiceImpl implements SystemService {
                 String.valueOf(overdueViolationLockLimit),
                 messages.get("backend.settings.description.overdueLockLimit"));
 
-        saveOrUpdateSetting("Book_Disposal_Condition_Threshold",
-                String.valueOf(bookDisposalConditionThreshold),
-                messages.get("backend.settings.description.disposalThreshold"));
-
         saveOrUpdateSetting("Deposit_Amount",
                 depositAmount.toPlainString(),
                 messages.get("backend.settings.description.deposit"));
@@ -204,29 +209,6 @@ public class SystemServiceImpl implements SystemService {
         auditLogService.log(
                 ActionType.UPDATE_SETTINGS,
                 messages.get("backend.settings.audit.updated"));
-    }
-
-    private void validateAndUpdateTiers(Map<Integer, Integer> tierBorrowLimits,
-                                        Map<Integer, BigDecimal> tierSpendingConditions) {
-        List<MembershipTier> tiers = getMembershipTiers();
-        if (tiers.isEmpty()) {
-            throw new ValidationException(messages.get("backend.settings.noTiers"));
-        }
-
-        for (MembershipTier tier : tiers) {
-            Integer borrowLimit = tierBorrowLimits == null ? null : tierBorrowLimits.get(tier.getTierId());
-            validatePositive(borrowLimit,
-                    messages.get("backend.settings.tierBorrowLimitPositive", tier.getTierName()));
-            BigDecimal spendingCondition = tierSpendingConditions == null
-                    ? null
-                    : tierSpendingConditions.get(tier.getTierId());
-            validateZeroOrPositive(spendingCondition,
-                    messages.get("backend.settings.tierSpendingNonNegative", tier.getTierName()));
-            tier.setBorrowLimit(borrowLimit);
-            tier.setCondition(spendingCondition);
-        }
-
-        membershipTierRepository.saveAll(tiers);
     }
 
     private void saveOrUpdateSetting(String key, String value, String description) {
@@ -252,8 +234,8 @@ public class SystemServiceImpl implements SystemService {
         }
     }
 
-    private void validatePercentage(Integer value, String message) {
-        if (value == null || value < 0 || value > 100) {
+    private void validateDamageThreshold(Integer value, String message) {
+        if (value == null || value < 2 || value > 4) {
             throw new ValidationException(message);
         }
     }

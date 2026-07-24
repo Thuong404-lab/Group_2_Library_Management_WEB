@@ -5,7 +5,6 @@ import com.lms.entity.MemberAccount;
 import com.lms.repository.MemberAccountRepository;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,8 +12,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // check db xem tai khoan ton tai khong
 @Service
@@ -36,11 +35,11 @@ public class CustomMemberDetailsService implements UserDetailsService {
                         .orElseThrow(() -> new UsernameNotFoundException(
                                 messages.get("backend.account.memberUsernameNotFound", username))));
 
-        if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new DisabledException(messages.get("backend.account.disabled"));
-        }
+        // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_MEMBER"));
+        List<GrantedAuthority> authorities = account.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
 
         return new CustomUserDetails(
                 account.getMember().getUser(),
@@ -48,7 +47,6 @@ public class CustomMemberDetailsService implements UserDetailsService {
                 account.getPasswordHash(),
                 account.getStatus(),
                 account.getId(),
-                authorities
-        );
+                authorities);
     }
 }

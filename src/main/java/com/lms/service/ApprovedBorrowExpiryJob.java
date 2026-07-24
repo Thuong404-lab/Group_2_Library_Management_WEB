@@ -1,5 +1,7 @@
 package com.lms.service;
 
+import com.lms.util.BorrowCodeFormatter;
+
 import com.lms.entity.BookItem;
 import com.lms.entity.Borrow;
 import com.lms.entity.BorrowDetail;
@@ -36,11 +38,11 @@ public class ApprovedBorrowExpiryJob {
     private final LocalizedMessageService messages;
 
     public ApprovedBorrowExpiryJob(BorrowRepository borrowRepository,
-                                   BorrowDetailRepository borrowDetailRepository,
-                                   BookItemRepository bookItemRepository,
-                                   NotificationRepository notificationRepository,
-                                   MemberNotificationRepository memberNotificationRepository,
-                                   LocalizedMessageService messages) {
+            BorrowDetailRepository borrowDetailRepository,
+            BookItemRepository bookItemRepository,
+            NotificationRepository notificationRepository,
+            MemberNotificationRepository memberNotificationRepository,
+            LocalizedMessageService messages) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookItemRepository = bookItemRepository;
@@ -51,7 +53,8 @@ public class ApprovedBorrowExpiryJob {
 
     /**
      * Tự động quét hệ thống định kỳ mỗi 10 phút.
-     * Tìm các phiếu mượn ở trạng thái Waiting_Pickup có thời gian duyệt vượt quá 48 tiếng để hủy đơn.
+     * Tìm các phiếu mượn ở trạng thái Waiting_Pickup có thời gian duyệt vượt quá 48
+     * tiếng để hủy đơn.
      */
     @Scheduled(fixedDelay = 600000)
     @Transactional(rollbackFor = Exception.class)
@@ -67,7 +70,8 @@ public class ApprovedBorrowExpiryJob {
             return;
         }
 
-        LOGGER.info("Phát hiện {} phiếu mượn quá hạn 48 giờ chưa nhận sách. Tiến hành hủy tự động...", expiredBorrows.size());
+        LOGGER.info("Phát hiện {} phiếu mượn quá hạn 48 giờ chưa nhận sách. Tiến hành hủy tự động...",
+                expiredBorrows.size());
 
         for (Borrow borrow : expiredBorrows) {
             borrow.setStatus("Canceled");
@@ -85,14 +89,15 @@ public class ApprovedBorrowExpiryJob {
                 }
             }
 
-            // Tạo thông báo gửi đến độc giả chỉ rõ điều khoản vi phạm quy định nhận sách và không hoàn phí
+            // Tạo thông báo gửi đến độc giả chỉ rõ điều khoản vi phạm quy định nhận sách và
+            // không hoàn phí
             try {
                 Notification notif = new Notification();
                 messages.prepareNotification(
                         notif,
                         "systemNotification.borrow.pickupExpired.title",
                         "systemNotification.borrow.pickupExpired.content",
-                        borrow.getBorrowId());
+                        BorrowCodeFormatter.format(borrow.getBorrowId()));
                 notif.setNotificationType(NotificationType.LOAN);
                 notif.setEventType(NotificationEventType.LOAN_PICKUP_EXPIRED);
                 notif.setNotificationSource(NotificationSource.SYSTEM);

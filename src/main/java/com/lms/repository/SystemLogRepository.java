@@ -6,7 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,12 +16,26 @@ import java.util.List;
 
 public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
 
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO dbo.SystemLogs
+                (user_id, action_type, ip_address, user_agent, description, created_at)
+            VALUES
+                (:userId, :actionType, :ipAddress, :userAgent, :description, SYSUTCDATETIME())
+            """, nativeQuery = true)
+    int insertAudit(@Param("userId") Integer userId,
+                    @Param("actionType") String actionType,
+                    @Param("ipAddress") String ipAddress,
+                    @Param("userAgent") String userAgent,
+                    @Param("description") String description);
+
     List<SystemLog> findByUser_Id(Integer userId);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = { "user" })
     Page<SystemLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = { "user" })
     @Query("""
             SELECT log
             FROM SystemLog log
@@ -51,7 +67,7 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
             """)
     Page<SystemLog> searchLogs(@Param("keyword") String keyword, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = { "user" })
     @Query("""
             SELECT log
             FROM SystemLog log

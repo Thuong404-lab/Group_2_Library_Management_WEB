@@ -1,6 +1,7 @@
 package com.lms.service;
 
-import com.lms.dto.request.AdminAccountCreateRequest;
+import com.lms.dto.request.AdminMemberAccountCreateRequest;
+import com.lms.dto.request.AdminStaffAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
 
@@ -19,9 +20,13 @@ public interface AccountService {
     AdminAccountListViewData getMemberAccountList(int page, String keyword, String status, String tier);
 
     // UC-20.1: Tạo tài khoản
-    void createAccount(AdminAccountCreateRequest request);
+    void createMemberAccount(AdminMemberAccountCreateRequest request);
 
-    Map<String, String> validateAccountCreate(AdminAccountCreateRequest request);
+    Map<String, String> validateMemberAccountCreate(AdminMemberAccountCreateRequest request);
+
+    void createStaffAccount(AdminStaffAccountCreateRequest request);
+
+    Map<String, String> validateStaffAccountCreate(AdminStaffAccountCreateRequest request);
 
     // UC-20.2: Cập nhật tài khoản
     void updateAccount(AdminAccountUpdateRequest request, Integer currentAccountId);
@@ -31,7 +36,16 @@ public interface AccountService {
 
     // UC-20.3: Xóa tài khoản (soft delete)
     void deleteAccount(Integer accountId, String source, Integer currentAccountId);
+    
+    // Vô hiệu hóa tài khoản
+    void deactivateAccount(Integer accountId, String source, Integer currentAccountId);
+
+    // Kiểm tra xem member có thể xóa được không
+    boolean checkMemberDeletability(Integer accountId);
 
     // Lấy email hiện tại của tài khoản thành viên để gửi liên kết đặt lại mật khẩu.
     String getMemberEmail(Integer accountId);
+
+    // Lấy email hiện tại của tài khoản nhân sự để gửi liên kết đặt lại mật khẩu.
+    String getStaffEmail(Integer accountId);
 }

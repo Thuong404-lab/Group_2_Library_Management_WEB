@@ -6,160 +6,175 @@
     <!-- UC-8.2 UI maintained by Pham Kien Quoc. -->
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title th:text="#{member.fees.title}">Borrowing Fees</title>
-    <link rel="stylesheet" th:href="@{/css/librarian-finance.css}"/>
+    <link rel="stylesheet" th:href="@{/css/pages/member/notifications.css}"/>
     <link rel="stylesheet" th:href="@{/css/pages/member/fees.css}"/>
 </head>
 
 <body>
-<div layout:fragment="content" class="container finance-page member-fees-page">
-    <div class="finance-header">
-        <div>
-            <h2 class="finance-title" th:text="#{member.fees.title}">Borrowing Fees</h2>
-            <div class="finance-description" th:text="#{member.fees.description}">Fees are deducted from your wallet when a librarian approves the loan.</div>
-        </div>
-        <div class="fees-wallet-balance">
-            <span th:text="#{member.wallet.balance}">Wallet Balance</span>
-            <strong
-                  th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
-            <span th:text="#{currency.vnd}">VND</span>
-        </div>
+<main layout:fragment="content" class="member-notifications-page member-palette-page">
+    <div class="member-notifications-container">
+        <header class="member-notifications-header member-dashboard-hero notifications-hero">
+            <div class="notifications-hero-copy">
+                <span class="member-notifications-eyebrow" th:text="#{member.fees.title}">Borrowing Fees</span>
+                <h1 th:text="#{member.fees.title}">Borrowing Fees</h1>
+                <p th:text="#{member.fees.description}">Fees are deducted from your wallet when a librarian approves the loan.</p>
+                <div class="member-notifications-summary" th:aria-label="#{member.wallet.balance}">
+                    <span>
+                        <strong th:text="${walletBalance != null ? #numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</strong>
+                        <span th:text="#{currency.vnd}">VND</span>
+                    </span>
+                </div>
+            </div>
+            <a th:href="@{/member/financial/transactions}" class="member-notifications-back notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-clock-history" aria-hidden="true"></i><span th:text="#{transaction.history}">Transaction History</span></a>
+        </header>
+
+        <div th:if="${message != null}" class="member-notifications-alert is-success" role="alert" th:text="${message}"></div>
+        <div th:if="${error != null}" class="member-notifications-alert is-error" role="alert" th:text="${error}"></div>
+
+        <section class="member-notifications-card member-reference-list mb-4">
+            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
+                <div class="member-notification-toolbar-copy">
+                    <h2 th:text="#{member.fees.pendingLoans}">Loans Pending Approval</h2>
+                </div>
+                <div class="member-notification-type-filter">
+                    <span th:text="#{member.fees.pendingLoans} + ': ' + ${pendingFees != null ? #lists.size(pendingFees) : 0}"></span>
+                </div>
+            </div>
+
+            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="member-notifications-empty member-notifications-empty--compact">
+                <span><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                <p th:text="#{member.fees.pendingEmpty}">There are no loans pending approval.</p>
+            </div>
+
+            <div class="member-notifications-list member-reference-list__body" th:if="${pendingFees != null and !#lists.isEmpty(pendingFees)}">
+                <article class="member-notification-row member-reference-list__item" th:each="fee : ${pendingFees}">
+                    <span class="member-notification-row-icon" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
+                    <div class="member-notification-row-content">
+                        <div class="member-notification-row-meta">
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{loan.id}">Loan ID</span>: <span th:text="${@borrowCodeFormatter.format(fee.borrowId)}">1</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{member.fees.bookCount}">Books</span>: <span th:text="${fee.quantity}">1</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{member.fees.chargeableDays}">Chargeable Days</span>: <span th:text="${fee.days}">10</span>
+                            </span>
+                        </div>
+                        <h3>
+                            <span th:text="#{member.fees.estimatedFee}">Estimated Fee</span>: 
+                            <strong th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</strong> <span th:text="#{currency.vnd}">VND</span>
+                        </h3>
+                    </div>
+                    <div class="text-end">
+                        <span class="member-notification-unread-label member-reference-pill" style="background: var(--member-color-surface-soft); color: var(--member-color-muted);">
+                            <span th:text="#{member.fees.awaitingLibrarian}">Awaiting Librarian Approval</span>
+                        </span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="member-notifications-card member-reference-list mb-4">
+            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
+                <div class="member-notification-toolbar-copy">
+                    <h2 th:text="#{member.fees.payable}">Fees to Pay</h2>
+                </div>
+                <div class="member-notification-type-filter">
+                    <span th:text="#{member.fees.payable} + ': ' + ${payableFees != null ? #lists.size(payableFees) : 0}"></span>
+                </div>
+            </div>
+
+            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="member-notifications-empty member-notifications-empty--compact">
+                <span><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+                <p th:text="#{member.fees.payableEmpty}">There are no borrowing fees to pay.</p>
+            </div>
+
+            <div class="member-notifications-list member-reference-list__body" th:if="${payableFees != null and !#lists.isEmpty(payableFees)}">
+                <article class="member-notification-row member-reference-list__item member-fee-row" th:each="fee : ${payableFees}">
+                    <span class="member-notification-row-icon" aria-hidden="true" style="color: var(--member-color-danger-ink); background: var(--member-color-danger-soft);"><i class="bi bi-exclamation-circle"></i></span>
+                    <div class="member-notification-row-content">
+                        <div class="member-notification-row-meta">
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{loan.id}">Loan ID</span>: <span th:text="${@borrowCodeFormatter.format(fee.borrowId)}">1</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{member.fees.bookCount}">Books</span>: <span th:text="${fee.quantity}">1</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{member.fees.chargeableDays}">Chargeable Days</span>: <span th:text="${fee.days}">10</span>
+                            </span>
+                            <span class="member-notification-unread-label member-reference-pill" style="color: var(--member-color-danger-ink); background: var(--member-color-canvas); border-color: var(--member-color-danger-soft);">
+                                <span th:text="#{payment.status.unpaid}">Unpaid</span>
+                            </span>
+                        </div>
+                        <h3 style="color: var(--member-color-danger-ink);">
+                            <span th:text="#{member.fees.totalFee}">Total Fee</span>: 
+                            <strong th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</strong> <span th:text="#{currency.vnd}">VND</span>
+                        </h3>
+                    </div>
+                    <div class="d-flex flex-column gap-2 text-end">
+                        <form th:if="${fee.payable}" method="post"
+                              th:action="@{/member/financial/fees/pay/{borrowId}(borrowId=${fee.borrowId})}">
+                            <button type="submit" class="member-ui-button member-ui-button--primary member-ui-button--compact w-100">
+                                <span th:text="#{payment.pay}">Pay</span>
+                            </button>
+                        </form>
+                        <form th:if="${fee.payable}" method="post"
+                              th:action="@{/member/payments/payos/borrow-fee/{borrowId}(borrowId=${fee.borrowId})}">
+                            <button type="submit" class="member-ui-button member-ui-button--secondary member-ui-button--compact w-100">
+                                KQPay QR
+                            </button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="member-notifications-card member-reference-list">
+            <div class="member-notification-toolbar member-notification-toolbar--controls-only member-reference-list__header">
+                <div class="member-notification-toolbar-copy">
+                    <h2 th:text="#{member.fees.paid}">Paid Fees</h2>
+                </div>
+                <div class="member-notification-type-filter">
+                    <span th:text="#{member.fees.paid} + ': ' + ${paidFees != null ? #lists.size(paidFees) : 0}"></span>
+                </div>
+            </div>
+
+            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="member-notifications-empty member-notifications-empty--compact">
+                <span><i class="bi bi-wallet2" aria-hidden="true"></i></span>
+                <p th:text="#{member.fees.paidEmpty}">No borrowing fees have been paid yet.</p>
+            </div>
+
+            <div class="member-notifications-list member-reference-list__body" th:if="${paidFees != null and !#lists.isEmpty(paidFees)}">
+                <article class="member-notification-row member-reference-list__item" th:each="fee : ${paidFees}">
+                    <span class="member-notification-row-icon" aria-hidden="true" style="color: var(--member-color-success-ink); background: var(--member-color-success-soft);"><i class="bi bi-check-circle"></i></span>
+                    <div class="member-notification-row-content">
+                        <div class="member-notification-row-meta">
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{loan.id}">Loan ID</span>: <span th:text="${@borrowCodeFormatter.format(fee.borrowId)}">1</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{transaction.code}">Transaction ID</span>: <span th:text="${fee.transactionId != null ? fee.transactionId : '-'}">10</span>
+                            </span>
+                            <span class="member-notification-row-type member-reference-pill">
+                                <span th:text="#{member.fees.bookCount}">Books</span>: <span th:text="${fee.quantity}">1</span>
+                            </span>
+                            <span class="member-notification-unread-label member-reference-pill" style="color: var(--member-color-success-ink); background: var(--member-color-canvas); border-color: var(--member-color-success-soft);">
+                                <span th:text="#{payment.status.paid}">Paid</span>
+                            </span>
+                        </div>
+                        <h3>
+                            <span th:text="#{member.fees.totalFee}">Total Fee</span>: 
+                            <strong th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</strong> <span th:text="#{currency.vnd}">VND</span>
+                        </h3>
+                    </div>
+                    <time class="member-notification-row-time text-end"
+                          th:text="${fee.paymentDate != null ? #temporals.format(fee.paymentDate, 'dd/MM/yyyy HH:mm') : '-'}">-</time>
+                </article>
+            </div>
+        </section>
     </div>
-
-    <div th:if="${message != null}" class="finance-alert finance-alert--success" role="alert" th:text="${message}"></div>
-    <div th:if="${error != null}" class="finance-alert finance-alert--danger" role="alert" th:text="${error}"></div>
-
-    <section class="finance-card fees-section">
-        <div class="fees-section-header">
-                <h2 th:text="#{member.fees.pendingLoans}">Loans Pending Approval</h2>
-                <span class="fees-count is-pending" th:text="${pendingFees != null ? #lists.size(pendingFees) : 0}">0</span>
-            </div>
-
-            <div th:if="${pendingFees == null or #lists.isEmpty(pendingFees)}" class="empty-state" th:text="#{member.fees.pendingEmpty}">
-                There are no loans pending approval.
-            </div>
-
-            <div class="app-table-wrap" th:if="${pendingFees != null and !#lists.isEmpty(pendingFees)}">
-                <table class="app-table">
-                    <thead>
-                    <tr>
-                        <th th:text="#{loan.id}">Loan ID</th>
-                        <th th:text="#{member.fees.bookCount}">Books</th>
-                        <th th:text="#{member.fees.chargeableDays}">Chargeable Days</th>
-                        <th th:text="#{member.fees.estimatedFee}">Estimated Fee</th>
-                        <th th:text="#{common.status}">Status</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="fee : ${pendingFees}">
-                        <td th:text="${fee.borrowId}">1</td>
-                        <td th:text="${fee.quantity}">1</td>
-                        <td th:text="${fee.days}">10</td>
-                        <td class="fees-amount">
-                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                        </td>
-                        <td>
-                            <span class="status-badge status-pending" th:text="#{member.fees.awaitingLibrarian}">Awaiting Librarian Approval</span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-    </section>
-
-    <section class="finance-card fees-section">
-        <div class="fees-section-header">
-                <h2 th:text="#{member.fees.payable}">Fees to Pay</h2>
-                <span class="fees-count is-unpaid" th:text="${payableFees != null ? #lists.size(payableFees) : 0}">0</span>
-            </div>
-
-            <div th:if="${payableFees == null or #lists.isEmpty(payableFees)}" class="empty-state" th:text="#{member.fees.payableEmpty}">
-                There are no borrowing fees to pay.
-            </div>
-
-            <div class="app-table-wrap" th:if="${payableFees != null and !#lists.isEmpty(payableFees)}">
-                <table class="app-table">
-                    <thead>
-                    <tr>
-                        <th th:text="#{loan.id}">Loan ID</th>
-                        <th th:text="#{member.fees.bookCount}">Books</th>
-                        <th th:text="#{member.fees.chargeableDays}">Chargeable Days</th>
-                        <th th:text="#{member.fees.totalFee}">Total Fee</th>
-                        <th th:text="#{common.status}">Status</th>
-                        <th class="text-end" th:text="#{common.actions}">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="fee : ${payableFees}">
-                        <td th:text="${fee.borrowId}">1</td>
-                        <td th:text="${fee.quantity}">1</td>
-                        <td th:text="${fee.days}">10</td>
-                        <td class="fees-amount">
-                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                        </td>
-                        <td>
-                            <span class="status-badge badge-danger" th:text="#{payment.status.unpaid}">Unpaid</span>
-                        </td>
-                        <td class="fees-actions">
-                            <form th:if="${fee.payable}" method="post"
-                                  th:action="@{/member/financial/fees/pay/{borrowId}(borrowId=${fee.borrowId})}"
-                                  class="fees-action-form">
-                                <button type="submit" class="btn app-primary-action" th:text="#{payment.pay}">
-                                    Pay
-                                </button>
-                            </form>
-                            <form th:if="${fee.payable}" method="post"
-                                  th:action="@{/member/payments/payos/borrow-fee/{borrowId}(borrowId=${fee.borrowId})}"
-                                  class="fees-action-form">
-                                <button type="submit" class="btn app-secondary-action">
-                                    KQPay QR
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-    </section>
-
-    <section class="finance-card fees-section">
-        <div class="fees-section-header">
-                <h2 th:text="#{member.fees.paid}">Paid Fees</h2>
-                <span class="fees-count is-paid" th:text="${paidFees != null ? #lists.size(paidFees) : 0}">0</span>
-            </div>
-
-            <div th:if="${paidFees == null or #lists.isEmpty(paidFees)}" class="empty-state" th:text="#{member.fees.paidEmpty}">
-                No borrowing fees have been paid yet.
-            </div>
-
-            <div class="app-table-wrap" th:if="${paidFees != null and !#lists.isEmpty(paidFees)}">
-                <table class="app-table">
-                    <thead>
-                    <tr>
-                        <th th:text="#{loan.id}">Loan ID</th>
-                        <th th:text="#{transaction.code}">Transaction ID</th>
-                        <th th:text="#{member.fees.bookCount}">Books</th>
-                        <th th:text="#{member.fees.totalFee}">Total Fee</th>
-                        <th th:text="#{payment.date}">Payment Date</th>
-                        <th th:text="#{common.status}">Status</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="fee : ${paidFees}">
-                        <td th:text="${fee.borrowId}">1</td>
-                        <td th:text="${fee.transactionId != null ? fee.transactionId : '-'}">10</td>
-                        <td th:text="${fee.quantity}">1</td>
-                        <td class="fees-amount">
-                            <span th:text="${#numbers.formatDecimal(fee.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span>
-                        </td>
-                        <td th:text="${fee.paymentDate != null ? #temporals.format(fee.paymentDate, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
-                        <td>
-                            <span class="status-badge status-completed" th:text="#{payment.status.paid}">Paid</span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-    </section>
-</div>
+</main>
 </body>
 </html>

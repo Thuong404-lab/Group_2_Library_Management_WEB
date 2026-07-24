@@ -1,4 +1,5 @@
 package com.lms.controller.member;
+
 import com.lms.exception.ApplicationException;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.UnauthorizedException;
@@ -28,42 +29,42 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
     private final MemberRepository memberRepository;
 
     public PayOsPaymentController(PayOsPaymentService payOsPaymentService,
-                                  MemberRepository memberRepository) {
+            MemberRepository memberRepository) {
         this.payOsPaymentService = payOsPaymentService;
         this.memberRepository = memberRepository;
     }
 
     @PostMapping("/top-up")
     public String createTopUp(@RequestParam BigDecimal amount, Principal principal,
-                              RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         return createAndRedirect(() -> payOsPaymentService.createTopUp(currentMember(principal), amount),
                 "/member/financial/transactions", redirectAttributes);
     }
 
     @PostMapping("/fine/{fineId}")
     public String createFinePayment(@PathVariable Integer fineId, Principal principal,
-                                    RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         return createAndRedirect(() -> payOsPaymentService.createFinePayment(currentMember(principal), fineId),
                 "/member/financial/transactions", redirectAttributes);
     }
 
     @PostMapping("/fine/all")
     public String createFineBatchPayment(Principal principal,
-                                         RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         return createAndRedirect(() -> payOsPaymentService.createFineBatchPayment(currentMember(principal)),
                 "/member/financial/transactions", redirectAttributes);
     }
 
     @PostMapping("/borrow-fee/{borrowId}")
     public String createBorrowFeePayment(@PathVariable Integer borrowId, Principal principal,
-                                         RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         return createAndRedirect(() -> payOsPaymentService.createBorrowFeePayment(currentMember(principal), borrowId),
                 "/member/financial/fees", redirectAttributes);
     }
 
     @GetMapping("/return")
     public String paymentReturn(@RequestParam(required = false) Long orderCode,
-                                Principal principal, RedirectAttributes redirectAttributes) {
+            Principal principal, RedirectAttributes redirectAttributes) {
         if (orderCode == null) {
             redirectAttributes.addFlashAttribute("error", message("backend.payment.orderUnknown"));
             return "redirect:/member/financial/transactions";
@@ -81,6 +82,20 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
         return "member/payos-payment";
     }
 
+    @PostMapping("/{orderCode}/cancel")
+    public String cancelPayment(@PathVariable Long orderCode, Principal principal,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Member member = currentMember(principal);
+            payOsPaymentService.cancelBorrowFeeForMember(orderCode, member.getMemberId());
+            redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelSuccess"));
+            return "redirect:/member/financial/fees";
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("error", readableMessage(exception));
+            return "redirect:/member/payments/payos/" + orderCode;
+        }
+    }
+
     @GetMapping("/{orderCode}/status")
     @ResponseBody
     public Map<String, Object> paymentStatus(@PathVariable Long orderCode, Principal principal) {
@@ -89,7 +104,8 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
         result.put("orderCode", payment.getOrderCode());
         result.put("status", payment.getStatus());
         result.put("paidAt", payment.getPaidAt());
-        result.put("transactionId", payment.getTransaction() == null ? null : payment.getTransaction().getTransactionId());
+        result.put("transactionId",
+                payment.getTransaction() == null ? null : payment.getTransaction().getTransactionId());
         result.put("fineCount", payOsPaymentService.getFineItems(payment).size());
         return result;
     }
@@ -107,7 +123,7 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
     }
 
     private String createAndRedirect(PaymentCreator creator, String errorRedirect,
-                                     RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             PayOsPayment payment = creator.create();
             return "redirect:/member/payments/payos/" + payment.getOrderCode();

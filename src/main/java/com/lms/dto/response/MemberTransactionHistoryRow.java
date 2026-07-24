@@ -7,6 +7,8 @@ public record MemberTransactionHistoryRow(
         String code,
         LocalDateTime occurredAt,
         String typeLabel,
+        String description,
+        String detail,
         BigDecimal amount,
         String statusLabel,
         boolean completed) {

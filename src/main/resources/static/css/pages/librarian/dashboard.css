@@ -105,8 +105,8 @@
 
         .overview-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
             min-width: 0;
         }
 
@@ -628,6 +628,16 @@
 
 .librarian-dashboard-div-width-height-background-29 {
     width: 48px; height: 48px; background-color: rgba(139, 90, 43, 0.1); color: #8b5a2b;
+}
+
+.acquisition-requests-page .status-cancelled {
+    border-color: var(--app-color-hairline);
+    background: var(--app-color-surface-soft);
+    color: var(--app-color-muted);
+}
+
+.acquisition-requests-page .acquisition-decision-note.decision-approved {
+    color: var(--app-color-success-ink);
 }
 
 .librarian-dashboard-col-width-36 {
@@ -1332,8 +1342,8 @@
 }
 
 .librarian-dashboard-page #section-overview .overview-kpi-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .librarian-dashboard-page #section-overview .overview-kpi-section-title {
@@ -1344,14 +1354,37 @@
     white-space: nowrap;
 }
 
+.librarian-dashboard-page #section-overview .overview-kpi-updated {
+    grid-column: 1 / -1;
+    margin: -6px 0 0;
+    color: var(--overview-muted);
+    font-size: .75rem;
+    text-align: right;
+}
+
 .librarian-dashboard-page #section-overview .overview-kpi-card {
-    min-height: 122px;
-    gap: 15px;
-    padding: 20px;
+    min-height: 110px;
+    gap: 10px;
+    padding: 14px 12px;
     border: 1px solid var(--overview-line);
     border-radius: 15px;
     background: var(--overview-paper);
+    color: inherit;
     box-shadow: 0 7px 20px rgba(68, 48, 35, .06);
+    text-decoration: none;
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.librarian-dashboard-page #section-overview .overview-kpi-card:hover {
+    border-color: var(--app-color-application-primary);
+    color: inherit;
+    box-shadow: 0 10px 24px rgba(68, 48, 35, .1);
+    transform: translateY(-1px);
+}
+
+.librarian-dashboard-page #section-overview .overview-kpi-card:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--app-color-focus-application-ring);
 }
 
 .librarian-dashboard-page #section-overview .overview-kpi-icon {
@@ -1397,6 +1430,7 @@
 .librarian-dashboard-page #section-overview .overview-kpi-value {
     margin: 3px 0;
     font: 700 1.65rem/1.1 system-ui, sans-serif;
+    font-variant-numeric: lining-nums tabular-nums;
 }
 
 .librarian-dashboard-page #section-overview .overview-kpi-caption {
@@ -2081,10 +2115,81 @@
     color: var(--app-color-success-ink) !important;
 }
 
-.book-inventory-page .status-disposed {
+.book-inventory-page .status-borrowed {
+    border-color: #9ec5fe !important;
+    background: #e7f1ff !important;
+    color: #2764a5 !important;
+}
+
+.book-inventory-page .inventory-cover-frame {
+    display: block;
+    width: 50px;
+    height: 70px;
+    box-sizing: border-box;
+    padding: 3px;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 6px;
+    background: var(--app-color-surface-card, #fff);
+    object-fit: contain;
+    object-position: center;
+}
+
+.book-inventory-page .inventory-cover-frame--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: var(--app-color-surface-soft);
+    color: var(--app-color-muted);
+}
+
+.book-inventory-page .status-zero {
     border-color: var(--app-color-danger-border) !important;
     background: var(--app-color-danger-soft) !important;
     color: var(--app-color-danger-ink) !important;
+}
+
+.book-inventory-page .status-lost {
+    border-color: #f0a8a8 !important;
+    background: #fde8e8 !important;
+    color: #b42318 !important;
+}
+
+.book-inventory-page .status-damaged {
+    border-color: #ead7a0 !important;
+    background: #fff5d8 !important;
+    color: #8a6116 !important;
+}
+
+.book-inventory-page .status-minor-damaged {
+    border-color: #efcf91 !important;
+    background: #fff8e8 !important;
+    color: #946200 !important;
+}
+
+.book-inventory-page .book-copy-select-cell {
+    width: 56px;
+    vertical-align: middle !important;
+}
+
+.book-inventory-page .book-copy-select-cell .form-check-input {
+    position: static;
+    display: block;
+    float: none;
+    margin: 0 auto !important;
+}
+
+.book-inventory-page .add-copies-form .add-copy-control {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background-color: var(--app-color-surface-card, #fff);
+}
+
+.book-inventory-page .add-copies-form .form-select.add-copy-control {
+    padding-right: 2.75rem;
+    background-position: right 1rem center;
 }
 
 .book-inventory-page .inventory-empty-cell {
@@ -2150,6 +2255,86 @@
     padding: 24px;
     background: var(--app-color-canvas);
 }
+
+.book-inventory-page .member-page-header > .member-primary-action {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    max-width: none;
+    padding-inline: 18px;
+    overflow: visible;
+    white-space: nowrap;
+}
+
+/* Keep the submit controls accessible when a selected cover image adds a preview. */
+.book-inventory-page .book-form-modal .modal-content {
+    display: flex;
+    max-height: calc(100vh - 2rem);
+    flex-direction: column;
+}
+
+.book-inventory-page .book-form-modal .modal-content > form {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.book-inventory-page .book-form-modal .modal-body {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.book-inventory-page .book-form-modal .modal-footer {
+    flex: 0 0 auto;
+}
+
+/* Edit-book fields: title/genre/shelf on the left; author/ISBN/cover on the right. */
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(1) { order: 1; }
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(3) { order: 2; }
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(4) { order: 3; }
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(2) { order: 4; }
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(5) { order: 5; }
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-md-6:nth-child(6) { order: 6; }
+.book-inventory-page .book-form-modal form[action*="/inventory/edit"] .row > .col-12:nth-child(7) { order: 7; }
+
+/* Display the existing cover beneath the file input, matching the add-book preview. */
+.book-inventory-page .book-form-modal .edit-book-cover-control {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px !important;
+}
+
+.book-inventory-page .book-form-modal .edit-book-cover-control > .flex-grow-1 { order: 1; }
+.book-inventory-page .book-form-modal .edit-book-cover-control > .flex-shrink-0 { order: 2; margin-top: 0; }
+.book-inventory-page .book-form-modal .edit-book-cover-control > .flex-shrink-0 .text-muted { display: none; }
+
+.book-cover-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.book-inventory-page .book-form-modal form .form-control:not(textarea),
+.book-inventory-page .book-form-modal form .form-select,
+.book-inventory-page .book-cover-file-control { height: 64px !important; min-height: 64px !important; box-sizing: border-box; }
+.book-inventory-page .book-form-modal form .form-select { width: 100% !important; }
+.book-inventory-page .book-form-modal .edit-book-cover-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    border: 1px solid var(--app-color-hairline);
+    border-radius: 8px;
+    background: #fff;
+}
+.book-inventory-page .book-form-modal .edit-book-cover-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.book-cover-file-control { display: flex; align-items: center; width: 100%; padding: 5px 10px; gap: 8px; border: 1px solid var(--app-color-hairline); border-radius: var(--app-radius-md); background: var(--app-color-canvas); }
+.book-inventory-page .add-book-form .book-cover-file-control { grid-column: 1 / -1; grid-row: 2; }
+.book-cover-file-button { display: inline-flex; align-items: center; justify-content: center; height: 30px !important; min-height: 30px !important; padding: 0 9px !important; margin: 0 !important; border: 1px solid var(--app-color-hairline); border-radius: 6px; background: var(--app-color-surface-soft); color: var(--app-color-ink); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.book-cover-file-name { display: inline-block; color: var(--app-color-muted); font-size: 14px; overflow-wrap: anywhere; }
 
 .book-inventory-page .modal-title {
     color: var(--app-color-ink) !important;

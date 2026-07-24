@@ -17,6 +17,13 @@ public class Transaction {
     @JoinColumn(name = "borrow_id")
     private Borrow borrow;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "borrow_detail_id")
+    private BorrowDetail borrowDetail;
+
+    @Column(name = "renewal_days")
+    private Integer renewalDays;
+
     @Column(nullable = false, length = 50)
     private String transactionType;
 
@@ -25,10 +32,39 @@ public class Transaction {
 
     private LocalDateTime transactionDate;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @Column(length = 50)
     private String status = "Completed";
 
+    @Column(name = "reference_code", length = 64, unique = true)
+    private String referenceCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "performed_by_staff_id")
+    private Staff performedByStaff;
+
+    @Column(length = 20)
+    private String channel;
+
+    @Column(name = "balance_before", precision = 18, scale = 2)
+    private BigDecimal balanceBefore;
+
+    @Column(name = "balance_after", precision = 18, scale = 2)
+    private BigDecimal balanceAfter;
+
     public Transaction() {
+    }
+
+    @PrePersist
+    void initializeTimestamps() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) createdAt = transactionDate == null ? now : transactionDate;
+        if (transactionDate == null) transactionDate = createdAt;
     }
 
     public Transaction(Integer transactionId, Wallet wallet, Borrow borrow, String transactionType, BigDecimal amount, LocalDateTime transactionDate, String status) {
@@ -47,12 +83,31 @@ public class Transaction {
     public void setWallet(Wallet wallet) { this.wallet = wallet; }
     public Borrow getBorrow() { return borrow; }
     public void setBorrow(Borrow borrow) { this.borrow = borrow; }
+    public BorrowDetail getBorrowDetail() { return borrowDetail; }
+    public void setBorrowDetail(BorrowDetail borrowDetail) { this.borrowDetail = borrowDetail; }
+    public Integer getRenewalDays() { return renewalDays; }
+    public void setRenewalDays(Integer renewalDays) { this.renewalDays = renewalDays; }
     public String getTransactionType() { return transactionType; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public LocalDateTime getTransactionDate() { return transactionDate; }
     public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getReferenceCode() { return referenceCode; }
+    public void setReferenceCode(String referenceCode) { this.referenceCode = referenceCode; }
+    public Staff getPerformedByStaff() { return performedByStaff; }
+    public void setPerformedByStaff(Staff performedByStaff) { this.performedByStaff = performedByStaff; }
+    public String getChannel() { return channel; }
+    public void setChannel(String channel) { this.channel = channel; }
+    public BigDecimal getBalanceBefore() { return balanceBefore; }
+    public void setBalanceBefore(BigDecimal balanceBefore) { this.balanceBefore = balanceBefore; }
+    public BigDecimal getBalanceAfter() { return balanceAfter; }
+    public void setBalanceAfter(BigDecimal balanceAfter) { this.balanceAfter = balanceAfter; }
 }
+

@@ -10,35 +10,37 @@ import com.lms.entity.Reservation;
 import java.util.List;
 
 public interface BorrowService {
-    // Luồng mượn trực tiếp tại quầy
+    // Luá»“ng mÆ°á»£n trá»±c tiáº¿p táº¡i quáº§y
     Borrow processBorrowing(BorrowRequest request, String librarianUsername);
     Borrow activatePendingBankBorrow(Integer borrowId);
     void cancelPendingBankBorrow(Integer borrowId, String paymentStatus);
 
-    // Luồng đăng ký mượn trực tuyến (Chờ duyệt)
+    // Luá»“ng Ä‘Äƒng kÃ½ mÆ°á»£n trá»±c tuyáº¿n (Chá» duyá»‡t)
     Borrow memberSubmitBorrowRequest(String username, Integer bookId, Integer numberOfDays);
     void approvePendingRequest(Integer borrowId, List<String> barcodes, String staffUsername);
-    void rejectPendingRequest(Integer borrowId, String reason);
+    void rejectPendingRequest(Integer borrowId, String reasonCode, String reason);
 
     void confirmPhysicalPickup(Integer borrowId, String staffUsername);
 
-    // Luồng YÊU CẦU TRẢ SÁCH VÀ GIA HẠN
-    void memberSubmitRenewRequest(Integer borrowDetailId);
-    void processReturnBook(String barcode); // Trả trực tiếp qua quét mã vạch
+    // Luá»“ng YÃŠU Cáº¦U TRáº¢ SÃCH VÃ€ GIA Háº N
+    void memberSubmitRenewRequest(String username, Integer borrowDetailId, Integer renewalDays);
+    void memberCancelRenewRequest(String username, Integer borrowDetailId);
+    void processReturnBook(String barcode); // Tráº£ trá»±c tiáº¿p qua quÃ©t mÃ£ váº¡ch
 
-    // Luồng ĐẶT TRƯỚC SÁCH - RESERVATION (Mới nâng cấp)
+    // Luá»“ng Äáº¶T TRÆ¯á»šC SÃCH - RESERVATION (Má»›i nÃ¢ng cáº¥p)
     Reservation memberSubmitReservationRequest(String username, Integer bookId);
     void approveReservationRequest(Integer reservationId, String staffUsername);
-    void rejectReservationRequest(Integer reservationId, String staffUsername, String reason);
+    void rejectReservationRequest(Integer reservationId, String staffUsername, String reasonCode, String reason);
     void memberCancelReservation(String username, Integer reservationId);
     Reservation getReservationById(Integer reservationId);
 
-    // FIX: Thêm phương thức này để đồng bộ với BorrowServiceImpl
+    // FIX: ThÃªm phÆ°Æ¡ng thá»©c nÃ y Ä‘á»ƒ Ä‘á»“ng bá»™ vá»›i BorrowServiceImpl
     List<Reservation> getAllPendingReservations();
 
-    // Các phương thức truy vấn danh sách dữ liệu
+    // CÃ¡c phÆ°Æ¡ng thá»©c truy váº¥n danh sÃ¡ch dá»¯ liá»‡u
     List<Borrow> getBorrowsByMemberAndStatus(String username, String status);
     List<Borrow> getAllPendingRequests();
+    List<Borrow> getWaitingPickupRequests();
     List<Borrow> getAllReturnRequests();
     List<Borrow> getAllActiveLoans();
     void updateStatus(Integer loanId, String status);
@@ -48,25 +50,25 @@ public interface BorrowService {
     List<BorrowDetail> getPendingRenewalRequests();
     BorrowDetail getBorrowDetailById(Integer borrowDetailId);
 
-    // Dữ liệu đồng bộ ra các Tab hiển thị trên Front-end
+    // Dá»¯ liá»‡u Ä‘á»“ng bá»™ ra cÃ¡c Tab hiá»ƒn thá»‹ trÃªn Front-end
     List<MemberBorrowDTO> getMemberCurrentBorrows(String username);
     List<MemberBorrowDTO> getMemberReservations(String username);
     List<MemberBorrowDTO> getMemberOneMonthHistory(String username);
 
-    // Thêm vào interface BorrowService
+    // ThÃªm vÃ o interface BorrowService
     List<ReturnRequestDTO> getPendingReturnRequestDTOs();
     List<ReservationRequestDTO> getPendingReservationDTOs();
 
-    // Dữ liệu cấu hình hệ thống
+    // Dá»¯ liá»‡u cáº¥u hÃ¬nh há»‡ thá»‘ng
     int getMaxBorrowDays();
 
     void memberSubmitReturnRequest(String username, Integer borrowDetailId);
     void approveReturnRequest(Integer borrowId);
 
-    // Đăng ký mượn nhiều cuốn trực tuyến
+    // ÄÄƒng kÃ½ mÆ°á»£n nhiá»u cuá»‘n trá»±c tuyáº¿n
     Borrow memberSubmitMultiBookBorrowRequest(String username, List<Integer> bookIds, Integer numberOfDays);
 
-    // Tính toán xem trước phí mượn
+    // TÃ­nh toÃ¡n xem trÆ°á»›c phÃ­ mÆ°á»£n
     java.math.BigDecimal calculateBorrowFeePreview(String username, List<Integer> bookIds, Integer numberOfDays);
 
     // Luồng thanh toán ngân hàng cho mượn nhiều sách online (member tự đặt từ giỏ sách)

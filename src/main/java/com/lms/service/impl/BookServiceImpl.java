@@ -21,6 +21,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import com.lms.entity.Author;
 import java.util.List;
+
 /**
  * BookService - Xử lý Logic Sách
  * Liên quan: Member 1 (Thương) + Member 2 (Khanh)
@@ -34,13 +35,13 @@ public class BookServiceImpl implements BookService {
     private final GenreRepository genreRepository;
     private final AuthorRepository authorRepository;
 
-    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository, GenreRepository genreRepository, AuthorRepository authorRepository) {
+    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository,
+            GenreRepository genreRepository, AuthorRepository authorRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.authorRepository = authorRepository;
     }
-
 
     // UC-1: Tìm kiếm sách
     @Override
@@ -50,33 +51,33 @@ public class BookServiceImpl implements BookService {
                 query.distinct(true);
             }
             Predicate predicate = cb.conjunction();
-            
+
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String[] words = keyword.trim().split("\\s+");
-                
+
                 // Ensure we only join once, and reuse it for all words
                 Join<Book, Author> authorJoin = root.join("authors", JoinType.LEFT);
-                
+
                 for (String word : words) {
                     String likePattern = "%" + word.toLowerCase() + "%";
-                    
+
                     Predicate titlePredicate = cb.like(cb.lower(root.get("title")), likePattern);
                     Predicate authorPredicate = cb.like(cb.lower(authorJoin.get("authorName")), likePattern);
                     Predicate isbnPredicate = cb.like(cb.lower(root.get("isbn")), likePattern);
-                    
+
                     Predicate wordPredicate = cb.or(titlePredicate, authorPredicate, isbnPredicate);
                     predicate = cb.and(predicate, wordPredicate);
                 }
             }
-            
+
             if (genreId != null) {
                 predicate = cb.and(predicate, cb.equal(root.get("genre").get("genreId"), genreId));
             }
-            
+
             if (status != null && !status.trim().isEmpty()) {
                 predicate = cb.and(predicate, cb.equal(root.get("status"), status));
             }
-            
+
             return predicate;
         };
 
@@ -92,9 +93,8 @@ public class BookServiceImpl implements BookService {
     // Lấy sách mới nhất cho trang chủ
     @Override
     public List<Book> getRecentBooks(int limit) {
-        Pageable pageable =
-                PageRequest.of(0, limit,
-                        Sort.by(Sort.Direction.DESC, "bookId"));
+        Pageable pageable = PageRequest.of(0, limit,
+                Sort.by(Sort.Direction.DESC, "bookId"));
         return bookRepository.findAll(pageable).getContent();
     }
 

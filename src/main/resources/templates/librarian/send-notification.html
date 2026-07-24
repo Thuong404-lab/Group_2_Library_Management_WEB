@@ -5,20 +5,23 @@
 <head>
     <title th:text="#{librarian.notification.title}">Send Notifications to Members</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css(v='20260724-2')}">
 </head>
 <body>
 <main layout:fragment="content"
       th:with="activeMenu='notifications'"
-      class="canonical-management-page notification-compose-page">
+      class="canonical-management-page member-palette-page member-management-page notification-compose-page">
 
-    <header class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom dashboard-page-header">
-        <div>
+    <header class="d-flex justify-content-between align-items-center dashboard-page-header notification-page-hero">
+        <div class="notification-hero-copy">
             <div class="app-page-eyebrow" th:text="#{librarian.notification.eyebrow}">READER INTERACTION</div>
             <h1 class="app-page-title" th:text="#{librarian.notification.title}">Send Notifications to Members</h1>
             <p class="app-page-description" th:text="#{librarian.notification.description}">
                 Send a notification to all members or a selected group.
             </p>
+        </div>
+        <div class="notification-hero-decoration" aria-hidden="true">
+            <i class="bi bi-send"></i>
         </div>
     </header>
 
@@ -31,8 +34,26 @@
                   th:object="${notificationRequest}"
                   method="post"
                   id="notificationForm"
+                  th:data-active-count="${activeMemberCount}"
+                  th:data-title-min="${notificationTitleMin}"
+                  th:data-title-max="${notificationTitleMax}"
+                  th:data-content-min="${notificationContentMin}"
+                  th:data-content-max="${notificationContentMax}"
+                  th:data-confirm-all="#{librarian.notification.confirmAllRecipients}"
+                  th:data-confirm-selected="#{librarian.notification.confirmSelectedRecipients}"
+                  th:data-processing="#{common.processing}"
+                  th:data-searching="#{librarian.notification.searching}"
+                  th:data-search-empty="#{librarian.notification.searchEmpty}"
+                  th:data-search-error="#{librarian.notification.searchError}"
+                  th:data-search-minimum="#{librarian.notification.searchMinimum}"
+                  th:data-member-required="#{backend.librarian.notification.memberRequired}"
+                  th:data-member-maximum="#{backend.librarian.notification.memberMaximum(${notificationMaxRecipients})}"
                   novalidate>
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="hidden" th:field="*{requestToken}">
+                <div th:if="${notificationFieldErrors != null and notificationFieldErrors['requestToken'] != null}"
+                     class="app-alert app-alert--danger"
+                     th:text="${notificationFieldErrors['requestToken']}"></div>
 
                 <div class="notification-form-grid">
                     <div class="notification-recipient-column">
@@ -41,13 +62,14 @@
                              id="recipientTypeGroup"
                              th:classappend="${notificationFieldErrors != null and notificationFieldErrors['recipientType'] != null} ? 'is-invalid'">
                             <div class="notification-choice">
-                                <input class="form-check-input" type="radio" th:field="*{recipientType}" value="ALL" id="recipientAll">
-                                <label class="form-check-label" for="recipientAll" th:text="#{librarian.notification.allMembers}">
-                                    Send to All Members
+                                <input class="form-check-input" type="radio" th:field="*{recipientType}" value="ALL" id="recipientAll" required>
+                                <label class="form-check-label" for="recipientAll">
+                                    <span th:text="#{librarian.notification.allMembers}">Send to All Active Members</span>
+                                    <strong th:text="${'(' + activeMemberCount + ')'}">(0)</strong>
                                 </label>
                             </div>
                             <div class="notification-choice">
-                                <input class="form-check-input" type="radio" th:field="*{recipientType}" value="SELECTED" id="recipientSelected">
+                                <input class="form-check-input" type="radio" th:field="*{recipientType}" value="SELECTED" id="recipientSelected" required>
                                 <label class="form-check-label" for="recipientSelected" th:text="#{librarian.notification.selectedMembers}">
                                     Send to Selected Members
                                 </label>
@@ -66,44 +88,47 @@
                                    class="notification-control"
                                    th:placeholder="#{librarian.notification.searchPlaceholder}"
                                    autocomplete="off"
-                                   aria-controls="memberIdsGroup"
+                                   th:data-search-url="@{/librarian/interaction/notifications/recipients}"
+                                   th:data-min-length="${notificationSearchMin}"
+                                   th:data-maximum="${notificationMaxRecipients}"
+                                   aria-controls="memberSearchResults"
                                    aria-describedby="memberSearchHint">
                             <p id="memberSearchHint" class="notification-helper-text" th:text="#{librarian.notification.searchHint}">
                                 Enter an email address or phone number to display matching members.
                             </p>
 
+                            <div class="notification-selected-summary">
+                                <span th:text="#{librarian.notification.selectedCount}">Selected</span>:
+                                <strong id="selectedMemberCount">0</strong>
+                            </div>
                             <div class="notification-member-list member-list-scroll validate-group"
-                                 id="memberIdsGroup"
+                                 id="selectedMembers"
                                  th:classappend="${notificationFieldErrors != null and notificationFieldErrors['memberIds'] != null} ? 'is-invalid'">
-                                <div th:each="member : ${members}"
+                                <div th:each="member : ${selectedMembers}"
                                      class="notification-member-item member-item"
-                                     th:data-member-email="${member.user != null and member.user.email != null ? #strings.toLowerCase(#strings.trim(member.user.email)) : ''}"
-                                     th:data-member-phone="${member.user != null and member.user.phone != null ? #strings.trim(member.user.phone) : ''}">
+                                     th:data-member-id="${member.memberId}">
                                     <input class="form-check-input member-checkbox"
                                            type="checkbox"
                                            name="memberIds"
                                            th:value="${member.memberId}"
                                            th:id="${'notificationMember-' + member.memberId}"
-                                           th:checked="${notificationRequest.memberIds != null and notificationRequest.memberIds.contains(member.memberId)}">
+                                           checked>
                                     <label class="form-check-label" th:for="${'notificationMember-' + member.memberId}">
-                                        <strong th:text="${member.user != null ? member.user.fullName : 'Member ID: ' + member.memberId}">Member name</strong>
-                                        <small th:if="${member.user != null}">
-                                            <span th:text="${member.user.email != null and !member.user.email.isBlank() ? member.user.email : #messages.msg('librarian.notification.noEmail')}">email</span>
+                                        <strong th:text="${member.fullName}">Member name</strong>
+                                        <small>
+                                            <span th:text="${member.memberCode}">MEM-1</span>
+                                            <span aria-hidden="true"> | </span>
+                                            <span th:text="${member.email}">email</span>
                                             <span aria-hidden="true"> · </span>
-                                            <span th:text="${member.user.phone != null and !member.user.phone.isBlank() ? member.user.phone : #messages.msg('librarian.notification.noPhone')}">phone</span>
+                                            <span th:text="${member.phone}">phone</span>
                                         </small>
                                     </label>
                                 </div>
 
-                                <div th:if="${members == null or members.isEmpty()}" class="notification-empty-state">
-                                    <i class="bi bi-person-x" aria-hidden="true"></i>
-                                    <span th:text="#{librarian.notification.noMembers}">There are no members in the system.</span>
-                                </div>
-                                <div id="memberSearchEmpty" class="notification-member-search-empty" hidden>
-                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
-                                    <span th:text="#{librarian.notification.searchEmpty}">No matching member was found.</span>
-                                </div>
                             </div>
+                            <div id="memberSearchResults" class="notification-member-list member-list-scroll"
+                                 aria-live="polite" hidden></div>
+                            <div id="memberSearchStatus" class="notification-helper-text" aria-live="polite"></div>
 
                             <p class="notification-helper-text" th:text="#{librarian.notification.selectionHint}">
                                 Only select members when "Send to Selected Members" is chosen.
@@ -132,7 +157,8 @@
                                     required
                                     th:classappend="${notificationFieldErrors != null and notificationFieldErrors['notificationType'] != null} ? 'is-invalid'">
                                 <option value="" disabled hidden th:text="#{librarian.notification.typePlaceholder}">Select a notification type</option>
-                                <option th:each="type : ${notificationTypes}" th:value="${type}" th:text="${type.displayName}">General notification</option>
+                                <option th:each="type : ${notificationTypes}" th:value="${type}"
+                                        th:text="${#messages.msg(type.messageKey)}">General notification</option>
                             </select>
                             <div id="notificationTypeError"
                                  class="invalid-feedback notification-validation-message"
@@ -159,8 +185,8 @@
                                    class="notification-control validate-field"
                                    th:field="*{title}"
                                    required
-                                   minlength="5"
-                                   maxlength="150"
+                                   th:minlength="${notificationTitleMin}"
+                                   th:maxlength="${notificationTitleMax}"
                                    th:placeholder="#{librarian.notification.titleRangePlaceholder}"
                                    aria-describedby="titleCharacterCount titleValidationMessage"
                                    th:classappend="${notificationFieldErrors != null and notificationFieldErrors['title'] != null} ? 'is-invalid'">
@@ -181,8 +207,8 @@
                                       rows="8"
                                       th:field="*{content}"
                                       required
-                                      minlength="10"
-                                      maxlength="2000"
+                                      th:minlength="${notificationContentMin}"
+                                      th:maxlength="${notificationContentMax}"
                                       th:placeholder="#{librarian.notification.contentRangePlaceholder}"
                                       aria-describedby="contentCharacterCount contentValidationMessage"
                                       th:classappend="${notificationFieldErrors != null and notificationFieldErrors['content'] != null} ? 'is-invalid'"></textarea>
@@ -197,8 +223,8 @@
                         </div>
 
                         <div class="notification-form-actions">
-                            <button type="submit" class="btn btn-classic notification-submit" th:text="#{librarian.notification.submit}">
-                                Send Notification
+                            <button type="submit" id="notificationSubmit" class="btn btn-classic notification-submit">
+                                <span class="submit-label" th:text="#{librarian.notification.submit}">Send Notification</span>
                             </button>
                         </div>
                     </div>
@@ -207,160 +233,76 @@
         </div>
     </section>
 
-    <script th:inline="javascript">
-        document.addEventListener("DOMContentLoaded", function () {
-            const form = document.getElementById("notificationForm");
-            if (!form) return;
+    <dialog id="notificationConfirmDialog" class="notification-confirm-dialog"
+            aria-labelledby="notificationConfirmTitle">
+        <div class="notification-confirm-header">
+            <div class="app-page-eyebrow" th:text="#{librarian.notification.confirmEyebrow}">SEND CONFIRMATION</div>
+            <h2 id="notificationConfirmTitle" th:text="#{librarian.notification.confirmTitle}">
+                Confirm notification
+            </h2>
+            <p id="notificationConfirmRecipients"></p>
+        </div>
+        <dl class="notification-confirm-preview">
+            <div>
+                <dt th:text="#{common.title}">Title</dt>
+                <dd id="notificationConfirmMessageTitle"></dd>
+            </div>
+            <div>
+                <dt th:text="#{librarian.notification.type}">Type</dt>
+                <dd id="notificationConfirmType"></dd>
+            </div>
+            <div>
+                <dt th:text="#{common.content}">Content</dt>
+                <dd id="notificationConfirmContent"></dd>
+            </div>
+        </dl>
+        <div class="notification-confirm-actions">
+            <button type="button" id="notificationConfirmCancel"
+                    class="btn notification-confirm-cancel"
+                    th:text="#{common.cancel}">Cancel</button>
+            <button type="button" id="notificationConfirmSubmit"
+                    class="btn btn-classic notification-confirm-submit">
+                <i class="bi bi-send" aria-hidden="true"></i>
+                <span th:text="#{librarian.notification.confirmSend}">Send now</span>
+            </button>
+        </div>
+    </dialog>
 
-            const recipientAll = document.getElementById("recipientAll");
-            const recipientSelected = document.getElementById("recipientSelected");
-            const recipientTypeGroup = document.getElementById("recipientTypeGroup");
-            const recipientTypeError = document.getElementById("recipientTypeError");
-            const memberListBox = document.getElementById("memberListBox");
-            const memberIdsGroup = document.getElementById("memberIdsGroup");
-            const memberIdsError = document.getElementById("memberIdsError");
-            const memberSearchInput = document.getElementById("memberSearchInput");
-            const memberSearchEmpty = document.getElementById("memberSearchEmpty");
-            const memberItems = Array.from(document.querySelectorAll(".notification-member-item"));
-            const memberCheckboxes = Array.from(document.querySelectorAll(".member-checkbox"));
-            const typeInput = document.getElementById("notificationType");
-            const typeError = document.getElementById("notificationTypeError");
-            const titleInput = document.getElementById("title");
-            const titleError = document.getElementById("titleValidationMessage");
-            const contentInput = document.getElementById("content");
-            const contentError = document.getElementById("contentValidationMessage");
+    <section class="app-card notification-history-card">
+        <div class="notification-compose-body">
+            <h2 class="notification-history-title" th:text="#{librarian.notification.history}">Recent send history</h2>
+            <p class="notification-helper-text" th:text="#{librarian.notification.historyHint}">
+                Delivery and read information from real notification records.
+            </p>
+            <div class="table-responsive notification-history-table-wrap" th:if="${recentNotifications != null and !recentNotifications.isEmpty()}">
+                <table class="table notification-history-table">
+                    <thead><tr>
+                        <th th:text="#{librarian.notification.historyId}">ID</th>
+                        <th th:text="#{common.title}">Title</th>
+                        <th th:text="#{librarian.notification.type}">Type</th>
+                        <th th:text="#{librarian.notification.sender}">Sender</th>
+                        <th th:text="#{librarian.notification.sentAt}">Sent at</th>
+                        <th th:text="#{librarian.notification.delivery}">Read / recipients</th>
+                    </tr></thead>
+                    <tbody><tr th:each="item : ${recentNotifications}">
+                        <td th:data-label="#{librarian.notification.historyId}" th:text="${'#' + item.notificationId}">#1</td>
+                        <td th:data-label="#{common.title}" th:text="${item.title}">Title</td>
+                        <td th:data-label="#{librarian.notification.type}" th:text="${#messages.msg(item.notificationType.messageKey)}">Type</td>
+                        <td th:data-label="#{librarian.notification.sender}" th:text="${item.senderName}">Sender</td>
+                        <td th:data-label="#{librarian.notification.sentAt}" th:text="${#temporals.format(item.createdDate, 'dd/MM/yyyy HH:mm')}">Date</td>
+                        <td th:data-label="#{librarian.notification.delivery}" th:text="${item.readCount + ' / ' + item.recipientCount}">0 / 0</td>
+                    </tr></tbody>
+                </table>
+            </div>
+            <div class="notification-empty-state"
+                 th:if="${recentNotifications == null or recentNotifications.isEmpty()}">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <span th:text="#{librarian.notification.historyEmpty}">No manual notifications have been sent.</span>
+            </div>
+        </div>
+    </section>
 
-            const messages = {
-                recipientRequired: /*[[#{backend.librarian.notification.recipientRequired}]]*/ "Please select the recipients.",
-                memberRequired: /*[[#{backend.librarian.notification.memberRequired}]]*/ "Please select at least one member.",
-                typeRequired: /*[[#{backend.librarian.notification.typeRequired}]]*/ "Please select a notification type.",
-                titleRequired: /*[[#{backend.librarian.notification.titleRequired}]]*/ "The title is required.",
-                titleMinimum: /*[[#{backend.librarian.notification.titleMinimum}]]*/ "The title must contain at least 5 characters.",
-                titleMaximum: /*[[#{backend.librarian.notification.titleMaximum}]]*/ "The title cannot exceed 150 characters.",
-                contentRequired: /*[[#{backend.librarian.notification.contentRequired}]]*/ "The content is required.",
-                contentMinimum: /*[[#{backend.librarian.notification.contentMinimum}]]*/ "The content must contain at least 10 characters.",
-                contentMaximum: /*[[#{backend.librarian.notification.contentMaximum}]]*/ "The content cannot exceed 2000 characters.",
-                contentDifferent: /*[[#{backend.librarian.notification.contentDifferent}]]*/ "The content cannot be identical to the title."
-            };
-
-            function setValidation(target, errorTarget, message) {
-                if (target) {
-                    target.classList.toggle("is-invalid", Boolean(message));
-                    target.classList.toggle("is-valid", !message);
-                }
-                if (errorTarget) errorTarget.textContent = message || "";
-            }
-
-            function clearValidation(target, errorTarget) {
-                if (target) target.classList.remove("is-invalid", "is-valid");
-                if (errorTarget) errorTarget.textContent = "";
-            }
-
-            function updateCounter(input, counterId, maximum) {
-                const counter = document.getElementById(counterId);
-                if (!input || !counter) return;
-                const length = input.value.length;
-                counter.textContent = length + "/" + maximum;
-                counter.classList.toggle("is-near-limit", length >= Math.floor(maximum * 0.9) && length < maximum);
-                counter.classList.toggle("is-limit-reached", length >= maximum);
-            }
-
-            function toggleMemberList() {
-                const show = Boolean(recipientSelected && recipientSelected.checked);
-                if (memberListBox) memberListBox.classList.toggle("is-hidden", !show);
-                memberCheckboxes.forEach(function (checkbox) {
-                    checkbox.disabled = !show;
-                    if (!show) checkbox.checked = false;
-                });
-                if (!show) clearValidation(memberIdsGroup, memberIdsError);
-            }
-
-            function filterMembers() {
-                const query = memberSearchInput ? memberSearchInput.value.trim().toLowerCase() : "";
-                let visibleCount = 0;
-                memberItems.forEach(function (item) {
-                    const matches = query === ""
-                        || (item.dataset.memberEmail || "").includes(query)
-                        || (item.dataset.memberPhone || "").toLowerCase().includes(query);
-                    item.classList.toggle("is-filtered-out", !matches);
-                    if (matches) visibleCount++;
-                });
-                if (memberSearchEmpty) memberSearchEmpty.hidden = query === "" || visibleCount > 0;
-            }
-
-            [recipientAll, recipientSelected].forEach(function (input) {
-                if (!input) return;
-                input.addEventListener("change", function () {
-                    clearValidation(recipientTypeGroup, recipientTypeError);
-                    toggleMemberList();
-                });
-            });
-            memberCheckboxes.forEach(function (checkbox) {
-                checkbox.addEventListener("change", function () {
-                    clearValidation(memberIdsGroup, memberIdsError);
-                });
-            });
-            if (memberSearchInput) memberSearchInput.addEventListener("input", filterMembers);
-            if (typeInput) typeInput.addEventListener("change", function () { clearValidation(typeInput, typeError); });
-            if (titleInput) titleInput.addEventListener("input", function () {
-                clearValidation(titleInput, titleError);
-                updateCounter(titleInput, "titleCharacterCount", 150);
-            });
-            if (contentInput) contentInput.addEventListener("input", function () {
-                clearValidation(contentInput, contentError);
-                updateCounter(contentInput, "contentCharacterCount", 2000);
-            });
-
-            form.addEventListener("submit", function (event) {
-                const normalizedTitle = titleInput ? titleInput.value.trim().replace(/\s+/g, " ") : "";
-                const normalizedContent = contentInput ? contentInput.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n") : "";
-                if (titleInput) titleInput.value = normalizedTitle;
-                if (contentInput) contentInput.value = normalizedContent;
-
-                let firstInvalid = null;
-                const recipientMessage = (!recipientAll || !recipientAll.checked) && (!recipientSelected || !recipientSelected.checked)
-                    ? messages.recipientRequired : "";
-                setValidation(recipientTypeGroup, recipientTypeError, recipientMessage);
-                if (recipientMessage) firstInvalid = recipientAll;
-
-                const selectedMemberMessage = recipientSelected && recipientSelected.checked
-                    && !memberCheckboxes.some(function (checkbox) { return checkbox.checked; })
-                    ? messages.memberRequired : "";
-                setValidation(memberIdsGroup, memberIdsError, selectedMemberMessage);
-                if (!firstInvalid && selectedMemberMessage) firstInvalid = memberSearchInput;
-
-                const typeMessage = !typeInput || typeInput.value === "" ? messages.typeRequired : "";
-                setValidation(typeInput, typeError, typeMessage);
-                if (!firstInvalid && typeMessage) firstInvalid = typeInput;
-
-                const titleMessage = normalizedTitle === "" ? messages.titleRequired
-                    : normalizedTitle.length < 5 ? messages.titleMinimum
-                    : normalizedTitle.length > 150 ? messages.titleMaximum : "";
-                setValidation(titleInput, titleError, titleMessage);
-                if (!firstInvalid && titleMessage) firstInvalid = titleInput;
-
-                const contentMessage = normalizedContent === "" ? messages.contentRequired
-                    : normalizedContent.length < 10 ? messages.contentMinimum
-                    : normalizedContent.length > 2000 ? messages.contentMaximum
-                    : normalizedTitle !== "" && normalizedContent.toLowerCase() === normalizedTitle.toLowerCase()
-                        ? messages.contentDifferent : "";
-                setValidation(contentInput, contentError, contentMessage);
-                if (!firstInvalid && contentMessage) firstInvalid = contentInput;
-
-                updateCounter(titleInput, "titleCharacterCount", 150);
-                updateCounter(contentInput, "contentCharacterCount", 2000);
-                if (firstInvalid) {
-                    event.preventDefault();
-                    firstInvalid.focus();
-                }
-            });
-
-            toggleMemberList();
-            filterMembers();
-            updateCounter(titleInput, "titleCharacterCount", 150);
-            updateCounter(contentInput, "contentCharacterCount", 2000);
-        });
-    </script>
+    <script th:src="@{/js/pages/librarian/send-notification.js}"></script>
 </main>
 </body>
 </html>

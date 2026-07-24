@@ -1,7 +1,7 @@
 package com.lms.dto.request;
 
+import com.lms.util.AcquisitionRequestPolicy;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -9,32 +9,36 @@ import jakarta.validation.constraints.Size;
 public class MemberBookAcquisitionRequest {
 
     @NotBlank(message = "{validation.acquisition.titleRequired}")
-    @Size(min = 2, max = 255, message = "{validation.acquisition.titleRange}")
+    @Size(min = AcquisitionRequestPolicy.TITLE_MIN_LENGTH,
+            max = AcquisitionRequestPolicy.TITLE_MAX_LENGTH, message = "{validation.acquisition.titleRange}")
     @Pattern(regexp = "(?s).*\\p{L}.*", message = "{validation.acquisition.titleLetters}")
     private String title;
     @NotBlank(message = "{validation.acquisition.authorRequired}")
-    @Size(min = 2, max = 255, message = "{validation.acquisition.authorRange}")
+    @Size(min = AcquisitionRequestPolicy.AUTHOR_MIN_LENGTH,
+            max = AcquisitionRequestPolicy.AUTHOR_MAX_LENGTH, message = "{validation.acquisition.authorRange}")
     @Pattern(regexp = "(?s).*\\p{L}.*", message = "{validation.acquisition.authorLetters}")
     private String author;
 
-    @Size(max = 20, message = "{validation.acquisition.isbnMaximum}")
+    @Size(max = AcquisitionRequestPolicy.ISBN_INPUT_MAX_LENGTH, message = "{validation.acquisition.isbnMaximum}")
     private String isbn;
 
-    @Size(max = 255, message = "{backend.acquisition.publisherMaximum}")
+    @Size(max = AcquisitionRequestPolicy.PUBLISHER_MAX_LENGTH,
+            message = "{backend.acquisition.publisherMaximum}")
     @Pattern(regexp = "^\\s*$|(?s).*\\p{L}.*", message = "{backend.acquisition.publisherLetters}")
     private String publisher;
 
-    @Min(value = 1000, message = "{validation.acquisition.year}")
-    @Max(value = 2100, message = "{validation.acquisition.year}")
+    @Min(value = AcquisitionRequestPolicy.MIN_PUBLICATION_YEAR, message = "{validation.acquisition.year}")
     private Integer publicationYear;
 
     @NotBlank(message = "{validation.acquisition.reasonRequired}")
-    @Size(min = 10, max = 1000, message = "{validation.acquisition.reasonRange}")
+    @Size(min = AcquisitionRequestPolicy.REASON_MIN_LENGTH,
+            max = AcquisitionRequestPolicy.REASON_MAX_LENGTH, message = "{validation.acquisition.reasonRange}")
     @Pattern(regexp = "(?s).*\\p{L}.*", message = "{validation.acquisition.reasonLetters}")
     private String requestReason;
 
-    @Size(max = 500, message = "{backend.acquisition.referenceMaximum}")
-    @Pattern(regexp = "^\\s*$|https?://.+", message = "{validation.httpUrl}")
+    @Size(max = AcquisitionRequestPolicy.REFERENCE_URL_MAX_LENGTH,
+            message = "{backend.acquisition.referenceMaximum}")
+    @Pattern(regexp = "(?i)^(?:\\s*|https?://.+)$", message = "{validation.httpUrl}")
     private String referenceUrl;
 
     public MemberBookAcquisitionRequest() {

@@ -1,9 +1,10 @@
 package com.lms.controller.admin;
+
 import com.lms.exception.ApplicationException;
 
 import com.lms.config.CustomUserDetails;
 import com.lms.controller.LocalizedControllerSupport;
-import com.lms.dto.request.AdminAccountCreateRequest;
+import com.lms.dto.request.AdminMemberAccountCreateRequest;
 import com.lms.dto.request.AdminAccountUpdateRequest;
 import com.lms.dto.response.AdminAccountListViewData;
 import com.lms.exception.AccountFormValidationException;
@@ -24,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/admin/accounts")
+@RequestMapping("/admin/member-list")
 public class AccountController extends LocalizedControllerSupport {
 
     private final AccountService accountService;
@@ -51,7 +52,7 @@ public class AccountController extends LocalizedControllerSupport {
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedTier", tier);
 
-        return "admin/accounts";
+        return "admin/member-list";
     }
 
     @GetMapping("/search")
@@ -61,30 +62,38 @@ public class AccountController extends LocalizedControllerSupport {
         return listAccounts(page, keyword, "", "", model);
     }
 
+    @GetMapping("/create/validate")
+    @ResponseBody
+    public Map<String, String> validateMemberAccountCreate(
+            @RequestParam(required = false, defaultValue = "") String fullName,
+            @RequestParam(required = false, defaultValue = "") String email,
+            @RequestParam(required = false, defaultValue = "") String phone,
+            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam(required = false, defaultValue = "") String password) {
+        AdminMemberAccountCreateRequest request = new AdminMemberAccountCreateRequest(
+                fullName, email, phone, username, password);
+        return accountService.validateMemberAccountCreate(request);
+    }
+
     @PostMapping("/create")
-    public String createAccount(@RequestParam String fullName,
+    public String createMemberAccount(@RequestParam String fullName,
             @RequestParam String email,
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam String username,
             @RequestParam String password,
-            @RequestParam String accountType,
-            @RequestParam(required = false) Integer tierId,
-            @RequestParam(defaultValue = "Active") String status,
-            @RequestParam(required = false, defaultValue = "members") String source,
-            Model model,
             RedirectAttributes redirectAttributes) {
 
-        AdminAccountCreateRequest request = new AdminAccountCreateRequest(
-                fullName, email, phone, username, password, accountType, tierId, status);
+        AdminMemberAccountCreateRequest request = new AdminMemberAccountCreateRequest(
+                fullName, email, phone, username, password);
         try {
-            accountService.createAccount(request);
+            accountService.createMemberAccount(request);
             redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
-            return redirectBySource(source);
+            return "redirect:/admin/member-list";
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
             redirectAttributes.addFlashAttribute("fieldErrors", e.getFieldErrors());
             redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
-            return redirectBySource(source);
+            return "redirect:/admin/member-list";
         }
     }
 
@@ -144,7 +153,10 @@ public class AccountController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             accountService.deleteAccount(id, source, accountIdOf(currentUser));
-            redirectAttributes.addFlashAttribute("success", message("backend.account.deleted"));
+            redirectAttributes.addFlashAttribute("success",
+                    message("staff".equalsIgnoreCase(source)
+                            ? "backend.account.deactivated"
+                            : "backend.account.deleted"));
         } catch (AccountFormValidationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -152,11 +164,34 @@ public class AccountController extends LocalizedControllerSupport {
         return redirectBySource(source);
     }
 
-    @PostMapping("/{id}/send-password-reset")
-    public String sendPasswordReset(@PathVariable Integer id,
+    @PostMapping("/deactivate/{id}")
+    public String deactivateAccount(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "members") String source,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes) {
         try {
-            String email = accountService.getMemberEmail(id);
+            accountService.deactivateAccount(id, source, accountIdOf(currentUser));
+            redirectAttributes.addFlashAttribute("success", message("backend.account.deactivated"));
+        } catch (AccountFormValidationException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return redirectBySource(source);
+    }
+
+    @GetMapping("/{id}/deletability")
+    @ResponseBody
+    public Map<String, Boolean> checkDeletability(@PathVariable Integer id) {
+        return Map.of("canDelete", accountService.checkMemberDeletability(id));
+    }
+
+    @PostMapping("/{id}/send-password-reset")
+    public String sendPasswordReset(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "members") String source,
+            RedirectAttributes redirectAttributes) {
+        try {
+            String email = "staff".equalsIgnoreCase(source)
+                    ? accountService.getStaffEmail(id)
+                    : accountService.getMemberEmail(id);
             authService.requestPasswordReset(email);
             redirectAttributes.addFlashAttribute("success", message("backend.account.resetSent", email));
         } catch (ApplicationException e) {
@@ -165,18 +200,15 @@ public class AccountController extends LocalizedControllerSupport {
                             ? message("backend.account.resetFailed")
                             : e.getMessage());
         }
-        return "redirect:/admin/accounts";
+        return redirectBySource(source);
     }
 
-    private Map<String, Object> createFormValues(AdminAccountCreateRequest request) {
+    private Map<String, Object> createFormValues(AdminMemberAccountCreateRequest request) {
         Map<String, Object> formValues = new HashMap<>();
         formValues.put("fullName", trim(request.getFullName()));
         formValues.put("email", trim(request.getEmail()));
         formValues.put("phone", trim(request.getPhone()));
         formValues.put("username", trim(request.getUsername()));
-        formValues.put("accountType", trim(request.getAccountType()).toUpperCase());
-        formValues.put("tierId", request.getTierId());
-        formValues.put("status", request.getStatus());
         return formValues;
     }
 
@@ -197,7 +229,7 @@ public class AccountController extends LocalizedControllerSupport {
             return "redirect:/admin/staff";
         }
 
-        return "redirect:/admin/accounts";
+        return "redirect:/admin/member-list";
     }
 
     private String trim(String value) {
