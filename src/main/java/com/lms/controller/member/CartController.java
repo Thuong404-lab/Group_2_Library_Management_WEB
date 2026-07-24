@@ -65,13 +65,25 @@ public class CartController extends LocalizedControllerSupport {
         try {
             book = bookService.findBookById(bookId);
         } catch (Exception exception) {
-            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidBook"));
-            redirectAttributes.addFlashAttribute("error", message("backend.cart.invalidBook"));
+            String errorMessage = message("backend.cart.invalidBook");
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of("success", false, "message", errorMessage));
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            redirectAttributes.addFlashAttribute("error", errorMessage);
             return "redirect:/books";
         }
         if (!"Active".equalsIgnoreCase(book.getStatus())) {
-            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.unavailable"));
-            redirectAttributes.addFlashAttribute("error", message("backend.cart.unavailable"));
+            String errorMessage = message("backend.cart.unavailable");
+            if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+                return org.springframework.http.ResponseEntity
+                        .status(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of("success", false, "message", errorMessage));
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            redirectAttributes.addFlashAttribute("error", errorMessage);
             return "redirect:/books/" + bookId;
         }
 

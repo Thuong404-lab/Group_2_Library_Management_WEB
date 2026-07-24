@@ -72,6 +72,9 @@
     var favoriteAddedLabel = /*[[#{favorite.action.added}]]*/ "Favorited";
     var favoriteDefaultLabel = /*[[#{guest.bookDetail.favorite}]]*/ "Favorite";
     var notificationUpdateError = /*[[#{notification.update.error}]]*/ "Unable to update the notification.";
+    var cartAddError = /*[[#{backend.cart.unavailable}]]*/ "Unable to add book to cart.";
+    var cartAddSuccess = /*[[#{backend.cart.added}]]*/ "Added to your book cart!";
+    var viewCartLabel = /*[[#{guest.bookDetail.viewCart}]]*/ "View Cart";
 
     window.AppFeedback = (function () {
       var hideTimer = null;
@@ -261,7 +264,76 @@
         .catch(function (error) {
           window.AppFeedback.error(error.message || favoriteAddError);
         })
-        .finally(function () {
+    });
+
+    document.addEventListener("submit", function (event) {
+      var form = event.target;
+      var isCartAddForm = form.matches(".js-cart-add-form") ||
+        (form.action && form.action.indexOf("/member/cart/add") !== -1);
+      if (!isCartAddForm) {
+        return;
+      }
+
+      event.preventDefault();
+      var button = form.querySelector("button[type='submit']");
+      if (button) {
+        button.disabled = true;
+      }
+
+      var formData = new FormData(form);
+
+      fetch(form.action, {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          [document.querySelector('meta[name="_csrf_header"]')?.content || "X-CSRF-TOKEN"]:
+            document.querySelector('meta[name="_csrf"]')?.content || "",
+        },
+      })
+        .then(function (response) {
+          if (response.redirected && new URL(response.url, window.location.origin).pathname === "/login") {
+            window.location.assign(response.url);
+            return null;
+          }
+          if (response.status === 401 || response.status === 403) {
+            window.location.href = "/login";
+            return null;
+          }
+          var contentType = response.headers.get("content-type") || "";
+          if (!contentType.toLowerCase().includes("application/json")) {
+            throw new Error(cartAddError);
+          }
+          return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok || data.success === false) {
+              throw new Error(data.message || cartAddError);
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (!data) {
+            return;
+          }
+
+          var viewCartUrl = form.dataset.viewCartUrl || "/member/cart";
+          var viewCartText = form.dataset.viewCartText || viewCartLabel;
+
+          var viewCartLink = document.createElement("a");
+          viewCartLink.href = viewCartUrl;
+          viewCartLink.className = "book-detail-button book-detail-button--secondary active";
+          viewCartLink.innerHTML = '<i class="bi bi-bag-check" aria-hidden="true"></i><span>' + viewCartText + '</span>';
+
+          if (form.parentNode) {
+            form.parentNode.replaceChild(viewCartLink, form);
+          }
+
+          window.AppFeedback.success(data.message || cartAddSuccess);
+        })
+        .catch(function (error) {
+          window.AppFeedback.error(error.message || cartAddError);
           if (button) {
             button.disabled = false;
           }
