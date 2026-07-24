@@ -1280,8 +1280,8 @@
                                                         <button
                                                             th:if="${item.status != 'Borrowed' and item.status != 'Payment_Pending' and item.status != 'Waiting_Pickup' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"
                                                             type="button"
-                                                            class="member-icon-action" data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#editCopyModalAdmin' + item.bookItemId}"
+                                                            class="member-icon-action"
+                                                            th:data-edit-copy-target="${'#editCopyModalAdmin' + item.bookItemId}"
                                                             th:title="#{librarian.inventory.editCopy}"
                                                             th:aria-label="#{librarian.inventory.editCopy}"><i
                                                                 class="bi bi-pencil-square"></i></button>
@@ -1331,7 +1331,7 @@
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header border-bottom border-color">
-                                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i><span
+                                    <h5 class="modal-title fw-bold"><span
                                             th:text="#{librarian.inventory.editCopy}">Edit Copy</span> – <span
                                             th:text="${item.barcode}">Code</span></h5>
                                 </div>
@@ -1975,6 +1975,25 @@
         </script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-edit-copy-target]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const target = document.querySelector(button.dataset.editCopyTarget);
+                        if (!target || typeof bootstrap === 'undefined') return;
+
+                        bootstrap.Modal.getOrCreateInstance(target).show();
+                        target.addEventListener('hidden.bs.modal', function restoreCopiesModal() {
+                            target.removeEventListener('hidden.bs.modal', restoreCopiesModal);
+                            if (document.querySelector('.modal.show')) {
+                                document.body.classList.add('modal-open');
+                            }
+                            button.focus();
+                        });
+                    });
+                });
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
                 const bookshelfSearch = document.getElementById('bookshelfSearch');
                 const bookshelfSearchButton = document.getElementById('bookshelfSearchButton');
                 const bookshelfRows = Array.from(document.querySelectorAll('.bookshelf-data-row'));
@@ -2125,8 +2144,6 @@
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header">
                         <h5 class="modal-title" th:text="#{common.confirm}">Confirm</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            th:aria-label="#{common.close}"></button>
                     </div>
                     <div class="modal-body">
                         <p class="mb-0" data-copy-delete-confirm-text></p>
