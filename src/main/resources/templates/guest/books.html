@@ -120,8 +120,8 @@
                                 </span>
                                 <span class="catalog-book-footer">
                                     <span class="catalog-status member-reference-pill"
-                                          th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
-                                          th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
+                                          th:classappend="${book.status == 'Active' and availableCopiesByBookId[book.bookId] > 0} ? ' is-available' : ' is-unavailable'"
+                                          th:text="${book.status == 'Active' and availableCopiesByBookId[book.bookId] > 0 ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
                                     <span class="catalog-isbn" th:text="#{catalog.isbn(${book.isbn != null ? book.isbn : #messages.msg('common.none')})}">ISBN</span>
                                 </span>
                             </span>

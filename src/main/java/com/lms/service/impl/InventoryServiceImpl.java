@@ -17,6 +17,7 @@ import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.repository.ShelfRepository;
 import com.lms.service.InventoryService;
+import com.lms.service.BookItemConditionPolicy;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -205,9 +206,7 @@ public class InventoryServiceImpl implements InventoryService {
             if (bookCondition != null && !bookCondition.trim().isEmpty()) {
                 item.setBookCondition(bookCondition.trim());
             }
-            item.setStatus(conditionRank(item.getBookCondition()) >= 3
-                    ? STATUS_UNAVAILABLE
-                    : STATUS_AVAILABLE);
+            item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
 
             bookItemRepository.save(item);
         }
@@ -312,9 +311,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setShelf(shelf);
             item.setBarcode(barcode);
             item.setBookCondition(normalizedCondition);
-            item.setStatus(conditionRank(normalizedCondition) >= 3
-                    ? STATUS_UNAVAILABLE
-                    : STATUS_AVAILABLE);
+            item.setStatus(BookItemConditionPolicy.circulationStatus(normalizedCondition));
             bookItemRepository.save(item);
             autoAssignNewCopyIfReservationWaiting(item);
             existingBarcodes.add(barcode);
@@ -369,8 +366,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         item.setBookCondition(normalizedCondition);
-        int rank = conditionRank(normalizedCondition);
-        item.setStatus(rank >= 3 ? STATUS_UNAVAILABLE : STATUS_AVAILABLE);
+        item.setStatus(BookItemConditionPolicy.circulationStatus(normalizedCondition));
         bookItemRepository.save(item);
         synchronizeBookStatus(item.getBook());
     }

@@ -116,23 +116,21 @@
                     </div>
 
                     <div class="col-md-4 setting-field">
-                        <label class="form-label fw-bold small text-muted text-uppercase"
-                            th:text="#{admin.settings.severeDamageBorrowFee}">Severe-damage Borrowing Fee</label>
-                        <input name="severeDamageBorrowFee" type="text" inputmode="numeric"
-                            class="form-control money-input" required
-                            th:value="${settingMap['Severe_Damage_Borrow_Fee'] != null ? settingMap['Severe_Damage_Borrow_Fee'] : 3000}">
-                        <div class="form-text" th:text="#{admin.settings.conditionBorrowFeeHint}">At least 1,000 VND below the preceding condition</div>
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            <span th:text="#{admin.settings.newBookOverdueFine}">New-book Overdue Fine</span>
+                        </label>
+                        <input id="newBookOverdueFine" type="text" class="form-control money-input" readonly
+                            th:value="${settingMap['New_Book_Overdue_Fine'] != null ? settingMap['New_Book_Overdue_Fine'] : 10000}">
+                        <div class="form-text" th:text="#{admin.settings.overdueFineAutoHint}">Automatically equals twice the borrowing fee</div>
                     </div>
 
                     <div class="col-md-4 setting-field">
                         <label class="form-label fw-bold small text-muted text-uppercase">
-                            <span th:text="#{admin.settings.overdueFine}">Overdue Fine</span>
+                            <span th:text="#{admin.settings.minorDamageOverdueFine}">Minor-damage Overdue Fine</span>
                         </label>
-                        <input name="finePerDay" type="text" inputmode="numeric" class="form-control money-input"
-                            required
-                            th:value="${settingMap['Fine_Per_Day'] != null ? settingMap['Fine_Per_Day'] : 5000}">
-                        <div class="form-text" th:text="#{admin.settings.vndPerBookOverdueDay}">VND / book / overdue day
-                        </div>
+                        <input id="minorDamageOverdueFine" type="text" class="form-control money-input" readonly
+                            th:value="${settingMap['Minor_Damage_Overdue_Fine'] != null ? settingMap['Minor_Damage_Overdue_Fine'] : 8000}">
+                        <div class="form-text" th:text="#{admin.settings.overdueFineAutoHint}">Automatically equals twice the borrowing fee</div>
                     </div>
 
                     <div class="col-md-4 setting-field">
@@ -203,6 +201,10 @@
             document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("policySettingsForm");
                 const moneyInputs = document.querySelectorAll(".money-input");
+                const newBookFeeInput = form.querySelector("[name='borrowFeePerBook']");
+                const minorDamageFeeInput = form.querySelector("[name='minorDamageBorrowFee']");
+                const newBookOverdueInput = document.getElementById("newBookOverdueFine");
+                const minorDamageOverdueInput = document.getElementById("minorDamageOverdueFine");
                 function initialDigits(value) {
                     const trimmed = value.trim();
                     if (/^\d+(?:\.0{1,2})?$/.test(trimmed)) {
@@ -224,6 +226,13 @@
                 function showFormattedMoney(input, initialLoad) {
                     const digits = normalizeDigits(input.value, initialLoad);
                     input.value = digits === "" ? "" : groupDigits(digits);
+                }
+
+                function updateDerivedOverdueFines() {
+                    const newBookFee = Number(normalizeDigits(newBookFeeInput.value, false) || "0");
+                    const minorDamageFee = Number(normalizeDigits(minorDamageFeeInput.value, false) || "0");
+                    newBookOverdueInput.value = groupDigits(String(newBookFee * 2));
+                    minorDamageOverdueInput.value = groupDigits(String(minorDamageFee * 2));
                 }
 
                 function showRawMoney(input) {
@@ -253,11 +262,15 @@
                     });
                     input.addEventListener("input", function () {
                         keepDigitsOnly(input);
+                        if (input === newBookFeeInput || input === minorDamageFeeInput) {
+                            updateDerivedOverdueFines();
+                        }
                     });
                     input.addEventListener("blur", function () {
                         showFormattedMoney(input, false);
                     });
                 });
+                updateDerivedOverdueFines();
 
                 form.addEventListener("submit", function () {
                     moneyInputs.forEach(function (input) {

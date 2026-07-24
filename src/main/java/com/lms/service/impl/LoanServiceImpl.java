@@ -11,6 +11,7 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LoanService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.service.BookItemConditionPolicy;
 import com.lms.util.BorrowCodeFormatter;
 import com.lms.service.FinancialService;
 import com.lms.service.MembershipService;
@@ -117,7 +118,7 @@ public class LoanServiceImpl implements LoanService {
         }
 
         // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½
-        item.setStatus(STATUS_AVAILABLE);
+        item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
         bookItemRepository.save(item);
 
         // 2. TÃ­nh toÃ¡n pháº¡t quÃ¡ háº¡n náº¿u cÃ³
@@ -147,7 +148,7 @@ public class LoanServiceImpl implements LoanService {
                 // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½ vá» Available
                 if (detail.getBookItem() != null) {
                     BookItem item = detail.getBookItem();
-                    item.setStatus(STATUS_AVAILABLE);
+                    item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
                     bookItemRepository.save(item);
                 }
 
@@ -211,7 +212,8 @@ public class LoanServiceImpl implements LoanService {
                         localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
             }
 
-            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())
+                    || !BookItemConditionPolicy.isLendable(item.getBookCondition())) {
                 throw new ConflictException(
                         localizedMessageService.get("backend.loan.barcodeUnavailable", trimmedBarcode));
             }
@@ -273,6 +275,10 @@ public class LoanServiceImpl implements LoanService {
 
             if (detail.getBookItem() != null) {
                 BookItem item = detail.getBookItem();
+                if (!BookItemConditionPolicy.isLendable(item.getBookCondition())) {
+                    throw new ConflictException(
+                            localizedMessageService.get("backend.loan.barcodeUnavailable", item.getBarcode()));
+                }
                 item.setStatus(STATUS_BORROWED);
                 bookItemRepository.save(item);
             }
@@ -733,6 +739,10 @@ public class LoanServiceImpl implements LoanService {
 
             if (detail.getBookItem() != null) {
                 BookItem item = detail.getBookItem();
+                if (!BookItemConditionPolicy.isLendable(item.getBookCondition())) {
+                    throw new ConflictException(
+                            localizedMessageService.get("backend.loan.barcodeUnavailable", item.getBarcode()));
+                }
                 item.setStatus(STATUS_BORROWED);
                 bookItemRepository.save(item);
             }
@@ -957,7 +967,7 @@ public class LoanServiceImpl implements LoanService {
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
             return STATUS_UNAVAILABLE;
         }
-        return STATUS_AVAILABLE;
+        return BookItemConditionPolicy.circulationStatus(bookCondition);
     }
 
     private String resolveConditionCode(String bookCondition) {

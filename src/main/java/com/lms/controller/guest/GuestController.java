@@ -123,6 +123,12 @@ public class GuestController extends LocalizedControllerSupport {
         model.addAttribute("selectedGenreId", genreId);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("sort", sort);
+        Map<Integer, Long> availableCopiesByBookId = bookPage.getContent().stream()
+                .collect(Collectors.toMap(
+                        Book::getBookId,
+                        book -> bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(
+                                book.getBookId(), "Available")));
+        model.addAttribute("availableCopiesByBookId", availableCopiesByBookId);
 
         addFavoriteBookIds(model, principal);
 
@@ -142,9 +148,9 @@ public class GuestController extends LocalizedControllerSupport {
 
         // Parse numeric currency values
         try {
-            model.addAttribute("finePerDay", Long.parseLong(settings.getOrDefault("Fine_Per_Day", "5000")));
+            model.addAttribute("finePerDay", Long.parseLong(settings.getOrDefault("New_Book_Overdue_Fine", "10000")));
         } catch (NumberFormatException e) {
-            model.addAttribute("finePerDay", 5000L);
+            model.addAttribute("finePerDay", 10000L);
         }
 
         try {

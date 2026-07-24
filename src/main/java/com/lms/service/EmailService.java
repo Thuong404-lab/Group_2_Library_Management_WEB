@@ -10,4 +10,7 @@ public interface EmailService {
     void sendHtmlEmail(String to, String subject, String htmlContent);
 
     void sendNotificationEmail(String to, String recipientName, String title, String content);
+
+    void sendStaffAccountCredentials(String to, String recipientName, String username, String rawPassword);
+
 }
