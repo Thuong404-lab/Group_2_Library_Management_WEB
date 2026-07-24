@@ -379,6 +379,15 @@ public class LoanServiceImpl implements LoanService {
         if (!List.of("cash", "wallet", "bank").contains(resolvedPaymentMethod)) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidPaymentMethod"));
         }
+        damageFine = damageFine == null ? BigDecimal.ZERO : damageFine;
+        if (damageFine.signum() < 0) {
+            throw new ValidationException(localizedMessageService.get("backend.return.invalidDamageFine"));
+        }
+        // Only minor damage accepts a librarian-entered fine. Severe damage and
+        // loss use the single automatic compensation amount configured by admin.
+        if (getConditionLevel(bookCondition) != 2) {
+            damageFine = BigDecimal.ZERO;
+        }
         if (!isGoodCondition(bookCondition)
                 && (damageNote == null || damageNote.trim().isEmpty())) {
             throw new ValidationException(localizedMessageService.get("backend.return.damageDescriptionRequired"));
@@ -930,16 +939,7 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private boolean requiresDamageCompensation(String bookCondition) {
-        int threshold = 3;
-        Optional<SystemSetting> setting = systemSettingRepository.findBySettingKey("Damage_Compensation_Threshold");
-        if (setting.isPresent()) {
-            try {
-                threshold = Integer.parseInt(setting.get().getSettingValue());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        int conditionLevel = getConditionLevel(bookCondition);
-        return conditionLevel >= threshold;
+        return getConditionLevel(bookCondition) >= 3;
     }
 
     private int getConditionLevel(String bookCondition) {
@@ -947,7 +947,7 @@ public class LoanServiceImpl implements LoanService {
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
             return 4;
         }
-        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe")) {
             return 3;
         }
         if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage") || normalized.contains("hư hỏng")) {
