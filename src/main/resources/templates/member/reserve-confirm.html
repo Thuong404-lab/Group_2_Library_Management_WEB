@@ -19,7 +19,7 @@
             <a th:href="@{/}" class="member-notifications-back notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.back}">Back</span></a>
         </header>
 
-        <div class="member-notifications-alert is-error" role="alert" th:if="${!canPayDeposit}">
+        <div class="member-notifications-alert is-error d-none" role="alert" id="depositBalanceAlert">
             <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             <span th:text="#{reservation.confirmPage.insufficientBalance}">Your wallet balance is insufficient.</span>
         </div>
@@ -120,8 +120,7 @@
                       th:data-confirm-action="#{payment.confirm}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit"
-                            class="member-ui-button member-ui-button--primary"
-                            th:disabled="${!canPayDeposit}">
+                            class="member-ui-button member-ui-button--primary">
                         <span th:text="#{reservation.confirmPage.submit}">Reserve and Pay Deposit</span>
                     </button>
                 </form>
@@ -143,6 +142,8 @@
         const balanceAfterDisplay = document.getElementById('balanceAfterDisplay');
         const balanceAfterContainer = document.getElementById('balanceAfterContainer');
         const submitBtn = document.querySelector('#reservationSubmitForm button[type="submit"]');
+        const reservationForm = document.getElementById('reservationSubmitForm');
+        const balanceAlert = document.getElementById('depositBalanceAlert');
 
         const msgInvalidDays = /*[[#{backend.borrow.invalidDays(${maxBorrowDays})}]]*/ 'Thời hạn mượn phải từ 1 đến 14 ngày.';
 
@@ -152,6 +153,7 @@
 
         function updateCalculations() {
             if (!daysInput) return;
+            if (balanceAlert) balanceAlert.classList.add('d-none');
             const days = parseInt(daysInput.value, 10);
             let isValid = true;
             let errorMsg = '';
@@ -180,11 +182,32 @@
 
             if (balanceAfter < 0) {
                 if (balanceAfterContainer) balanceAfterContainer.className = 'amount-negative';
-                if (submitBtn) submitBtn.disabled = true;
             } else {
                 if (balanceAfterContainer) balanceAfterContainer.className = 'amount-positive';
-                if (submitBtn) submitBtn.disabled = false;
             }
+        }
+
+        if (reservationForm) {
+            reservationForm.addEventListener('submit', function(event) {
+                const days = parseInt(daysInput?.value, 10);
+                if (isNaN(days) || days < 1 || days > maxBorrowDays) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    updateCalculations();
+                    daysInput?.focus();
+                    return;
+                }
+
+                const totalDeposit = dailyDepositRate * days;
+                if (walletBalance < totalDeposit) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    if (balanceAlert) {
+                        balanceAlert.classList.remove('d-none');
+                        balanceAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }, true);
         }
 
         if (daysInput) {
