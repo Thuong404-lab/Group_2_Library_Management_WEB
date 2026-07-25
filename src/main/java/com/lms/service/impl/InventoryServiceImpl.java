@@ -17,6 +17,7 @@ import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.repository.ShelfRepository;
 import com.lms.service.InventoryService;
+import com.lms.service.BookItemConditionPolicy;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.util.Set;
 @Service
 public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_RESERVED = "Reserved";
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_PAYMENT_PENDING = "Payment_Pending";
     private static final String STATUS_WAITING_PICKUP = "Waiting_Pickup";
@@ -118,6 +120,7 @@ public class InventoryServiceImpl implements InventoryService {
     public Map<String, Long> getInventoryStatusCounts() {
         Map<String, Long> counts = new HashMap<>();
         counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
+        counts.put(STATUS_RESERVED, bookItemRepository.countByStatusIgnoreCase(STATUS_RESERVED));
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
         counts.put(STATUS_PAYMENT_PENDING, bookItemRepository.countByStatusIgnoreCase(STATUS_PAYMENT_PENDING));
         counts.put(STATUS_WAITING_PICKUP, bookItemRepository.countByStatusIgnoreCase(STATUS_WAITING_PICKUP));
@@ -164,7 +167,8 @@ public class InventoryServiceImpl implements InventoryService {
         book.setTitle(title.trim());
         book.setIsbn(isbn.trim());
         book.setGenre(genre);
-        book.setStatus(STATUS_ACTIVE);
+        book.setStatus(quantity > 0
+                && BookItemConditionPolicy.isLendable(bookCondition) ? STATUS_ACTIVE : "Inactive");
         if (description != null && !description.trim().isEmpty()) {
             book.setDescription(description.trim());
         }
@@ -205,9 +209,7 @@ public class InventoryServiceImpl implements InventoryService {
             if (bookCondition != null && !bookCondition.trim().isEmpty()) {
                 item.setBookCondition(bookCondition.trim());
             }
-            item.setStatus(conditionRank(item.getBookCondition()) >= 3
-                    ? STATUS_UNAVAILABLE
-                    : STATUS_AVAILABLE);
+            item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
 
             bookItemRepository.save(item);
         }
@@ -273,6 +275,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setShelf(shelf);
             bookItemRepository.save(item);
         }
+        synchronizeBookStatus(book);
     }
 
     @Override
@@ -312,15 +315,12 @@ public class InventoryServiceImpl implements InventoryService {
             item.setShelf(shelf);
             item.setBarcode(barcode);
             item.setBookCondition(normalizedCondition);
-            item.setStatus(conditionRank(normalizedCondition) >= 3
-                    ? STATUS_UNAVAILABLE
-                    : STATUS_AVAILABLE);
+            item.setStatus(BookItemConditionPolicy.circulationStatus(normalizedCondition));
             bookItemRepository.save(item);
             autoAssignNewCopyIfReservationWaiting(item);
             existingBarcodes.add(barcode);
         }
-        book.setStatus(STATUS_ACTIVE);
-        bookRepository.save(book);
+        synchronizeBookStatus(book);
     }
 
     @Override
@@ -337,14 +337,35 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         for (BookItem item : items) {
-            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+            boolean isAvailable = STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus());
+            boolean isPermanentlyUnavailable = conditionRank(item.getBookCondition())
+                    >= conditionRank("Severely damaged");
+            if (!isAvailable && !isPermanentlyUnavailable) {
                 throw new ConflictException(messages.get("backend.inventory.deleteUnavailableCopyConflict"));
             }
-            if (borrowDetailRepository.existsByBookItem_BookItemId(item.getBookItemId())) {
+            List<com.lms.entity.BorrowDetail> history =
+                    borrowDetailRepository.findByBookItem_BookItemId(item.getBookItemId());
+            boolean hasActiveLoan = history.stream().anyMatch(detail -> {
+                String status = detail.getStatus() == null ? "" : detail.getStatus().trim().toLowerCase(java.util.Locale.ROOT);
+                return status.equals("payment_pending")
+                        || status.equals("waiting_pickup")
+                        || status.equals("borrowed")
+                        || status.equals("overdue")
+                        || status.equals("return_pending")
+                        || status.equals("renew_pending");
+            });
+            if (hasActiveLoan) {
                 throw new ConflictException(messages.get("backend.inventory.deleteCopyHistoryConflict"));
             }
+            for (com.lms.entity.BorrowDetail detail : history) {
+                detail.setBookItem(null);
+            }
+            borrowDetailRepository.saveAll(history);
         }
+        borrowDetailRepository.flush();
         bookItemRepository.deleteAll(items);
+        bookItemRepository.flush();
+        synchronizeBookStatus(findBookById(bookId));
     }
 
     @Override
@@ -360,7 +381,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (!item.getBook().getBookId().equals(bookId)) {
             throw new ValidationException(messages.get("backend.inventory.invalidCopySelection"));
         }
-        if (STATUS_BORROWED.equalsIgnoreCase(item.getStatus())
+        if (conditionRank(item.getBookCondition()) >= conditionRank("Severely damaged")
+                || STATUS_BORROWED.equalsIgnoreCase(item.getStatus())
+                || STATUS_PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
                 || STATUS_WAITING_PICKUP.equalsIgnoreCase(item.getStatus())) {
             throw new ConflictException(messages.get("backend.inventory.copyConditionLocked"));
         }
@@ -369,17 +392,16 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         item.setBookCondition(normalizedCondition);
-        int rank = conditionRank(normalizedCondition);
-        item.setStatus(rank >= 3 ? STATUS_UNAVAILABLE : STATUS_AVAILABLE);
+        item.setStatus(BookItemConditionPolicy.circulationStatus(normalizedCondition));
         bookItemRepository.save(item);
         synchronizeBookStatus(item.getBook());
     }
 
     private void synchronizeBookStatus(Book book) {
         List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
-        boolean hasLendableCopy = items.stream()
-                .anyMatch(item -> !STATUS_UNAVAILABLE.equalsIgnoreCase(item.getStatus()));
-        book.setStatus(hasLendableCopy ? STATUS_ACTIVE : "Inactive");
+        boolean hasAvailableCopy = items.stream()
+                .anyMatch(item -> STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus()));
+        book.setStatus(hasAvailableCopy ? STATUS_ACTIVE : "Inactive");
         bookRepository.save(book);
     }
 
@@ -402,8 +424,7 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ValidationException(messages.get("backend.inventory.statusRequired"));
         }
         Book book = findBookById(bookId);
-        book.setStatus(normalizedStatus);
-        bookRepository.save(book);
+        synchronizeBookStatus(book);
     }
 
     @Override
@@ -526,18 +547,8 @@ public class InventoryServiceImpl implements InventoryService {
         List<com.lms.entity.Reservation> waitingList = reservationRepository.findByBook_BookIdAndStatusInOrderByReservationDateAsc(
                 bookId, List.of("Deposit_Paid", "Pending"));
         if (!waitingList.isEmpty()) {
-            com.lms.entity.Reservation nextReservation = waitingList.get(0);
-            nextReservation.setStatus("Ready");
-            reservationRepository.save(nextReservation);
-
-            item.setStatus(STATUS_WAITING_PICKUP);
+            item.setStatus(STATUS_RESERVED);
             bookItemRepository.save(item);
-
-            sendInternalNotification(nextReservation.getMember(),
-                    com.lms.enums.NotificationType.RESERVATION, com.lms.enums.NotificationEventType.RESERVATION_APPROVED, com.lms.enums.NotificationSource.SYSTEM,
-                    "systemNotification.reservation.ready.title",
-                    "systemNotification.reservation.ready.content",
-                    nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
         }
     }
 

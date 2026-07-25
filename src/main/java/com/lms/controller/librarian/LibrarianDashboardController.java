@@ -82,6 +82,7 @@ public class LibrarianDashboardController {
             @RequestParam(defaultValue = "0") int shelfPage,
             @RequestParam(required = false, defaultValue = "") String keyword,
             @RequestParam(required = false, defaultValue = "") String bookCondition,
+            @RequestParam(required = false, defaultValue = "") String bookItemStatus,
             @RequestParam(required = false, defaultValue = "") String tab,
             @RequestParam(required = false, defaultValue = "inventory") String subsection,
             Model model,
@@ -89,7 +90,7 @@ public class LibrarianDashboardController {
         String effectiveBookCondition = "audit".equalsIgnoreCase(tab) ? bookCondition : "";
         model.addAllAttributes(dashboardService.getBookManagementData(
                 Math.max(0, bookPage), Math.max(0, shelfPage), keyword, effectiveBookCondition,
-                subsection, tab));
+                "audit".equalsIgnoreCase(tab) ? bookItemStatus : "", subsection, tab));
         model.addAttribute("staffPrefix", "/librarian");
         model.addAttribute("keyword", keyword);
         addCurrentUser(model, userDetails);

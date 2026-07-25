@@ -4,7 +4,7 @@
 
 <head>
     <title th:text="#{librarian.borrowList.title}">Loan Records</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/borrow-list.css(v='20260724-9')}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
 </head>
 
@@ -20,34 +20,38 @@
         </div>
     </header>
 
+    <nav class="borrow-page-tabs" th:aria-label="#{librarian.borrowList.heading}">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link"
+                   th:classappend="${activeTab == 'all' or activeTab == null ? 'active' : ''}"
+                   th:href="@{/librarian/borrow/list(tab='all')}">
+                    <i class="bi bi-list-task" aria-hidden="true"></i>
+                    <span th:text="#{librarian.borrowList.tabAll}">All Loan Records</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link"
+                   th:classappend="${activeTab == 'members' ? 'active' : ''}"
+                   th:href="@{/librarian/borrow/list(tab='members')}">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <span th:text="#{librarian.borrowList.tabMembers}">History by Member</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
     <section class="member-data-card borrow-list-content borrow-management-card">
         <div class="member-data-card-body">
-            <!-- Master Navigation Tabs: [Tất cả phiếu mượn] & [Lịch sử theo độc giả] -->
-            <ul class="nav nav-pills mb-4 gap-2 border-bottom pb-3">
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill fw-bold"
-                       th:classappend="${activeTab == 'all' or activeTab == null ? 'active bg-primary text-white' : 'btn-outline-secondary'}"
-                       th:href="@{/librarian/borrow/list(tab='all')}">
-                        <i class="bi bi-list-task me-1"></i>
-                        <span th:text="#{librarian.borrowList.tabAll}">Tất cả phiếu mượn</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill fw-bold"
-                       th:classappend="${activeTab == 'members' ? 'active bg-primary text-white' : 'btn-outline-secondary'}"
-                       th:href="@{/librarian/borrow/list(tab='members')}">
-                        <i class="bi bi-people me-1"></i>
-                        <span th:text="#{librarian.borrowList.tabMembers}">Lịch sử theo độc giả</span>
-                    </a>
-                </li>
-            </ul>
-
             <!-- TAB 1: TẤT CẢ PHIẾU MƯỢN -->
             <div th:if="${activeTab == 'all' or activeTab == null}">
                 <div class="member-summary-chips borrow-summary-chips"
                      th:aria-label="#{librarian.borrowList.summary}">
-                    <span class="app-number"
-                          th:text="#{librarian.borrowList.total(${@displayNumber.count(totalItems)})}">0 loan records</span>
+                    <span>
+                        <strong class="app-stat-number"
+                                th:text="${@displayNumber.count(totalItems)}">0</strong>
+                        <span th:text="#{librarian.borrowList.totalLabel}">Loan records</span>
+                    </span>
                 </div>
 
                 <!-- Search & Filter đồng bộ toolbar -->
@@ -78,6 +82,9 @@
                                 <option value="Pending" th:selected="${status == 'Pending'}" th:text="#{librarian.borrowList.status.pending}">Pending approval</option>
                                 <option value="Rejected" th:selected="${status == 'Rejected'}" th:text="#{librarian.borrowList.status.rejected}">Rejected</option>
                                 <option value="Return_Pending" th:selected="${status == 'Return_Pending'}" th:text="#{librarian.borrowList.status.returnPending}">Return requested</option>
+                                <option value="Payment_Pending" th:selected="${status == 'Payment_Pending'}" th:text="#{loan.status.paymentPending}">Payment pending</option>
+                                <option value="Payment_Expired" th:selected="${status == 'Payment_Expired'}" th:text="#{loan.status.paymentExpired}">Payment expired</option>
+                                <option value="Canceled" th:selected="${status == 'Canceled' or status == 'Cancelled'}" th:text="#{librarian.borrowMember.status.canceled}">Canceled</option>
                             </select>
 
                             <!-- Nút tìm kiếm chuẩn -->
@@ -99,7 +106,7 @@
                             <col class="borrow-list-col-status">
                             <col class="borrow-list-col-actions">
                         </colgroup>
-                        <thead>
+                        <thead class="table-light text-uppercase small text-muted">
                         <tr>
                             <th th:text="#{common.number}">No.</th>
                             <th th:text="#{loan.code}">Loan Code</th>
@@ -127,7 +134,7 @@
                             <td th:data-label="#{librarian.borrowDesk.memberInfo}">
                                 <div th:if="${borrow.member?.user != null}">
                                     <a th:href="@{/librarian/borrow/member/{id}(id=${borrow.member.memberId})}"
-                                       class="fw-bold text-dark text-decoration-none"
+                                       class="fw-bold text-classic text-decoration-none"
                                        th:text="${borrow.member.user.fullName}">Nguyễn Văn An</a>
                                     <div class="small text-muted" th:if="${borrow.member.user.email}">
                                         <i class="bi bi-envelope me-1"></i>
@@ -148,23 +155,31 @@
                                 th:text="${#temporals.format(borrow.borrowDate, 'dd/MM/yyyy HH:mm')}">12/07/2026 10:00</td>
 
                             <!-- Trạng thái phiếu -->
-                            <td th:data-label="#{librarian.borrowList.status}">
-                                <span class="status-badge" th:classappend="${
-                                            #strings.equalsIgnoreCase(borrow.status, 'Active') ? 'status-active' :
-                                            #strings.equalsIgnoreCase(borrow.status, 'Returned') ? 'status-returned' :
-                                            #strings.equalsIgnoreCase(borrow.status, 'Overdue') ? 'status-blocked' :
-                                            #strings.equalsIgnoreCase(borrow.status, 'Rejected') ? 'status-blocked' :
-                                            #strings.equalsIgnoreCase(borrow.status, 'Return_Pending') ? 'status-return-pending' :
-                                            'status-inactive'
-                                        }" th:text="${
-                                             #strings.equalsIgnoreCase(borrow.status, 'Active') ? #messages.msg('loan.status.borrowed') :
-                                             (#strings.equalsIgnoreCase(borrow.status, 'Waiting_Pickup') or #strings.equalsIgnoreCase(borrow.status, 'APPROVED') ? #messages.msg('librarian.borrowList.status.pickup') :
-                                             (#strings.equalsIgnoreCase(borrow.status, 'Returned') ? #messages.msg('librarian.borrowMember.status.completed') :
-                                             (#strings.equalsIgnoreCase(borrow.status, 'Overdue') ? #messages.msg('loan.status.overdue') :
-                                             (#strings.equalsIgnoreCase(borrow.status, 'Pending') ? #messages.msg('librarian.borrowMember.status.pending') :
-                                             (#strings.equalsIgnoreCase(borrow.status, 'Rejected') ? #messages.msg('librarian.borrowMember.status.rejected') :
-                                             (#strings.equalsIgnoreCase(borrow.status, 'Return_Pending') ? #messages.msg('librarian.borrowMember.status.returnPending') : borrow.status))))))
-                                        }">
+                            <td th:data-label="#{librarian.borrowList.status}"
+                                th:with="stat=${borrow.status != null ? #strings.toUpperCase(#strings.replace(borrow.status, '-', '_')) : 'UNKNOWN'}">
+                                <span class="status-badge"
+                                      th:classappend="${
+                                          stat == 'ACTIVE' or stat == 'BORROWED' or stat == 'RETURNED' ? 'status-active' :
+                                          stat == 'OVERDUE' or stat == 'REJECTED' or stat == 'PAYMENT_EXPIRED'
+                                              or stat == 'PAYMENT_CANCELLED' or stat == 'CANCELED' or stat == 'CANCELLED'
+                                              ? 'status-blocked' :
+                                          stat == 'RETURN_PENDING' ? 'status-return-pending' :
+                                          'status-inactive'
+                                      }"
+                                      th:text="${
+                                          stat == 'ACTIVE' or stat == 'BORROWED' ? #messages.msg('loan.status.borrowed') :
+                                          stat == 'WAITING_PICKUP' or stat == 'APPROVED' ? #messages.msg('librarian.borrowList.status.pickup') :
+                                          stat == 'RETURNED' ? #messages.msg('librarian.borrowMember.status.completed') :
+                                          stat == 'OVERDUE' ? #messages.msg('loan.status.overdue') :
+                                          stat == 'PENDING' ? #messages.msg('librarian.borrowMember.status.pending') :
+                                          stat == 'REJECTED' ? #messages.msg('librarian.borrowMember.status.rejected') :
+                                          stat == 'RETURN_PENDING' ? #messages.msg('librarian.borrowMember.status.returnPending') :
+                                          stat == 'PAYMENT_PENDING' ? #messages.msg('loan.status.paymentPending') :
+                                          stat == 'PAYMENT_EXPIRED' ? #messages.msg('loan.status.paymentExpired') :
+                                          stat == 'PAYMENT_CANCELLED' or stat == 'CANCELED' or stat == 'CANCELLED'
+                                              ? #messages.msg('librarian.borrowMember.status.canceled') :
+                                          borrow.status
+                                      }">
                                     Currently borrowed
                                 </span>
                             </td>
@@ -173,9 +188,27 @@
                             <td class="text-center member-actions" th:data-label="#{admin.logs.action}">
                                 <div class="borrow-list-actions">
                                     <a th:href="@{/librarian/loan/{id}(id=${borrow.borrowId})}"
-                                       class="borrow-icon-action"
+                                       class="borrow-list-icon-action"
                                        th:title="#{common.details}" th:aria-label="#{common.details}">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="borrow-list-empty-row" th:if="${#lists.isEmpty(borrows)}">
+                            <td colspan="6">
+                                <div class="borrow-list-empty-state">
+                                    <span class="borrow-list-empty-icon" aria-hidden="true">
+                                        <i class="bi bi-journal-x"></i>
+                                    </span>
+                                    <p th:text="#{librarian.borrowList.empty}">
+                                        No loan records match the search filters.
+                                    </p>
+                                    <a class="btn borrow-clear-filter borrow-empty-filter-reset"
+                                       th:if="${(keyword != null and !#strings.isEmpty(keyword)) or (status != null and !#strings.isEmpty(status))}"
+                                       th:href="@{/librarian/borrow/list(tab='all')}"
+                                       th:text="#{common.clearFilters}">
+                                        Clear Filters
                                     </a>
                                 </div>
                             </td>
@@ -242,30 +275,37 @@
             <div th:if="${activeTab == 'members'}">
                 <div class="member-summary-chips borrow-summary-chips"
                      th:aria-label="#{librarian.borrowList.summary}">
-                    <span class="app-number"
-                          th:text="${totalItems != null ? #messages.msg('librarian.borrowList.total', totalItems) : '0 members'}">0 members</span>
+                    <span>
+                        <strong class="app-stat-number"
+                                th:text="${@displayNumber.count(totalItems)}">0</strong>
+                        <span th:text="#{librarian.borrowList.memberTotalLabel}">Members</span>
+                    </span>
                 </div>
 
-                <div class="member-toolbar borrow-list-filter-card mb-4">
+                <div class="member-toolbar borrow-list-filter-card">
                     <form class="member-search-form w-100" method="get" th:action="@{/librarian/borrow/list}">
                         <input type="hidden" name="tab" value="members">
-                        <div class="member-search-group">
+                        <div class="member-search-group member-search-group--history">
                             <div class="borrow-keyword-control">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control border-start-0 ps-0" name="keyword"
+                                <span class="input-group-text">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
+                                </span>
+                                <input type="search" class="form-control border-start-0 ps-0" name="keyword"
                                        th:value="${keyword}"
                                        th:placeholder="#{librarian.schedule.memberSearchPlaceholder}"
                                        placeholder="Search by member ID, name, email, or phone number...">
                             </div>
                             <button type="submit" class="btn member-search-button text-nowrap" th:text="#{common.search}">Search</button>
-                            <a th:href="@{/librarian/borrow/list(tab='members')}" class="btn btn-outline-secondary text-nowrap" th:text="#{common.clearFilter}">Clear Filter</a>
+                            <a th:href="@{/librarian/borrow/list(tab='members')}"
+                               class="btn borrow-clear-filter text-nowrap"
+                               th:text="#{common.clearFilters}">Clear Filters</a>
                         </div>
                     </form>
                 </div>
 
                 <div class="table-responsive member-table-wrap borrow-list-table-wrap">
                     <table class="table table-hover align-middle member-table borrow-list-table">
-                        <thead>
+                        <thead class="table-light text-uppercase small text-muted">
                             <tr>
                                 <th th:text="#{common.number}">No.</th>
                                 <th th:text="#{librarian.memberDetail.memberId}">Member ID</th>
@@ -307,15 +347,27 @@
                                 </td>
                                 <td class="text-center">
                                     <a th:href="@{/librarian/borrow/member/{id}(id=${member.memberId})}"
-                                       class="btn btn-sm btn-outline-primary px-3 py-1 fw-bold rounded-pill" th:title="#{common.details}">
-                                        <i class="bi bi-clock-history me-1"></i><span th:text="#{common.details}">Xem lịch sử</span>
+                                       class="borrow-list-icon-action"
+                                       th:title="#{common.details}"
+                                       th:aria-label="#{common.details}">
+                                         <i class="bi bi-clock-history" aria-hidden="true"></i>
                                     </a>
                                 </td>
                             </tr>
-                            <tr th:if="${#lists.isEmpty(accounts)}">
-                                <td colspan="6" class="text-center py-5">
-                                    <i class="bi bi-people fs-1 d-block mb-2 text-muted opacity-50"></i>
-                                    <div class="text-muted fst-italic" th:text="#{librarian.schedule.noMembers}">No matching members found.</div>
+                            <tr class="borrow-list-empty-row" th:if="${#lists.isEmpty(accounts)}">
+                                <td colspan="6">
+                                    <div class="borrow-list-empty-state">
+                                        <span class="borrow-list-empty-icon" aria-hidden="true">
+                                            <i class="bi bi-people"></i>
+                                        </span>
+                                        <p th:text="#{librarian.schedule.noMembers}">No matching members found.</p>
+                                        <a class="btn borrow-clear-filter borrow-empty-filter-reset"
+                                           th:if="${keyword != null and !#strings.isEmpty(keyword)}"
+                                           th:href="@{/librarian/borrow/list(tab='members')}"
+                                           th:text="#{common.clearFilters}">
+                                            Clear Filters
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>

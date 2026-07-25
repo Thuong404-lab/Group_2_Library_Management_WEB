@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="toast">
+    <div id="appFeedbackRegion" class="app-feedback-region" aria-live="polite" aria-atomic="true"
+         th:data-success-title="#{feedback.successTitle}"
+         th:data-error-title="#{feedback.errorTitle}"
+         th:data-warning-title="#{feedback.warningTitle}"
+         th:data-info-title="#{feedback.infoTitle}">
+        <div id="customToast" class="app-feedback-toast" role="status" hidden>
+            <span class="app-feedback-toast__icon" aria-hidden="true">
+                <i class="bi bi-check-lg"></i>
+            </span>
+            <div class="app-feedback-toast__copy">
+                <strong id="toastTitle" class="app-feedback-toast__title"></strong>
+                <span id="toastMessage" class="app-feedback-toast__message"></span>
+            </div>
+            <button type="button" class="app-feedback-toast__close" th:aria-label="#{common.close}">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+    <script th:src="@{/js/staff-feedback-toast.js(v='20260724-2')}"></script>
+</th:block>
+</body>
+</html>

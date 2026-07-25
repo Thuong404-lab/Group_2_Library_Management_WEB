@@ -96,9 +96,9 @@
                         </h6>
                     </div>
 
-                    <div class="col-md-4 setting-field">
+                    <div class="col-md-6 setting-field" style="order: 1">
                         <label class="form-label fw-bold small text-muted text-uppercase">
-                            <span th:text="#{admin.settings.standardBorrowFee}">Standard Borrowing Fee</span>
+                            <span th:text="#{admin.settings.standardBorrowFee}">Borrowing Fee</span>
                         </label>
                         <input name="borrowFeePerBook" type="text" inputmode="numeric" class="form-control money-input"
                             required
@@ -106,78 +106,63 @@
                         <div class="form-text" th:text="#{admin.settings.vndPerBookDay}">VND / book / day</div>
                     </div>
 
-                    <div class="col-md-4 setting-field">
-                        <label class="form-label fw-bold small text-muted text-uppercase"
-                            th:text="#{admin.settings.minorDamageBorrowFee}">Minor-damage Borrowing Fee</label>
-                        <input name="minorDamageBorrowFee" type="text" inputmode="numeric"
-                            class="form-control money-input" required
-                            th:value="${settingMap['Minor_Damage_Borrow_Fee'] != null ? settingMap['Minor_Damage_Borrow_Fee'] : 4000}">
-                        <div class="form-text" th:text="#{admin.settings.conditionBorrowFeeHint}">At least 1,000 VND below the preceding condition</div>
-                    </div>
-
-                    <div class="col-md-4 setting-field">
-                        <label class="form-label fw-bold small text-muted text-uppercase"
-                            th:text="#{admin.settings.severeDamageBorrowFee}">Severe-damage Borrowing Fee</label>
-                        <input name="severeDamageBorrowFee" type="text" inputmode="numeric"
-                            class="form-control money-input" required
-                            th:value="${settingMap['Severe_Damage_Borrow_Fee'] != null ? settingMap['Severe_Damage_Borrow_Fee'] : 3000}">
-                        <div class="form-text" th:text="#{admin.settings.conditionBorrowFeeHint}">At least 1,000 VND below the preceding condition</div>
-                    </div>
-
-                    <div class="col-md-4 setting-field">
+                    <div class="col-md-6 setting-field" style="order: 2">
                         <label class="form-label fw-bold small text-muted text-uppercase">
-                            <span th:text="#{admin.settings.overdueFine}">Overdue Fine</span>
+                            <span th:text="#{admin.settings.renewalFee}">Renewal Fee</span>
                         </label>
-                        <input name="finePerDay" type="text" inputmode="numeric" class="form-control money-input"
-                            required
-                            th:value="${settingMap['Fine_Per_Day'] != null ? settingMap['Fine_Per_Day'] : 5000}">
-                        <div class="form-text" th:text="#{admin.settings.vndPerBookOverdueDay}">VND / book / overdue day
-                        </div>
+                        <input name="renewalFeePerDay" type="text" inputmode="numeric"
+                            class="form-control money-input" required
+                            th:value="${settingMap['RENEWAL_FEE_PER_DAY'] != null ? settingMap['RENEWAL_FEE_PER_DAY'] : (settingMap['Borrow_Fee_Per_Book'] != null ? settingMap['Borrow_Fee_Per_Book'] : 5000)}">
+                        <div class="form-text" th:text="#{admin.settings.vndPerBookDay}">VND / book / day</div>
                     </div>
 
-                    <div class="col-md-4 setting-field">
+                    <div class="col-md-6 setting-field" style="order: 4">
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            <span th:text="#{admin.settings.newBookOverdueFine}">Overdue Fine</span>
+                        </label>
+                        <input id="newBookOverdueFine" type="text" class="form-control money-input" readonly
+                            th:value="${settingMap['New_Book_Overdue_Fine'] != null ? settingMap['New_Book_Overdue_Fine'] : 10000}">
+                        <div class="form-text" th:text="#{admin.settings.overdueFineAutoHint}">Automatically equals twice the borrowing fee</div>
+                    </div>
+
+                    <div class="col-md-6 setting-field" style="order: 3">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.reservationDeposit}">Reservation Deposit</span>
                         </label>
                         <input name="depositAmount" type="text" inputmode="numeric" class="form-control money-input"
                             required
                             th:value="${settingMap['Deposit_Amount'] != null ? settingMap['Deposit_Amount'] : 50000}">
-                        <div class="form-text" th:text="#{admin.settings.vndPerBook}">VND / book</div>
+                        <div class="form-text" th:text="#{admin.settings.vndPerBookDay}">VND / book / day</div>
                     </div>
 
-                    <div class="col-md-4 setting-field">
+                    <div class="col-md-6 setting-field" style="order: 5">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageCompensation}">Book Damage Compensation Fee</span>
                         </label>
                         <input name="damageCompensationAmount" type="text" inputmode="numeric"
                             class="form-control money-input" required
                             th:value="${settingMap['Damage_Compensation_Amount'] != null ? settingMap['Damage_Compensation_Amount'] : 120000}">
-                        <div class="form-text" th:text="#{admin.settings.severeDamageHint}">Applied when a book is
-                            severely damaged</div>
+                        <div class="form-text" th:text="#{admin.settings.severeAndLostDamageHint}">Applied equally when a book is severely damaged or lost</div>
                     </div>
 
-                    <div class="col-md-4 setting-field">
+                    <div class="col-12 setting-field" style="order: 6">
                         <label class="form-label fw-bold small text-muted text-uppercase">
-                            <span th:text="#{admin.settings.damageThreshold}">Damage Compensation Threshold</span>
+                            <span th:text="#{admin.settings.damageCompensationRules}">Damage compensation rules</span>
                         </label>
-                        <select name="damageCompensationThreshold" class="form-select" required>
-                            <option th:each="option : ${damageThresholdOptions}" th:value="${option.key}"
-                                th:selected="${settingMap['Damage_Compensation_Threshold'] == option.key}"
-                                th:text="${option.value}">
-                            </option>
-                        </select>
-                        <div class="form-text" th:text="#{admin.settings.damageThresholdHint}">Compensation is charged
-                            when damage exceeds this value</div>
+                        <div class="alert alert-light border mb-0">
+                            <div th:text="#{admin.settings.minorDamageRule}">Minor damage: librarian may enter a custom fine, including 0 VND.</div>
+                            <div th:text="#{admin.settings.severeLostRule}">Severe damage and lost book: the same compensation fee is created automatically.</div>
+                        </div>
                     </div>
 
-                    <div class="col-12 settings-section-title">
+                    <div class="col-12 settings-section-title" style="order: 7">
                         <h6 class="fw-bold text-classic mb-0">
                             <i class="bi bi-shield-lock me-1"></i>
                             <span th:text="#{admin.settings.accountLockingRules}">Account Locking Rules</span>
                         </h6>
                     </div>
 
-                    <div class="col-md-6 setting-field">
+                    <div class="col-md-6 setting-field" style="order: 8">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.overdueLockLimit}">Overdue Violations Before Account
                                 Lock</span>
@@ -186,11 +171,11 @@
                             th:value="${settingMap['Overdue_Violation_Lock_Limit'] != null ? settingMap['Overdue_Violation_Lock_Limit'] : 3}">
                     </div>
 
-                    <div class="col-12 settings-action-divider">
+                    <div class="col-12 settings-action-divider" style="order: 9">
                         <hr class="settings-divider">
                     </div>
 
-                    <div class="col-12 settings-form-actions">
+                    <div class="col-12 settings-form-actions" style="order: 10">
                         <button type="submit" class="btn btn-classic settings-save-button">
                             <span th:text="#{admin.settings.save}">Save Settings</span>
                         </button>
@@ -203,6 +188,8 @@
             document.addEventListener("DOMContentLoaded", function () {
                 const form = document.getElementById("policySettingsForm");
                 const moneyInputs = document.querySelectorAll(".money-input");
+                const newBookFeeInput = form.querySelector("[name='borrowFeePerBook']");
+                const newBookOverdueInput = document.getElementById("newBookOverdueFine");
                 function initialDigits(value) {
                     const trimmed = value.trim();
                     if (/^\d+(?:\.0{1,2})?$/.test(trimmed)) {
@@ -224,6 +211,11 @@
                 function showFormattedMoney(input, initialLoad) {
                     const digits = normalizeDigits(input.value, initialLoad);
                     input.value = digits === "" ? "" : groupDigits(digits);
+                }
+
+                function updateDerivedOverdueFines() {
+                    const newBookFee = Number(normalizeDigits(newBookFeeInput.value, false) || "0");
+                    newBookOverdueInput.value = groupDigits(String(newBookFee * 2));
                 }
 
                 function showRawMoney(input) {
@@ -253,11 +245,15 @@
                     });
                     input.addEventListener("input", function () {
                         keepDigitsOnly(input);
+                        if (input === newBookFeeInput) {
+                            updateDerivedOverdueFines();
+                        }
                     });
                     input.addEventListener("blur", function () {
                         showFormattedMoney(input, false);
                     });
                 });
+                updateDerivedOverdueFines();
 
                 form.addEventListener("submit", function () {
                     moneyInputs.forEach(function (input) {

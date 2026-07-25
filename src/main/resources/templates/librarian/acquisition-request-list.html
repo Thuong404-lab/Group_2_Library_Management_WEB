@@ -5,15 +5,19 @@
 <head>
     <title th:text="#{librarian.acquisition.title}">Book Acquisition Requests</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/acquisition-request-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/acquisition-request-list.css(v='20260724-1')}" />
 </head>
 <body>
-<main layout:fragment="content" th:with="activeMenu='suggestions'" class="canonical-management-page acquisition-requests-page">
+<main layout:fragment="content" th:with="activeMenu='suggestions'"
+      class="canonical-management-page member-palette-page member-management-page acquisition-requests-page">
     <header class="app-page-header acquisition-page-hero">
         <div class="acquisition-hero-copy">
             <div class="app-page-eyebrow" th:text="#{librarian.acquisition.eyebrow}">COLLECTION DEVELOPMENT</div>
             <h1 class="app-page-title" th:text="#{librarian.acquisition.heading}">Book Acquisition Requests</h1>
             <p class="app-page-description" th:text="#{librarian.acquisition.description}">Review reader requests and respond to each suggestion.</p>
+        </div>
+        <div class="acquisition-hero-decoration" aria-hidden="true">
+            <i class="bi bi-bookmark-plus"></i>
         </div>
     </header>
 
@@ -29,10 +33,6 @@
             <span class="acquisition-request-count" th:if="${requests != null}"
                   th:text="#{librarian.acquisition.count(${requests.totalElements})}">0 requests</span>
         </div>
-        <div class="acquisition-hero-decoration" aria-hidden="true">
-            <i class="bi bi-bookmark-plus"></i>
-        </div>
-
         <form method="get" th:action="@{/librarian/interaction/acquisition-requests}"
               class="acquisition-filter-toolbar" role="search">
             <div class="acquisition-filter-field acquisition-filter-field--search">
@@ -54,13 +54,11 @@
                 </select>
             </div>
             <button type="submit" class="acquisition-filter-submit">
-                <i class="bi bi-funnel" aria-hidden="true"></i>
                 <span th:text="#{common.filter}">Filter</span>
             </button>
             <a th:if="${!#strings.isEmpty(acquisitionKeyword) || !#strings.isEmpty(currentAcquisitionStatus)}"
                class="acquisition-filter-reset"
                th:href="@{/librarian/interaction/acquisition-requests}">
-                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
                 <span th:text="#{common.clearFilter}">Clear filter</span>
             </a>
         </form>
@@ -147,7 +145,7 @@
             <div class="modal-header"><div>
                 <h2 class="modal-title" id="approveAcquisitionModalLabel" th:text="#{librarian.acquisition.approveTitle}">Approve request</h2>
                 <p id="approveAcquisitionBookTitle"></p>
-            </div><button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}"><i class="bi bi-x-lg"></i></button></div>
+            </div></div>
             <form id="approveAcquisitionForm" method="post" novalidate><div class="modal-body">
                 <input type="hidden" name="page" th:value="${requests.number}">
                 <input type="hidden" name="status" th:value="${currentAcquisitionStatus}">
@@ -169,8 +167,7 @@
 
     <div class="modal fade acquisition-reject-modal" id="rejectAcquisitionModal" tabindex="-1" aria-labelledby="rejectAcquisitionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-            <div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel" th:text="#{librarian.acquisition.rejectTitle}">Reject Request</h2><p id="rejectAcquisitionBookTitle"></p></div>
-                <button type="button" class="acquisition-modal-close" data-bs-dismiss="modal" th:aria-label="#{common.close}"><i class="bi bi-x-lg"></i></button></div>
+            <div class="modal-header"><div><h2 class="modal-title" id="rejectAcquisitionModalLabel" th:text="#{librarian.acquisition.rejectTitle}">Reject Request</h2><p id="rejectAcquisitionBookTitle"></p></div></div>
             <form id="rejectAcquisitionForm" method="post" novalidate><div class="modal-body">
                 <input type="hidden" name="page" th:value="${requests.number}">
                 <input type="hidden" name="status" th:value="${currentAcquisitionStatus}">

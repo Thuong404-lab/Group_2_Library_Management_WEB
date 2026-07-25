@@ -13,6 +13,7 @@ import com.lms.entity.StaffAccount;
 import com.lms.entity.User;
 import com.lms.enums.ActionType;
 import com.lms.enums.UserStatus;
+import com.lms.event.StaffAccountCreatedEvent;
 import com.lms.exception.AccountFormValidationException;
 import com.lms.exception.DataProcessingException;
 import com.lms.exception.ResourceNotFoundException;
@@ -30,6 +31,7 @@ import com.lms.service.AuditLogService;
 import com.lms.service.LocalizedMessageService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -75,6 +77,7 @@ public class AccountServiceImpl implements AccountService {
     private final StaffRepository staffRepository;
     private final AuditLogService auditLogService;
     private final MemberAccountDeletionRepository memberAccountDeletionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AccountServiceImpl(MemberAccountRepository memberAccountRepository,
             StaffAccountRepository staffAccountRepository,
@@ -85,7 +88,8 @@ public class AccountServiceImpl implements AccountService {
             RoleRepository roleRepository,
             StaffRepository staffRepository,
             AuditLogService auditLogService,
-            MemberAccountDeletionRepository memberAccountDeletionRepository) {
+            MemberAccountDeletionRepository memberAccountDeletionRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.memberAccountRepository = memberAccountRepository;
         this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
@@ -96,6 +100,7 @@ public class AccountServiceImpl implements AccountService {
         this.staffRepository = staffRepository;
         this.auditLogService = auditLogService;
         this.memberAccountDeletionRepository = memberAccountDeletionRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -163,6 +168,14 @@ public class AccountServiceImpl implements AccountService {
         auditLogService.log(
                 ActionType.CREATE_ACCOUNT,
                 messages.get("backend.account.audit.created", username, roleName));
+
+        if ("LIBRARIAN".equals(roleName)) {
+            eventPublisher.publishEvent(new StaffAccountCreatedEvent(
+                    trim(request.getEmail()),
+                    trim(request.getFullName()),
+                    username,
+                    request.getPassword()));
+        }
     }
 
     @Override

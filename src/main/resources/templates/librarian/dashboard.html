@@ -7,7 +7,7 @@
 
 <head>
     <title th:text="#{librarian.dashboard.title}">Librarian Overview</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css(v='20260724-1')}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/books.css}" />
@@ -1482,6 +1482,7 @@
                                                             th:value="${item.bookItemId}"
                                                             th:form="${'bulkDeleteCopiesForm' + book.bookId}"
                                                             data-copy-select-item th:data-book-id="${book.bookId}"
+                                                            th:disabled="${item.status != 'Available' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"
                                                             th:aria-label="#{librarian.inventory.selectCopy}">
                                                     </td>
                                                     <td class="fw-bold font-monospace" th:text="${item.barcode}">
@@ -1507,10 +1508,11 @@
                                                             th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions">
-                                                        <button th:if="${item.status != 'Borrowed'}" type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                        <button th:if="${item.status != 'Borrowed' and item.status != 'Payment_Pending' and item.status != 'Waiting_Pickup' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}" type="button" class="member-icon-action" data-bs-toggle="modal"
                                                             th:data-bs-target="${'#editCopyModalLibrarian' + item.bookItemId}"
                                                             th:title="#{librarian.inventory.editCopy}"><i class="bi bi-pencil-square"></i></button>
                                                         <form
+                                                            th:if="${item.status == 'Available' or item.bookCondition == 'Severely damaged' or item.bookCondition == 'Lost book'}"
                                                             th:action="@{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                                             method="post" data-copy-delete-form
                                                             th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}">
@@ -1544,7 +1546,7 @@
                         </div>
                     </div>
 
-                    <div class="modal fade" th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed'] : {}}" th:id="${'editCopyModalLibrarian' + item.bookItemId}" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade" th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed' and status != 'Payment_Pending' and status != 'Waiting_Pickup' and bookCondition != 'Severely damaged' and bookCondition != 'Lost book'] : {}}" th:id="${'editCopyModalLibrarian' + item.bookItemId}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header border-bottom border-color"><h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i><span th:text="#{librarian.inventory.editCopy}">Edit Copy</span> – <span th:text="${item.barcode}">Code</span></h5></div>

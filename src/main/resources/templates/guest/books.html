@@ -104,7 +104,7 @@
                     <article class="catalog-book-card member-reference-list__item" th:each="book : ${bookPage.content}">
                         <a class="catalog-book-link" th:href="@{'/books/' + ${book.bookId}}">
                             <span class="catalog-cover-wrap">
-                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                                      class="catalog-cover" th:alt="${book.title}"
                                      onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                             </span>
@@ -120,8 +120,8 @@
                                 </span>
                                 <span class="catalog-book-footer">
                                     <span class="catalog-status member-reference-pill"
-                                          th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
-                                          th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
+                                          th:classappend="${book.status == 'Active' and availableCopiesByBookId[book.bookId] > 0} ? ' is-available' : ' is-unavailable'"
+                                          th:text="${book.status == 'Active' and availableCopiesByBookId[book.bookId] > 0 ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
                                     <span class="catalog-isbn" th:text="#{catalog.isbn(${book.isbn != null ? book.isbn : #messages.msg('common.none')})}">ISBN</span>
                                 </span>
                             </span>

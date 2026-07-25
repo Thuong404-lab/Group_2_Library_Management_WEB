@@ -129,11 +129,8 @@ public class SystemServiceImpl implements SystemService {
             Integer renewalRejectionCooldownHours,
             Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
-            BigDecimal minorDamageBorrowFee,
-            BigDecimal severeDamageBorrowFee,
-            BigDecimal finePerDay,
+            BigDecimal renewalFeePerDay,
             BigDecimal damageCompensationAmount,
-            Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount) {
 
@@ -143,16 +140,8 @@ public class SystemServiceImpl implements SystemService {
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
         validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
-        validateZeroOrPositive(minorDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
-        validateZeroOrPositive(severeDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
-        BigDecimal minimumGap = BigDecimal.valueOf(1000);
-        if (minorDamageBorrowFee.compareTo(borrowFeePerBook.subtract(minimumGap)) > 0
-                || severeDamageBorrowFee.compareTo(minorDamageBorrowFee.subtract(minimumGap)) > 0) {
-            throw new ValidationException(messages.get("backend.settings.conditionFeeOrder"));
-        }
-        validateZeroOrPositive(finePerDay, messages.get("backend.settings.fineNonNegative"));
+        validateZeroOrPositive(renewalFeePerDay, messages.get("backend.settings.renewalFeeNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
-        validateDamageThreshold(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
@@ -179,24 +168,16 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
                 messages.get("backend.settings.description.borrowFee"));
-        saveOrUpdateSetting("Minor_Damage_Borrow_Fee",
-                minorDamageBorrowFee.toPlainString(),
-                messages.get("backend.settings.description.minorDamageBorrowFee"));
-        saveOrUpdateSetting("Severe_Damage_Borrow_Fee",
-                severeDamageBorrowFee.toPlainString(),
-                messages.get("backend.settings.description.severeDamageBorrowFee"));
-
-        saveOrUpdateSetting("Fine_Per_Day",
-                finePerDay.toPlainString(),
-                messages.get("backend.settings.description.finePerDay"));
+        saveOrUpdateSetting("RENEWAL_FEE_PER_DAY",
+                renewalFeePerDay.toPlainString(),
+                messages.get("backend.settings.description.renewalFee"));
+        saveOrUpdateSetting("New_Book_Overdue_Fine",
+                borrowFeePerBook.multiply(BigDecimal.valueOf(2)).toPlainString(),
+                messages.get("backend.settings.description.newBookOverdueFine"));
 
         saveOrUpdateSetting("Damage_Compensation_Amount",
                 damageCompensationAmount.toPlainString(),
                 messages.get("backend.settings.description.compensation"));
-
-        saveOrUpdateSetting("Damage_Compensation_Threshold",
-                String.valueOf(damageCompensationThreshold),
-                messages.get("backend.settings.description.damageThreshold"));
 
         saveOrUpdateSetting("Overdue_Violation_Lock_Limit",
                 String.valueOf(overdueViolationLockLimit),
@@ -230,12 +211,6 @@ public class SystemServiceImpl implements SystemService {
 
     private void validateZeroOrPositive(Integer value, String message) {
         if (value == null || value < 0) {
-            throw new ValidationException(message);
-        }
-    }
-
-    private void validateDamageThreshold(Integer value, String message) {
-        if (value == null || value < 2 || value > 4) {
             throw new ValidationException(message);
         }
     }

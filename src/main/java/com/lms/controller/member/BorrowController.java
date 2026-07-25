@@ -104,7 +104,8 @@ public class BorrowController extends LocalizedControllerSupport {
         model.addAttribute("maxRenewals", getPositiveIntSetting("MAX_RENEWALS", 2));
         model.addAttribute("maxRenewalRequests", getPositiveIntSetting("MAX_RENEWAL_REQUESTS_PER_LOAN", 3));
         model.addAttribute("renewalApprovalTimeoutHours", getPositiveIntSetting("RENEWAL_APPROVAL_TIMEOUT_HOURS", 12));
-        model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000)));
+        model.addAttribute("renewalFeePerDay", BigDecimal.valueOf(getPositiveIntSetting(
+                "RENEWAL_FEE_PER_DAY", getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000))));
 
         java.time.LocalDate minDate = java.time.LocalDate.now().minusMonths(6);
         java.time.LocalDate maxDate = java.time.LocalDate.now();
@@ -547,14 +548,20 @@ public class BorrowController extends LocalizedControllerSupport {
             BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                     .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
                     .orElse(BigDecimal.ZERO);
-            BigDecimal depositAmount = getDepositAmount();
+            BigDecimal dailyDepositRate = getDepositAmount();
+            int maxBorrowDays = getMaxBorrowDays();
+            int defaultBorrowDays = Math.min(14, maxBorrowDays);
+            BigDecimal depositAmount = dailyDepositRate.multiply(BigDecimal.valueOf(defaultBorrowDays));
 
             model.addAttribute("book", book);
             model.addAttribute("username", principal.getName());
             model.addAttribute("walletBalance", walletBalance);
+            model.addAttribute("dailyDepositRate", dailyDepositRate);
             model.addAttribute("depositAmount", depositAmount);
             model.addAttribute("remainingBalance", walletBalance.subtract(depositAmount));
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
+            model.addAttribute("maxBorrowDays", maxBorrowDays);
+            model.addAttribute("defaultBorrowDays", defaultBorrowDays);
             return "member/reserve-confirm";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
@@ -567,12 +574,13 @@ public class BorrowController extends LocalizedControllerSupport {
     // trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
+            @RequestParam(value = "numberOfDays", required = false) Integer numberOfDays,
             Principal principal,
             RedirectAttributes redirectAttributes) {
         if (principal == null)
             return "redirect:/login";
         try {
-            borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
+            borrowService.memberSubmitReservationRequest(principal.getName(), bookId, numberOfDays);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationSubmitted"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
@@ -707,10 +715,7 @@ public class BorrowController extends LocalizedControllerSupport {
     private BigDecimal getBorrowFeeForCondition(String bookCondition) {
         String condition = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
         if (condition.contains("severely")) {
-            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
-        }
-        if (condition.contains("minor")) {
-            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
+            return BigDecimal.ZERO;
         }
         return getMoneySetting("BORROW_FEE_PER_BOOK", 5000);
     }

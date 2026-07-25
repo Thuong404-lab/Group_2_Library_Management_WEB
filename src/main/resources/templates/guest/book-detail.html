@@ -22,12 +22,12 @@
         <!-- Book Hero Section -->
         <section class="book-detail-hero member-reference-list">
             <div class="book-detail-cover-panel">
-                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
+                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                      class="book-detail-cover" th:alt="${book.title}"
                      onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                 <span class="book-detail-status member-reference-pill"
-                      th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
-                      th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
+                      th:classappend="${book.status == 'Active' and availableCount > 0} ? ' is-available' : ' is-unavailable'"
+                      th:text="${book.status == 'Active' and availableCount > 0 ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
             </div>
 
             <div class="book-detail-main">
@@ -99,7 +99,9 @@
 
                     <!-- Add to Cart / View Cart Button -->
                     <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"
-                          th:action="@{/member/cart/add}" method="post">
+                          th:action="@{/member/cart/add}" method="post" class="js-cart-add-form"
+                          th:data-view-cart-url="@{/member/cart}"
+                          th:data-view-cart-text="#{guest.bookDetail.viewCart}">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
                         <button type="submit" class="book-detail-button book-detail-button--secondary"
                                 th:disabled="${book.status != 'Active' or availableCount == 0 or (isInactiveMember != null and isInactiveMember)}"
@@ -119,13 +121,7 @@
 
                     <!-- Reserve Button -->
                     <form sec:authorize="hasRole('MEMBER')"
-                          th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
-                          class="app-confirm-form"
-                          th:data-confirm-title="#{reservation.confirmPage.confirmTitle}"
-                          th:data-confirm-subject-label="#{reservation.book}"
-                          th:data-confirm-subject="${book.title}"
-                          th:data-confirm-message="#{reservation.deposit.confirmMessage}"
-                          th:data-confirm-action="#{payment.confirm}">
+                          th:action="@{'/member/borrow/reserve/form/' + ${book.bookId}}" method="get">
                         <button type="submit" class="book-detail-button book-detail-button--secondary"
                                 th:disabled="${isInactiveMember != null and isInactiveMember}">
                             <i class="bi bi-bookmark" aria-hidden="true"></i><span th:text="#{guest.bookDetail.reserve}">Reserve</span>

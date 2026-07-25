@@ -667,6 +667,9 @@
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Waiting_Pickup'])}">0</strong>
                                         <span th:text="#{loan.status.waitingPickup}">Waiting for Pickup</span></span>
                                     <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Reserved'])}">0</strong>
+                                        <span th:text="#{book.status.reserved}">Reserved</span></span>
+                                    <span><strong class="app-stat-number"
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Unavailable'])}">0</strong>
                                         <span th:text="#{book.status.unavailable}">Unavailable</span></span>
                                 </div>
@@ -684,20 +687,22 @@
                                                     th:value="${keyword}"
                                                     th:placeholder="#{librarian.inventory.searchPlaceholder}">
                                             </div>
-                                            <select class="form-select member-filter-select" name="bookCondition"
-                                                th:aria-label="#{librarian.inventory.condition}">
-                                                <option value="" th:text="#{librarian.inventory.allConditions}">All
-                                                    conditions</option>
-                                                <option value="New" th:selected="${bookCondition == 'New'}"
-                                                    th:text="#{book.condition.good}">New</option>
-                                                <option value="Minor damage"
-                                                    th:selected="${bookCondition == 'Minor damage'}"
-                                                    th:text="#{book.condition.minorDamage}">Minor damage</option>
-                                                <option value="Severely damaged"
-                                                    th:selected="${bookCondition == 'Severely damaged'}"
-                                                    th:text="#{book.condition.severeDamage}">Severely damaged</option>
-                                                <option value="Lost book" th:selected="${bookCondition == 'Lost book'}"
-                                                    th:text="#{book.condition.lost}">Lost book</option>
+                                            <select class="form-select member-filter-select" name="bookItemStatus"
+                                                aria-label="Filter by copy status">
+                                                <option value="" th:selected="${bookItemStatus == null or bookItemStatus == ''}"
+                                                    th:text="#{common.allStatuses}">All statuses</option>
+                                                <option value="Available" th:selected="${bookItemStatus == 'Available'}"
+                                                    th:text="#{book.status.available}">Available</option>
+                                                <option value="Borrowed" th:selected="${bookItemStatus == 'Borrowed'}"
+                                                    th:text="#{loan.status.borrowed}">Borrowing</option>
+                                                <option value="Payment_Pending" th:selected="${bookItemStatus == 'Payment_Pending'}"
+                                                    th:text="#{book.status.paymentPending}">Awaiting payment</option>
+                                                <option value="Waiting_Pickup" th:selected="${bookItemStatus == 'Waiting_Pickup'}"
+                                                    th:text="#{loan.status.waitingPickup}">Awaiting physical copy pickup</option>
+                                                <option value="Reserved" th:selected="${bookItemStatus == 'Reserved'}"
+                                                    th:text="#{book.status.reserved}">Reserved</option>
+                                                <option value="Unavailable" th:selected="${bookItemStatus == 'Unavailable'}"
+                                                    th:text="#{book.status.unavailable}">Unavailable</option>
                                             </select>
                                             <button type="submit" class="btn member-search-button text-nowrap"
                                                 th:text="#{common.search}">Search</button>
@@ -778,24 +783,24 @@
                                     <ul class="pagination justify-content-center mb-0">
                                         <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=0,keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"
                                                 th:text="#{common.first}">First</a></li>
                                         <li class="page-item" th:classappend="${books.first ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition})}"><i
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"><i
                                                     class="bi bi-chevron-left"></i></a></li>
                                         <li class="page-item" th:each="i : ${#numbers.sequence(startPage,endPage)}"
                                             th:classappend="${i == books.number ? 'active' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${i},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"
                                                 th:text="${i + 1}">1</a></li>
                                         <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition})}"><i
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.number + 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"><i
                                                     class="bi bi-chevron-right"></i></a></li>
                                         <li class="page-item" th:classappend="${books.last ? 'disabled' : ''}"><a
                                                 class="page-link page-link-classic"
-                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition})}"
+                                                th:href="${staffPrefix == '/admin'} ? @{/admin/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})} : @{/librarian/books(subsection='inventory',tab='audit',bookPage=${books.totalPages - 1},keyword=${keyword},bookCondition=${bookCondition},bookItemStatus=${bookItemStatus})}"
                                                 th:text="#{common.last}">Last</a></li>
                                     </ul>
                                 </nav>
@@ -824,6 +829,7 @@
                                 th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/add} : @{/librarian/inventory/add}"
                                 method="post"
                                 enctype="multipart/form-data" novalidate onsubmit="validateBookForm(event, this)">
+                                <input type="hidden" name="bookPage" th:value="${books.number}">
                                 <div class="modal-body px-4 pt-4 pb-0">
                                     <div class="row g-3">
                                         <div class="col-md-6">
@@ -1072,6 +1078,7 @@
                             <form
                                 th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/audit} : @{/librarian/inventory/audit}"
                                 method="post">
+                                <input type="hidden" name="bookPage" th:value="${books.number}">
                                 <div class="modal-body">
                                     <div class="row g-3">
                                         <div class="col-12">
@@ -1091,6 +1098,11 @@
                                                 <span class="fw-semibold" th:text="#{loan.status.waitingPickup}">Waiting for pickup</span>
                                                 <span class="app-number"
                                                     th:text="${@displayNumber.count(inventoryStatusCounts['Waiting_Pickup'])}">0</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold" th:text="#{book.status.reserved}">Reserved</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['Reserved'])}">0</span>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="fw-semibold"
@@ -1125,6 +1137,7 @@
                                 <form class="add-copies-form"
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/add/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/add/{id}(id=${book.bookId})}"
                                     method="post" novalidate onsubmit="validateAddCopiesForm(event, this)">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body p-4">
                                         <div class="mb-3">
                                             <label class="form-label fw-semibold"><span
@@ -1182,19 +1195,51 @@
                         <div class="modal-dialog modal-dialog-centered modal-xl">
                             <div class="modal-content border-0 shadow">
                                 <div
-                                    class="modal-header border-bottom border-color d-flex align-items-center justify-content-between gap-3">
+                                    class="modal-header border-bottom border-color d-flex align-items-center justify-content-between gap-3 flex-wrap">
                                     <h5 class="modal-title fw-bold admin-books-h5-color-font-family-31">
                                         <span th:text="#{librarian.inventory.copyList}">Book Copies</span> – <span
                                             th:text="${book.title}">Book title</span>
                                     </h5>
-                                    <form class="ms-auto flex-shrink-0" th:id="${'bulkDeleteCopiesForm' + book.bookId}"
-                                        th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
-                                        method="post" data-copy-delete-form
-                                        th:data-confirm-message="#{librarian.inventory.deleteCopiesConfirm}">
-                                        <button type="submit" class="btn btn-outline-danger"><span
-                                                th:text="#{librarian.inventory.deleteSelectedCopies}">Delete
-                                                Selected</span></button>
-                                    </form>
+                                    <div class="ms-auto d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                                        <div class="input-group" style="width: 230px">
+                                            <span class="input-group-text"><i class="bi bi-upc-scan" aria-hidden="true"></i></span>
+                                            <input type="search" class="form-control"
+                                                data-copy-barcode-search th:data-book-id="${book.bookId}"
+                                                th:placeholder="#{librarian.inventory.barcodeSearchPlaceholder}"
+                                                th:aria-label="#{librarian.inventory.barcodeSearchPlaceholder}">
+                                        </div>
+                                        <select class="form-select member-filter-select"
+                                            style="width: 190px"
+                                            data-copy-condition-filter th:data-book-id="${book.bookId}"
+                                            th:aria-label="#{librarian.inventory.condition}">
+                                            <option value="" th:text="#{librarian.inventory.allConditions}">All conditions</option>
+                                            <option value="New" th:text="#{book.condition.good}">New</option>
+                                            <option value="Minor damage" th:text="#{book.condition.minorDamage}">Minor damage</option>
+                                            <option value="Severely damaged" th:text="#{book.condition.severeDamage}">Severely damaged</option>
+                                            <option value="Lost book" th:text="#{book.condition.lost}">Lost book</option>
+                                        </select>
+                                        <select class="form-select member-filter-select"
+                                            style="width: 190px"
+                                            data-copy-status-filter th:data-book-id="${book.bookId}"
+                                            th:aria-label="#{common.status}">
+                                            <option value="" th:text="#{common.allStatuses}">All statuses</option>
+                                            <option value="Available" th:text="#{book.status.available}">Available</option>
+                                            <option value="Borrowed" th:text="#{loan.status.borrowed}">Borrowing</option>
+                                            <option value="Payment_Pending" th:text="#{book.status.paymentPending}">Awaiting payment</option>
+                                            <option value="Waiting_Pickup" th:text="#{loan.status.waitingPickup}">Awaiting physical copy pickup</option>
+                                            <option value="Reserved" th:text="#{book.status.reserved}">Reserved</option>
+                                            <option value="Unavailable" th:text="#{book.status.unavailable}">Unavailable</option>
+                                        </select>
+                                        <form class="flex-shrink-0" th:id="${'bulkDeleteCopiesForm' + book.bookId}"
+                                            th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
+                                            method="post" data-copy-delete-form
+                                            th:data-confirm-message="#{librarian.inventory.deleteCopiesConfirm}">
+                                            <input type="hidden" name="bookPage" th:value="${books.number}">
+                                            <button type="submit" class="btn btn-outline-danger text-nowrap"><span
+                                                    th:text="#{librarian.inventory.deleteSelectedCopies}">Delete
+                                                    Selected</span></button>
+                                        </form>
+                                    </div>
                                 </div>
                                 <div class="modal-body p-4">
                                     <div class="table-responsive">
@@ -1218,7 +1263,10 @@
                                             <tbody>
                                                 <tr class="copy-detail-row"
                                                     th:each="item, stat : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId] : {}}"
-                                                    data-copy-row th:data-book-id="${book.bookId}">
+                                                    data-copy-row th:data-book-id="${book.bookId}"
+                                                    th:data-copy-condition="${item.bookCondition}"
+                                                    th:data-copy-barcode="${item.barcode}"
+                                                    th:data-copy-status="${item.status}">
                                                     <td class="app-number" th:data-label="#{common.number}"
                                                         th:text="${@displayNumber.count(stat.index + 1)}">1</td>
                                                     <td class="text-center book-copy-select-cell"
@@ -1226,7 +1274,8 @@
                                                             class="form-check-input" type="checkbox" name="itemIds"
                                                             th:value="${item.bookItemId}"
                                                             th:form="${'bulkDeleteCopiesForm' + book.bookId}"
-                                                            data-copy-select-item th:data-book-id="${book.bookId}"></td>
+                                                            data-copy-select-item th:data-book-id="${book.bookId}"
+                                                            th:disabled="${item.status != 'Available' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"></td>
                                                     <td class="fw-bold app-code-number"
                                                         th:data-label="#{librarian.inventory.copyCode}"
                                                         th:text="${item.barcode != null ? item.barcode : '—'}">BC001-001
@@ -1254,21 +1303,26 @@
                                                     </td>
                                                     <td th:data-label="#{common.status}">
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Payment_Pending'} ? ' status-payment-pending' : (${item.status == 'Waiting_Pickup'} ? ' status-waiting-pickup' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive'))))"
-                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Payment_Pending' ? #messages.msg('book.status.paymentPending') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status))))}">Available</span>
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Reserved'} ? ' status-reserved' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Payment_Pending'} ? ' status-payment-pending' : (${item.status == 'Waiting_Pickup'} ? ' status-waiting-pickup' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive')))))"
+                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Reserved' ? #messages.msg('book.status.reserved') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Payment_Pending' ? #messages.msg('book.status.paymentPending') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions"
                                                         th:data-label="#{common.actions}">
-                                                        <button th:if="${item.status != 'Borrowed'}" type="button"
-                                                            class="member-icon-action" data-bs-toggle="modal"
-                                                            th:data-bs-target="${'#editCopyModalAdmin' + item.bookItemId}"
+                                                        <button
+                                                            th:if="${item.status != 'Reserved' and item.status != 'Borrowed' and item.status != 'Payment_Pending' and item.status != 'Waiting_Pickup' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"
+                                                            type="button"
+                                                            class="member-icon-action"
+                                                            th:data-edit-copy-target="${'#editCopyModalAdmin' + item.bookItemId}"
                                                             th:title="#{librarian.inventory.editCopy}"
                                                             th:aria-label="#{librarian.inventory.editCopy}"><i
                                                                 class="bi bi-pencil-square"></i></button>
                                                         <form
+                                                            th:if="${item.status == 'Available' or item.bookCondition == 'Severely damaged' or item.bookCondition == 'Lost book'}"
                                                             th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                                             method="post" data-copy-delete-form
                                                             th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}">
+                                                            <input type="hidden" name="bookPage"
+                                                                th:value="${books.number}">
                                                             <input type="hidden" name="itemIds"
                                                                 th:value="${item.bookItemId}"><button type="submit"
                                                                 class="member-icon-action member-icon-action-danger"
@@ -1282,6 +1336,10 @@
                                                     <td colspan="8" class="text-center text-muted py-4"
                                                         th:text="#{librarian.inventory.noCopies}">No copies in
                                                         inventory.</td>
+                                                </tr>
+                                                <tr data-copy-filter-empty hidden>
+                                                    <td colspan="8" class="text-center text-muted py-4"
+                                                        th:text="#{librarian.inventory.noMatchingCopies}">No matching copies found.</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1301,19 +1359,20 @@
                     </div>
 
                     <div class="modal fade"
-                        th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed'] : {}}"
+                        th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Reserved' and status != 'Borrowed' and status != 'Payment_Pending' and status != 'Waiting_Pickup' and bookCondition != 'Severely damaged' and bookCondition != 'Lost book'] : {}}"
                         th:if="${param.tab != null and param.tab[0] == 'audit'}"
                         th:id="${'editCopyModalAdmin' + item.bookItemId}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header border-bottom border-color">
-                                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i><span
+                                    <h5 class="modal-title fw-bold"><span
                                             th:text="#{librarian.inventory.editCopy}">Edit Copy</span> – <span
                                             th:text="${item.barcode}">Code</span></h5>
                                 </div>
                                 <form
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})} : @{/librarian/inventory/copies/update/{bookId}/{itemId}(bookId=${book.bookId},itemId=${item.bookItemId})}"
                                     method="post">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body p-4">
                                         <label class="form-label fw-semibold"
                                             th:text="#{librarian.inventory.condition}">Condition</label>
@@ -1357,6 +1416,7 @@
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/edit/{id}(id=${book.bookId})} : @{/librarian/inventory/edit/{id}(id=${book.bookId})}"
                                     method="post" enctype="multipart/form-data" novalidate
                                     onsubmit="validateBookForm(event, this)">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body">
                                         <div class="row g-3">
                                             <div class="col-md-6">
@@ -1500,6 +1560,7 @@
                                 <form
                                     th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/delete/{id}(id=${book.bookId})}"
                                     method="post">
+                                    <input type="hidden" name="bookPage" th:value="${books.number}">
                                     <div class="modal-body">
                                         <div class="alert alert-danger py-2 mb-3">
                                             <i class="bi bi-trash3-fill me-1"></i>
@@ -1951,6 +2012,25 @@
         </script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-edit-copy-target]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const target = document.querySelector(button.dataset.editCopyTarget);
+                        if (!target || typeof bootstrap === 'undefined') return;
+
+                        bootstrap.Modal.getOrCreateInstance(target).show();
+                        target.addEventListener('hidden.bs.modal', function restoreCopiesModal() {
+                            target.removeEventListener('hidden.bs.modal', restoreCopiesModal);
+                            if (document.querySelector('.modal.show')) {
+                                document.body.classList.add('modal-open');
+                            }
+                            button.focus();
+                        });
+                    });
+                });
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
                 const bookshelfSearch = document.getElementById('bookshelfSearch');
                 const bookshelfSearchButton = document.getElementById('bookshelfSearchButton');
                 const bookshelfRows = Array.from(document.querySelectorAll('.bookshelf-data-row'));
@@ -2001,35 +2081,75 @@
                     const bookId = table.dataset.bookId;
                     const rows = Array.from(table.querySelectorAll('tbody [data-copy-row]'));
                     const pagination = document.querySelector('.copy-modal-pagination[data-book-id="' + bookId + '"]');
-                    if (!pagination || rows.length <= copyPageSize) return;
-                    const previous = pagination.querySelector('[data-copy-page-prev]');
-                    const next = pagination.querySelector('[data-copy-page-next]');
-                    const summary = pagination.querySelector('[data-copy-page-summary]');
-                    const pageCount = Math.ceil(rows.length / copyPageSize);
+                    const conditionFilter = document.querySelector('[data-copy-condition-filter][data-book-id="' + bookId + '"]');
+                    const statusFilter = document.querySelector('[data-copy-status-filter][data-book-id="' + bookId + '"]');
+                    const barcodeSearch = document.querySelector('[data-copy-barcode-search][data-book-id="' + bookId + '"]');
+                    const filterEmpty = table.querySelector('[data-copy-filter-empty]');
+                    const previous = pagination?.querySelector('[data-copy-page-prev]');
+                    const next = pagination?.querySelector('[data-copy-page-next]');
+                    const summary = pagination?.querySelector('[data-copy-page-summary]');
                     let currentPage = 1;
 
+                    const getFilteredRows = function () {
+                        const selectedCondition = conditionFilter?.value || '';
+                        const selectedStatus = statusFilter?.value || '';
+                        const barcodeKeyword = (barcodeSearch?.value || '').trim().toLocaleLowerCase();
+                        return rows.filter(function (row) {
+                            const matchesCondition = !selectedCondition
+                                || row.dataset.copyCondition === selectedCondition;
+                            const matchesStatus = !selectedStatus
+                                || row.dataset.copyStatus === selectedStatus;
+                            const matchesBarcode = !barcodeKeyword
+                                || (row.dataset.copyBarcode || '').toLocaleLowerCase().includes(barcodeKeyword);
+                            return matchesCondition && matchesStatus && matchesBarcode;
+                        });
+                    };
+
                     const renderCopyPage = function () {
+                        const filteredRows = getFilteredRows();
+                        const pageCount = Math.max(1, Math.ceil(filteredRows.length / copyPageSize));
+                        currentPage = Math.min(currentPage, pageCount);
                         const start = (currentPage - 1) * copyPageSize;
-                        rows.forEach(function (row, index) {
+                        rows.forEach(function (row) {
+                            row.hidden = true;
+                        });
+                        filteredRows.forEach(function (row, index) {
                             row.hidden = index < start || index >= start + copyPageSize;
                         });
-                        previous.disabled = currentPage === 1;
-                        next.disabled = currentPage === pageCount;
-                        summary.textContent = currentPage + ' / ' + pageCount;
+                        if (filterEmpty) filterEmpty.hidden = rows.length === 0 || filteredRows.length > 0;
+                        if (pagination) {
+                            pagination.hidden = filteredRows.length <= copyPageSize;
+                            previous.disabled = currentPage === 1;
+                            next.disabled = currentPage === pageCount;
+                            summary.textContent = currentPage + ' / ' + pageCount;
+                        }
                         const selectAll = document.querySelector('[data-copy-select-all][data-book-id="' + bookId + '"]');
                         if (selectAll) {
                             selectAll.checked = false;
                             selectAll.indeterminate = false;
                         }
                     };
-                    previous.addEventListener('click', function () {
+                    previous?.addEventListener('click', function () {
                         if (currentPage > 1) currentPage -= 1;
                         renderCopyPage();
                     });
-                    next.addEventListener('click', function () {
+                    next?.addEventListener('click', function () {
+                        const filteredCount = getFilteredRows().length;
+                        const pageCount = Math.max(1, Math.ceil(filteredCount / copyPageSize));
                         if (currentPage < pageCount) currentPage += 1;
                         renderCopyPage();
                     });
+                    const resetAndRenderCopyList = function () {
+                        currentPage = 1;
+                        rows.forEach(function (row) {
+                            const checkbox = row.querySelector('[data-copy-select-item]');
+                            if (checkbox) checkbox.checked = false;
+                        });
+                        renderCopyPage();
+                    };
+                    conditionFilter?.addEventListener('change', resetAndRenderCopyList);
+                    statusFilter?.addEventListener('change', resetAndRenderCopyList);
+                    barcodeSearch?.addEventListener('input', resetAndRenderCopyList);
                     renderCopyPage();
                 });
 
@@ -2061,8 +2181,6 @@
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header">
                         <h5 class="modal-title" th:text="#{common.confirm}">Confirm</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            th:aria-label="#{common.close}"></button>
                     </div>
                     <div class="modal-body">
                         <p class="mb-0" data-copy-delete-confirm-text></p>

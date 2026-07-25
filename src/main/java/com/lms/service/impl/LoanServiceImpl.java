@@ -11,6 +11,7 @@ import com.lms.exception.ValidationException;
 import com.lms.repository.*;
 import com.lms.service.LoanService;
 import com.lms.service.LocalizedMessageService;
+import com.lms.service.BookItemConditionPolicy;
 import com.lms.util.BorrowCodeFormatter;
 import com.lms.service.FinancialService;
 import com.lms.service.MembershipService;
@@ -117,7 +118,7 @@ public class LoanServiceImpl implements LoanService {
         }
 
         // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½
-        item.setStatus(STATUS_AVAILABLE);
+        item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
         bookItemRepository.save(item);
 
         // 2. TÃ­nh toÃ¡n pháº¡t quÃ¡ háº¡n náº¿u cÃ³
@@ -147,7 +148,7 @@ public class LoanServiceImpl implements LoanService {
                 // 1. Cáº­p nháº­t tráº¡ng thÃ¡i sÃ¡ch váº­t lÃ½ vá» Available
                 if (detail.getBookItem() != null) {
                     BookItem item = detail.getBookItem();
-                    item.setStatus(STATUS_AVAILABLE);
+                    item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
                     bookItemRepository.save(item);
                 }
 
@@ -211,7 +212,8 @@ public class LoanServiceImpl implements LoanService {
                         localizedMessageService.get("backend.loan.duplicateBarcode", trimmedBarcode), e);
             }
 
-            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())
+                    || !BookItemConditionPolicy.isLendable(item.getBookCondition())) {
                 throw new ConflictException(
                         localizedMessageService.get("backend.loan.barcodeUnavailable", trimmedBarcode));
             }
@@ -273,6 +275,10 @@ public class LoanServiceImpl implements LoanService {
 
             if (detail.getBookItem() != null) {
                 BookItem item = detail.getBookItem();
+                if (!BookItemConditionPolicy.isLendable(item.getBookCondition())) {
+                    throw new ConflictException(
+                            localizedMessageService.get("backend.loan.barcodeUnavailable", item.getBarcode()));
+                }
                 item.setStatus(STATUS_BORROWED);
                 bookItemRepository.save(item);
             }
@@ -373,6 +379,15 @@ public class LoanServiceImpl implements LoanService {
         if (!List.of("cash", "wallet", "bank").contains(resolvedPaymentMethod)) {
             throw new ValidationException(localizedMessageService.get("backend.return.invalidPaymentMethod"));
         }
+        damageFine = damageFine == null ? BigDecimal.ZERO : damageFine;
+        if (damageFine.signum() < 0) {
+            throw new ValidationException(localizedMessageService.get("backend.return.invalidDamageFine"));
+        }
+        // Only minor damage accepts a librarian-entered fine. Severe damage and
+        // loss use the single automatic compensation amount configured by admin.
+        if (getConditionLevel(bookCondition) != 2) {
+            damageFine = BigDecimal.ZERO;
+        }
         if (!isGoodCondition(bookCondition)
                 && (damageNote == null || damageNote.trim().isEmpty())) {
             throw new ValidationException(localizedMessageService.get("backend.return.damageDescriptionRequired"));
@@ -454,18 +469,8 @@ public class LoanServiceImpl implements LoanService {
             List<Reservation> waitingReservations = reservationRepository
                     .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
             if (!waitingReservations.isEmpty()) {
-                Reservation nextReservation = waitingReservations.get(0);
-                nextReservation.setStatus("Ready");
-                reservationRepository.save(nextReservation);
-
-                item.setStatus("Waiting_Pickup");
+                item.setStatus("Reserved");
                 bookItemRepository.save(item);
-
-                sendInternalNotification(nextReservation.getMember(),
-                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.SYSTEM,
-                        "systemNotification.reservation.ready.title",
-                        "systemNotification.reservation.ready.content",
-                        nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
             }
         }
 
@@ -733,6 +738,10 @@ public class LoanServiceImpl implements LoanService {
 
             if (detail.getBookItem() != null) {
                 BookItem item = detail.getBookItem();
+                if (!BookItemConditionPolicy.isLendable(item.getBookCondition())) {
+                    throw new ConflictException(
+                            localizedMessageService.get("backend.loan.barcodeUnavailable", item.getBarcode()));
+                }
                 item.setStatus(STATUS_BORROWED);
                 bookItemRepository.save(item);
             }
@@ -920,16 +929,7 @@ public class LoanServiceImpl implements LoanService {
     }
 
     private boolean requiresDamageCompensation(String bookCondition) {
-        int threshold = 3;
-        Optional<SystemSetting> setting = systemSettingRepository.findBySettingKey("Damage_Compensation_Threshold");
-        if (setting.isPresent()) {
-            try {
-                threshold = Integer.parseInt(setting.get().getSettingValue());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        int conditionLevel = getConditionLevel(bookCondition);
-        return conditionLevel >= threshold;
+        return getConditionLevel(bookCondition) >= 3;
     }
 
     private int getConditionLevel(String bookCondition) {
@@ -937,7 +937,7 @@ public class LoanServiceImpl implements LoanService {
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
             return 4;
         }
-        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe damage")) {
+        if (normalized.contains("hư hỏng nặng") || normalized.contains("severe")) {
             return 3;
         }
         if (normalized.contains("hư hỏng nhẹ") || normalized.contains("minor damage") || normalized.contains("hư hỏng")) {
@@ -957,7 +957,7 @@ public class LoanServiceImpl implements LoanService {
         if (normalized.contains("mất sách") || normalized.contains("lost")) {
             return STATUS_UNAVAILABLE;
         }
-        return STATUS_AVAILABLE;
+        return BookItemConditionPolicy.circulationStatus(bookCondition);
     }
 
     private String resolveConditionCode(String bookCondition) {

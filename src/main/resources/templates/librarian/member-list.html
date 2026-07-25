@@ -4,7 +4,7 @@
 
 <head>
     <title th:text="#{librarian.members.title}">Member List</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css(v='20260724-user-management-ui-v2')}" />
     <link rel="stylesheet" th:href="@{/css/pages/admin/member-list.css}" />
     <script defer th:src="@{/js/auto-filter.js}"></script>
     <script defer th:src="@{/js/admin-account-create.js}"></script>
@@ -18,8 +18,8 @@
 
 <body>
     <div layout:fragment="content" th:with="activeMenu='members'"
-        class="member-management-page accounts-page admin-member-list-page">
-        <header class="member-page-header admin-member-list-hero">
+        class="member-management-page member-list-page canonical-management-page accounts-page admin-member-list-page">
+        <header class="member-page-header member-list-hero admin-member-list-hero">
             <div class="member-list-hero-copy">
                 <div class="member-page-eyebrow" th:text="#{librarian.members.title}">MEMBER MANAGEMENT</div>
                 <h1 class="member-page-title" th:text="#{librarian.members.heading}">Member List</h1>
@@ -272,13 +272,14 @@
                 <div class="member-toolbar">
                     <form class="member-search-form" method="get" th:action="@{/librarian/members}"
                         data-auto-filter-form data-focus-key="librarianMemberFilterFocus">
-                        <div class="member-search-group">
-                            <div class="member-keyword-control">
+                        <div class="member-search-group member-list-filter-group">
+                            <div class="input-group member-keyword-control">
                                 <span class="input-group-text">
                                     <i class="bi bi-search" aria-hidden="true"></i>
                                 </span>
-                                <input class="form-control" type="search" name="keyword" data-auto-search
-                                    th:value="${keyword}" th:placeholder="#{librarian.members.searchPlaceholder}">
+                                <input class="form-control border-start-0 ps-0" type="search" name="keyword"
+                                    data-auto-search th:value="${keyword}"
+                                    th:placeholder="#{librarian.members.searchPlaceholder}">
                             </div>
 
                             <select class="form-select member-filter-select" name="tier" data-auto-submit
