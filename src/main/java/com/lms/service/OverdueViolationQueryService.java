@@ -26,7 +26,8 @@ import java.util.Set;
 public class OverdueViolationQueryService {
 
     private final LocalizedMessageService messages;
-    private static final String FINE_PER_DAY_SETTING_KEY = "Fine_Per_Day";
+    private static final String NEW_BOOK_OVERDUE_FINE_KEY = "New_Book_Overdue_Fine";
+    private static final String MINOR_DAMAGE_OVERDUE_FINE_KEY = "Minor_Damage_Overdue_Fine";
     private static final Set<String> OVERDUE_ELIGIBLE_STATUSES =
             Set.of("BORROWED", "OVERDUE", "RETURN_PENDING");
 
@@ -42,12 +43,10 @@ public class OverdueViolationQueryService {
     @Transactional(readOnly = true)
     public List<OverdueViolationView> getActiveOverdueViolations() {
         LocalDate today = LocalDate.now();
-        BigDecimal finePerDay = getConfiguredFinePerDay();
-
         return borrowDetailRepository.findActiveOverdueDetails(
                         today.atStartOfDay(), OVERDUE_ELIGIBLE_STATUSES.stream().toList()).stream()
                 .filter(detail -> isActiveOverdue(detail, today))
-                .map(detail -> toView(detail, today, finePerDay))
+                .map(detail -> toView(detail, today, getConfiguredFinePerDay(detail)))
                 .sorted(Comparator.comparingLong(OverdueViolationView::overdueDays)
                         .reversed()
                         .thenComparing(OverdueViolationView::dueDate))
@@ -56,11 +55,24 @@ public class OverdueViolationQueryService {
 
     @Transactional(readOnly = true)
     public BigDecimal getConfiguredFinePerDay() {
+        return getSettingAmount(NEW_BOOK_OVERDUE_FINE_KEY, BigDecimal.valueOf(10000));
+    }
+
+    private BigDecimal getConfiguredFinePerDay(BorrowDetail detail) {
+        boolean minorDamage = detail.getBookItem() != null
+                && detail.getBookItem().getBookCondition() != null
+                && detail.getBookItem().getBookCondition().toLowerCase(Locale.ROOT).contains("minor");
+        return minorDamage
+                ? getSettingAmount(MINOR_DAMAGE_OVERDUE_FINE_KEY, BigDecimal.valueOf(8000))
+                : getConfiguredFinePerDay();
+    }
+
+    private BigDecimal getSettingAmount(String key, BigDecimal fallback) {
         try {
-            return systemSettingRepository.findBySettingKeyIgnoreCase(FINE_PER_DAY_SETTING_KEY)
+            return systemSettingRepository.findBySettingKeyIgnoreCase(key)
                     .map(setting -> new BigDecimal(setting.getSettingValue()))
                     .filter(amount -> amount.signum() >= 0)
-                    .orElseThrow(() -> new ValidationException(messages.get("backend.financial.fineRateNotConfigured")));
+                    .orElse(fallback);
         } catch (NumberFormatException exception) {
             throw new ValidationException(messages.get("backend.financial.fineRateNotConfigured"));
         }

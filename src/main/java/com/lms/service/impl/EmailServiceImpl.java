@@ -9,6 +9,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -108,5 +109,90 @@ public class EmailServiceImpl implements EmailService {
                 """.formatted(safeName, safeTitle, safeContent);
 
         sendHtmlEmail(to, safeTitle, htmlContent);
+    }
+
+    @Override
+    public void sendStaffAccountCredentials(String to,
+            String recipientName,
+            String username,
+            String rawPassword) {
+        String subject = messages.get("backend.email.staffCredentials.subject");
+        String safeBrand = escape(messages.get("backend.email.staffCredentials.brand"));
+        String safeEyebrow = escape(messages.get("backend.email.staffCredentials.eyebrow"));
+        String safeGreeting = escape(messages.get(
+                "backend.email.staffCredentials.greeting",
+                recipientName == null || recipientName.isBlank()
+                        ? messages.get("backend.email.staffCredentials.defaultRecipient")
+                        : recipientName));
+        String safeIntroduction = escape(messages.get("backend.email.staffCredentials.introduction"));
+        String safeUsernameLabel = escape(messages.get("backend.email.staffCredentials.username"));
+        String safePasswordLabel = escape(messages.get("backend.email.staffCredentials.password"));
+        String safeUsername = escape(username);
+        String safePassword = escape(rawPassword);
+        String safeSecurityNotice = escape(messages.get("backend.email.staffCredentials.securityNotice"));
+        String safeFooter = escape(messages.get("backend.email.staffCredentials.footer"));
+
+        String htmlContent = """
+                <!doctype html>
+                <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width,initial-scale=1">
+                  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                </head>
+                <body style="margin:0;padding:0;background:#f5f1eb;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;color:#33271f;-webkit-font-smoothing:antialiased;">
+                  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="padding:32px 16px;background:#f5f1eb;">
+                    <tr>
+                      <td align="center">
+                        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:620px;overflow:hidden;border:1px solid #e4d8ca;border-radius:16px;background:#fffdf9;box-shadow:0 8px 24px rgba(68,48,35,.08);">
+                          <tr>
+                            <td style="padding:28px 32px;background:linear-gradient(135deg,#8b5a2b 0%%,#513215 100%%);color:#fff;text-align:center;">
+                              <div style="font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:24px;font-weight:700;line-height:1.3;">%s</div>
+                              <div style="margin-top:6px;font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.86;">%s</div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding:32px;">
+                              <p style="margin:0 0 14px;font-size:16px;line-height:1.55;">%s</p>
+                              <p style="margin:0 0 22px;color:#66564b;font-size:14px;line-height:1.6;">%s</p>
+                              <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="border:1px solid #eadbd1;border-radius:12px;background:#fff8f1;">
+                                <tr>
+                                  <td style="padding:16px 18px;border-bottom:1px solid #eadbd1;color:#765a49;font-size:13px;">%s</td>
+                                  <td style="padding:16px 18px;border-bottom:1px solid #eadbd1;color:#2e1a08;font-size:15px;font-weight:700;text-align:right;">%s</td>
+                                </tr>
+                                <tr>
+                                  <td style="padding:16px 18px;color:#765a49;font-size:13px;">%s</td>
+                                  <td style="padding:16px 18px;color:#2e1a08;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:15px;font-weight:700;text-align:right;">%s</td>
+                                </tr>
+                              </table>
+                              <div style="margin-top:22px;padding:14px 16px;border-left:4px solid #c38040;border-radius:8px;background:#fceee7;color:#513215;font-size:13px;line-height:1.55;">%s</div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding:20px 32px;border-top:1px solid #e4d8ca;background:#f8f3ed;color:#78685c;font-size:12px;line-height:1.5;text-align:center;">%s</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(
+                safeBrand,
+                safeEyebrow,
+                safeGreeting,
+                safeIntroduction,
+                safeUsernameLabel,
+                safeUsername,
+                safePasswordLabel,
+                safePassword,
+                safeSecurityNotice,
+                safeFooter);
+
+        sendHtmlEmail(to, subject, htmlContent);
+    }
+
+    private String escape(String value) {
+        return HtmlUtils.htmlEscape(value == null ? "" : value);
     }
 }

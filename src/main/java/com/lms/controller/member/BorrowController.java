@@ -707,7 +707,7 @@ public class BorrowController extends LocalizedControllerSupport {
     private BigDecimal getBorrowFeeForCondition(String bookCondition) {
         String condition = bookCondition == null ? "" : bookCondition.trim().toLowerCase(java.util.Locale.ROOT);
         if (condition.contains("severely")) {
-            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
+            return BigDecimal.ZERO;
         }
         if (condition.contains("minor")) {
             return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);

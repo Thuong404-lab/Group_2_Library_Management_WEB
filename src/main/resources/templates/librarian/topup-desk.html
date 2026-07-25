@@ -6,7 +6,7 @@
     <!-- Librarian top-up desk UI maintained by Pham Kien Quoc. -->
     <title th:text="#{librarian.topupDesk.title}">Top Up at Desk</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/topup-desk.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/topup-desk.css(v='20260724-1')}" />
   </head>
 
 <body>
@@ -142,17 +142,17 @@
                     </h5>
                     <div class="summary-panel d-flex justify-content-between mb-3 p-3 rounded">
                         <div class="text-center">
-                            <div class="topup-stat-value"
-                                th:text="${todayTopupCount != null ? todayTopupCount : 0}">0</div>
-                                    <div class="text-muted small" th:text="#{transaction.transactions}">Transactions</div>
+                            <strong class="topup-stat-value topup-stat-value--count"
+                                th:text="${todayTopupCount != null ? todayTopupCount : 0}">0</strong>
+                            <div class="topup-stat-label" th:text="#{transaction.transactions}">Transactions</div>
                         </div>
                         <div class="text-center">
-                            <div class="topup-stat-value">
-                                <span
+                            <strong class="topup-stat-value topup-stat-value--money">
+                                <span class="topup-stat-number"
                                     th:text="${todayTopupTotal != null ? #numbers.formatDecimal(todayTopupTotal, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
-                                <span th:text="#{currency.vnd}">VND</span>
-                            </div>
-                                    <div class="text-muted small" th:text="#{librarian.topupDesk.totalAmount}">Total Top-up</div>
+                                <span class="topup-stat-currency" th:text="#{currency.vnd}">VND</span>
+                            </strong>
+                            <div class="topup-stat-label" th:text="#{librarian.topupDesk.totalAmount}">Total Top-up</div>
                         </div>
                     </div>
 

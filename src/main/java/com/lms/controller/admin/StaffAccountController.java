@@ -3,6 +3,7 @@ package com.lms.controller.admin;
 import com.lms.controller.LocalizedControllerSupport;
 import com.lms.dto.request.AdminStaffAccountCreateRequest;
 import com.lms.exception.AccountFormValidationException;
+import com.lms.exception.ExternalServiceException;
 import com.lms.service.AccountService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,11 +52,21 @@ public class StaffAccountController extends LocalizedControllerSupport {
                 fullName, email, phone, username, password, staffType);
         try {
             accountService.createStaffAccount(request);
-            redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
+            if ("Librarian".equalsIgnoreCase(trim(request.getStaffType()))) {
+                redirectAttributes.addFlashAttribute(
+                        "success",
+                        message("backend.account.createdCredentialsSent", trim(request.getEmail())));
+            } else {
+                redirectAttributes.addFlashAttribute("success", message("backend.account.created"));
+            }
         } catch (AccountFormValidationException exception) {
             redirectAttributes.addFlashAttribute("formValues", createFormValues(request));
             redirectAttributes.addFlashAttribute("fieldErrors", exception.getFieldErrors());
             redirectAttributes.addFlashAttribute("openCreateAccountModal", true);
+        } catch (ExternalServiceException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "warning",
+                    message("backend.account.createdCredentialsEmailFailed", trim(request.getEmail())));
         }
         return "redirect:/admin/staff";
     }

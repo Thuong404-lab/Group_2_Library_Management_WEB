@@ -43,6 +43,7 @@ import com.lms.repository.TransactionRepository;
 import com.lms.repository.WalletRepository;
 import com.lms.service.AuditLogService;
 import com.lms.service.BorrowService;
+import com.lms.service.BookItemConditionPolicy;
 import com.lms.service.LocalizedMessageService;
 import com.lms.util.BorrowCodeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -324,7 +325,7 @@ public class BorrowServiceImpl implements BorrowService {
             if (item != null && (PAYMENT_PENDING.equalsIgnoreCase(item.getStatus())
                     || "Waiting_Pickup".equalsIgnoreCase(item.getStatus()))
                     && PAYMENT_PENDING.equalsIgnoreCase(detail.getStatus())) {
-                item.setStatus("Available");
+                item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
 
                 bookItemRepository.save(item);
             }
@@ -639,6 +640,10 @@ public class BorrowServiceImpl implements BorrowService {
         // Báº¯t Ä‘áº§u tÃ­nh thá»i gian tá»« thá»i Ä‘iá»ƒm nháº­n sÃ¡ch thá»±c táº¿
         LocalDateTime pickupTime = LocalDateTime.now();
         for (BorrowDetail detail : details) {
+            if (!BookItemConditionPolicy.isLendable(detail.getBookItem().getBookCondition())) {
+                throw new ConflictException(localizedMessageService.get(
+                        "backend.loan.barcodeUnavailable", detail.getBookItem().getBarcode()));
+            }
             detail.setStatus("Borrowed");
             detail.setDueDate(pickupTime.plusDays(borrowDays));
             borrowDetailRepository.save(detail);
@@ -799,7 +804,7 @@ public class BorrowServiceImpl implements BorrowService {
             loanService.rejectRenewal(activeDetail.getBorrowDetailId(), "SYSTEM", "RETURNED_BEFORE_APPROVAL", null);
         }
 
-        item.setStatus("Available");
+        item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
         bookItemRepository.save(item);
 
         activeDetail.setReturnDate(LocalDateTime.now());
@@ -892,6 +897,10 @@ public class BorrowServiceImpl implements BorrowService {
                         .orElseThrow(() -> new ConflictException(localizedMessageService.get("backend.borrow.noCopiesAvailableToApprove"))));
 
         // 2. Cập nhật trạng thái bản sao sách thành Borrowed (Đã mượn)
+        if (!BookItemConditionPolicy.isLendable(itemToHandover.getBookCondition())) {
+            throw new ConflictException(localizedMessageService.get(
+                    "backend.loan.barcodeUnavailable", itemToHandover.getBarcode()));
+        }
         itemToHandover.setStatus("Borrowed");
         bookItemRepository.save(itemToHandover);
 
@@ -1477,7 +1486,7 @@ public class BorrowServiceImpl implements BorrowService {
             throw new ConflictException(localizedMessageService.get("backend.borrow.lostCopyUnavailable"));
         }
         if (condition.contains("severely")) {
-            return getMoneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
+            throw new ConflictException(localizedMessageService.get("backend.borrow.lostCopyUnavailable"));
         }
         if (condition.contains("minor")) {
             return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
@@ -1551,7 +1560,7 @@ public class BorrowServiceImpl implements BorrowService {
             borrowDetailRepository.save(detail);
             if (detail.getBookItem() != null) {
                 BookItem item = detail.getBookItem();
-                item.setStatus("Available");
+                item.setStatus(BookItemConditionPolicy.circulationStatus(item.getBookCondition()));
 
                 bookItemRepository.save(item);
             }
