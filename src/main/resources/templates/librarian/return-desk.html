@@ -150,7 +150,7 @@
     <div class="modal fade"
          id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content">
+            <form th:action="@{/librarian/loan/returns/confirm}" method="post" class="modal-content" novalidate>
                 <div id="barcodeInputsContainer">
                 </div>
                 <div class="modal-header u-background-color-fdfbf7-border-bottom-1px-dashed-rgba-139-90-43-0-2-518871f5">
@@ -191,12 +191,15 @@
                         <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.additionalNotes}">Additional Notes (Optional)</label>
                         <textarea class="form-control scan-input" name="conditionNoteAdditional" id="conditionNoteAdditional" rows="3"
                                   th:placeholder="#{librarian.returnDesk.notesPlaceholder}" placeholder="Add a detailed description of any damage..."></textarea>
+                        <div id="conditionNoteError" class="text-danger small mt-1 fw-bold return-conditional-hidden">
+                            <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{backend.return.damageDescriptionRequired}">A detailed description is required.</span>
+                        </div>
                     </div>
                     <div class="mb-2 return-conditional-hidden" id="fineInputContainer">
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.damageFine}">Damage Fine (VND)</label>
-                            <input type="number" class="form-control scan-input" name="damageFine" id="damageFineInput"
-                                   min="0" max="500000000" step="1" inputmode="numeric" value="0"
+                            <input type="text" class="form-control scan-input" name="damageFine" id="damageFineInput"
+                                   inputmode="numeric" maxlength="9" value="0"
                                    th:placeholder="#{librarian.returnDesk.damageFinePlaceholder}" placeholder="Enter fine amount..."/>
                             <div id="fineError" class="text-danger small mt-1 font-weight-bold return-conditional-hidden">
                                 <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{librarian.returnDesk.fineRequired}">Bắt buộc nhập số tiền phạt hợp lệ (lớn hơn 0) khi sách bị hư hỏng.</span>
@@ -578,11 +581,21 @@
                 const returnForm = confirmReturnModal.querySelector('form');
                 if (returnForm) {
                     returnForm.addEventListener('submit', function(e) {
+                        const requiresNote = conditionNoteSelect && conditionNoteSelect.value !== 'New';
+                        const noteError = document.getElementById('conditionNoteError');
+                        if (requiresNote && !conditionNoteAdditional?.value.trim()) {
+                            e.preventDefault();
+                            conditionNoteAdditional?.classList.add('is-invalid');
+                            if (noteError) noteError.style.display = 'block';
+                            conditionNoteAdditional?.focus();
+                            return false;
+                        }
                         if (conditionNoteSelect && damageFineInput) {
                             const value = (conditionNoteSelect.value || '').toLocaleLowerCase('vi');
                             if (value.includes('hư hỏng nhẹ') || value.includes('minor damage')) {
-                                const fineVal = parseFloat(damageFineInput.value) || 0;
-                                if (fineVal < 0) {
+                                if (damageFineInput.value === '') damageFineInput.value = '0';
+                                const fineVal = Number(damageFineInput.value);
+                                if (!Number.isInteger(fineVal) || fineVal < 0 || fineVal > 500000000) {
                                     e.preventDefault();
                                     const fineError = document.getElementById('fineError');
                                     if (fineError) {
@@ -599,12 +612,32 @@
             }
 
             if (damageFineInput) {
+                damageFineInput.addEventListener('keydown', function(event) {
+                    if (["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Tab"].includes(event.key)) {
+                        return;
+                    }
+                    if (!/^[0-9]$/.test(event.key)) event.preventDefault();
+                });
                 damageFineInput.addEventListener('input', function() {
-                    const fineVal = parseFloat(this.value) || 0;
+                    this.value = this.value.replace(/\D/g, '').slice(0, 9);
+                    const fineVal = this.value === '' ? 0 : Number(this.value);
                     const fineError = document.getElementById('fineError');
-                    if (fineVal >= 0) {
+                    if (Number.isInteger(fineVal) && fineVal <= 500000000) {
                         this.classList.remove('is-invalid');
                         if (fineError) fineError.style.display = 'none';
+                    }
+                });
+                damageFineInput.addEventListener('blur', function() {
+                    if (this.value === '') this.value = '0';
+                });
+            }
+
+            if (conditionNoteAdditional) {
+                conditionNoteAdditional.addEventListener('input', function() {
+                    if (this.value.trim()) {
+                        this.classList.remove('is-invalid');
+                        const noteError = document.getElementById('conditionNoteError');
+                        if (noteError) noteError.style.display = 'none';
                     }
                 });
             }

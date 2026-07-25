@@ -212,12 +212,6 @@ public class LoanController extends LocalizedControllerSupport {
             // lost books are charged by issueDamageCompensation() using the amount
             // configured in system settings, so requiring damageFine for them would
             // either block the form or charge the member twice.
-            if (isMinorDamage(conditionNote)) {
-                if (damageFine == null || damageFine.compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new ValidationException(message("librarian.returnDesk.fineRequired"));
-                }
-            }
-
             String staffUsername = (principal != null) ? principal.getName() : "admin";
             Set<Integer> borrowIds = new LinkedHashSet<>();
             for (String barcode : barcodes) {
@@ -280,6 +274,9 @@ public class LoanController extends LocalizedControllerSupport {
 
     private boolean isGoodCondition(String conditionNote) {
         String normalized = conditionNote == null ? "" : conditionNote.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("new".equals(normalized)) {
+            return true;
+        }
         return normalized.startsWith("tốt") || normalized.startsWith("good");
     }
 
