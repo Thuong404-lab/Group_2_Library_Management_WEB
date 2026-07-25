@@ -225,7 +225,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        BigDecimal depositAmount = getReservationDepositAmount();
+        int days = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+        BigDecimal depositAmount = getReservationDepositAmount().multiply(BigDecimal.valueOf(days));
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
         ensureSufficientBalance(currentBalance, depositAmount, localizedMessageService.get("backend.financial.depositLabel"));
 
@@ -578,7 +579,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        BigDecimal refundAmount = getReservationDepositAmount();
+        int days = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+        BigDecimal refundAmount = getReservationDepositAmount().multiply(BigDecimal.valueOf(days));
         if (refundAmount.signum() <= 0) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidRefundAmount"));
         }

@@ -548,14 +548,20 @@ public class BorrowController extends LocalizedControllerSupport {
             BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                     .map(wallet -> wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance())
                     .orElse(BigDecimal.ZERO);
-            BigDecimal depositAmount = getDepositAmount();
+            BigDecimal dailyDepositRate = getDepositAmount();
+            int maxBorrowDays = getMaxBorrowDays();
+            int defaultBorrowDays = Math.min(14, maxBorrowDays);
+            BigDecimal depositAmount = dailyDepositRate.multiply(BigDecimal.valueOf(defaultBorrowDays));
 
             model.addAttribute("book", book);
             model.addAttribute("username", principal.getName());
             model.addAttribute("walletBalance", walletBalance);
+            model.addAttribute("dailyDepositRate", dailyDepositRate);
             model.addAttribute("depositAmount", depositAmount);
             model.addAttribute("remainingBalance", walletBalance.subtract(depositAmount));
             model.addAttribute("canPayDeposit", walletBalance.compareTo(depositAmount) >= 0);
+            model.addAttribute("maxBorrowDays", maxBorrowDays);
+            model.addAttribute("defaultBorrowDays", defaultBorrowDays);
             return "member/reserve-confirm";
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
@@ -568,12 +574,13 @@ public class BorrowController extends LocalizedControllerSupport {
     // trước và lưu vết hệ thống
     @PostMapping("/reserve/{bookId}")
     public String reserveBook(@PathVariable Integer bookId,
+            @RequestParam(value = "numberOfDays", required = false) Integer numberOfDays,
             Principal principal,
             RedirectAttributes redirectAttributes) {
         if (principal == null)
             return "redirect:/login";
         try {
-            borrowService.memberSubmitReservationRequest(principal.getName(), bookId);
+            borrowService.memberSubmitReservationRequest(principal.getName(), bookId, numberOfDays);
             redirectAttributes.addFlashAttribute("successMessage", message("backend.borrow.reservationSubmitted"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
