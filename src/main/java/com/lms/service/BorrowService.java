@@ -28,7 +28,7 @@ public interface BorrowService {
     void processReturnBook(String barcode); // Tráº£ trá»±c tiáº¿p qua quÃ©t mÃ£ váº¡ch
 
     // Luá»“ng Äáº¶T TRÆ¯á»šC SÃCH - RESERVATION (Má»›i nÃ¢ng cáº¥p)
-    Reservation memberSubmitReservationRequest(String username, Integer bookId);
+    Reservation memberSubmitReservationRequest(String username, Integer bookId, Integer numberOfDays);
     void approveReservationRequest(Integer reservationId, String staffUsername);
     void rejectReservationRequest(Integer reservationId, String staffUsername, String reasonCode, String reason);
     void memberCancelReservation(String username, Integer reservationId);

@@ -67,7 +67,6 @@ public class FinancialServiceImpl implements FinancialService {
     private static final String PENDING_STATUS = "Pending";
     private static final String BORROW_FEE_SETTING_KEY = "BORROW_FEE_PER_BOOK";
     private static final String NEW_BOOK_OVERDUE_FINE_KEY = "New_Book_Overdue_Fine";
-    private static final String MINOR_DAMAGE_OVERDUE_FINE_KEY = "Minor_Damage_Overdue_Fine";
     private static final String DAMAGE_COMPENSATION_SETTING_KEY = "Damage_Compensation_Amount";
     private static final String DEPOSIT_SETTING_KEY = "Deposit_Amount";
     private static final BigDecimal DEFAULT_DEPOSIT_AMOUNT = BigDecimal.valueOf(50000);
@@ -226,7 +225,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        BigDecimal depositAmount = getReservationDepositAmount();
+        int days = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+        BigDecimal depositAmount = getReservationDepositAmount().multiply(BigDecimal.valueOf(days));
         BigDecimal currentBalance = balanceOf(wallet.getBalance());
         ensureSufficientBalance(currentBalance, depositAmount, localizedMessageService.get("backend.financial.depositLabel"));
 
@@ -579,7 +579,8 @@ public class FinancialServiceImpl implements FinancialService {
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        BigDecimal refundAmount = getReservationDepositAmount();
+        int days = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+        BigDecimal refundAmount = getReservationDepositAmount().multiply(BigDecimal.valueOf(days));
         if (refundAmount.signum() <= 0) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidRefundAmount"));
         }
@@ -765,9 +766,6 @@ public class FinancialServiceImpl implements FinancialService {
         if (condition.contains("severely")) {
             return BigDecimal.ZERO;
         }
-        if (condition.contains("minor")) {
-            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", BigDecimal.valueOf(4000));
-        }
         return getBorrowFeePerBookPerDay();
     }
 
@@ -786,14 +784,8 @@ public class FinancialServiceImpl implements FinancialService {
     }
 
     private BigDecimal getOverdueFinePerDay(BorrowDetail detail) {
-        boolean minorDamage = detail.getBookItem() != null
-                && detail.getBookItem().getBookCondition() != null
-                && detail.getBookItem().getBookCondition().toLowerCase(java.util.Locale.ROOT).contains("minor");
-        String key = minorDamage ? MINOR_DAMAGE_OVERDUE_FINE_KEY : NEW_BOOK_OVERDUE_FINE_KEY;
-        BigDecimal fallbackBorrowFee = minorDamage
-                ? getMoneySetting("MINOR_DAMAGE_BORROW_FEE", BigDecimal.valueOf(4000))
-                : getBorrowFeePerBookPerDay();
-        return getMoneySetting(key, fallbackBorrowFee.multiply(BigDecimal.valueOf(2)));
+        return getMoneySetting(NEW_BOOK_OVERDUE_FINE_KEY,
+                getBorrowFeePerBookPerDay().multiply(BigDecimal.valueOf(2)));
     }
 
     @Override

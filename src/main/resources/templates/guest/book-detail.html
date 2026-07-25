@@ -121,13 +121,7 @@
 
                     <!-- Reserve Button -->
                     <form sec:authorize="hasRole('MEMBER')"
-                          th:action="@{'/member/borrow/reserve/' + ${book.bookId}}" method="post"
-                          class="app-confirm-form"
-                          th:data-confirm-title="#{reservation.confirmPage.confirmTitle}"
-                          th:data-confirm-subject-label="#{reservation.book}"
-                          th:data-confirm-subject="${book.title}"
-                          th:data-confirm-message="#{reservation.deposit.confirmMessage}"
-                          th:data-confirm-action="#{payment.confirm}">
+                          th:action="@{'/member/borrow/reserve/form/' + ${book.bookId}}" method="get">
                         <button type="submit" class="book-detail-button book-detail-button--secondary"
                                 th:disabled="${isInactiveMember != null and isInactiveMember}">
                             <i class="bi bi-bookmark" aria-hidden="true"></i><span th:text="#{guest.bookDetail.reserve}">Reserve</span>

@@ -1263,7 +1263,8 @@
                                                             class="form-check-input" type="checkbox" name="itemIds"
                                                             th:value="${item.bookItemId}"
                                                             th:form="${'bulkDeleteCopiesForm' + book.bookId}"
-                                                            data-copy-select-item th:data-book-id="${book.bookId}"></td>
+                                                            data-copy-select-item th:data-book-id="${book.bookId}"
+                                                            th:disabled="${item.status != 'Available' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"></td>
                                                     <td class="fw-bold app-code-number"
                                                         th:data-label="#{librarian.inventory.copyCode}"
                                                         th:text="${item.barcode != null ? item.barcode : '—'}">BC001-001
@@ -1305,6 +1306,7 @@
                                                             th:aria-label="#{librarian.inventory.editCopy}"><i
                                                                 class="bi bi-pencil-square"></i></button>
                                                         <form
+                                                            th:if="${item.status == 'Available' or item.bookCondition == 'Severely damaged' or item.bookCondition == 'Lost book'}"
                                                             th:action="${staffPrefix == '/admin'} ? @{/admin/inventory/copies/delete/{id}(id=${book.bookId})} : @{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                                             method="post" data-copy-delete-form
                                                             th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}">
