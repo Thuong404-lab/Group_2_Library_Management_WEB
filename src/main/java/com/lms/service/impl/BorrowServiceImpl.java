@@ -843,13 +843,17 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Reservation memberSubmitReservationRequest(String username, Integer bookId) {
+    public Reservation memberSubmitReservationRequest(String username, Integer bookId, Integer numberOfDays) {
         Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.account.memberNotFound")));
         Book book = bookRepository.findByIdForUpdate(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.borrow.reservedBookNotFound")));
+        int requestedDays = numberOfDays == null ? Math.min(14, getMaxBorrowDays()) : numberOfDays;
+        if (requestedDays < 1 || requestedDays > getMaxBorrowDays()) {
+            throw new ValidationException(localizedMessageService.get("backend.borrow.invalidDays", getMaxBorrowDays()));
+        }
 
         boolean alreadyReserved = reservationRepository
                 .findByMember_MemberIdOrderByReservationDateDesc(member.getMemberId())
@@ -869,6 +873,7 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setMember(member);
         reservation.setBook(book);
         reservation.setReservationDate(LocalDateTime.now());
+        reservation.setNumberOfDays(requestedDays);
         reservation.setStatus("Pending");
         Reservation savedReservation = reservationRepository.save(reservation);
         financialService.payReservationDeposit(member.getMemberId(), savedReservation.getReservationId());
@@ -917,7 +922,9 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setBorrow(borrow);
         detail.setBook(reservation.getBook());
         detail.setBookItem(itemToHandover);
-        int borrowDays = getMaxBorrowDays();
+        int borrowDays = reservation.getNumberOfDays() == null
+                ? getMaxBorrowDays()
+                : Math.max(1, Math.min(reservation.getNumberOfDays(), getMaxBorrowDays()));
         detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
         detail.setStatus("Borrowed");
         detail.setRenewCount(0);
@@ -957,7 +964,8 @@ public class BorrowServiceImpl implements BorrowService {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             localizedMessageService.get("backend.financial.walletNotFound")));
-            BigDecimal refundAmount = financialService.getReservationDepositAmount();
+            int resDays = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+            BigDecimal refundAmount = financialService.getReservationDepositAmount().multiply(BigDecimal.valueOf(resDays));
             if (refundAmount != null && refundAmount.signum() > 0) {
                 wallet.setBalance(wallet.getBalance().add(refundAmount));
                 walletRepository.save(wallet);
@@ -1038,7 +1046,8 @@ public class BorrowServiceImpl implements BorrowService {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             localizedMessageService.get("backend.financial.walletNotFound")));
-            BigDecimal refundAmount = financialService.getReservationDepositAmount();
+            int resDays = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+            BigDecimal refundAmount = financialService.getReservationDepositAmount().multiply(BigDecimal.valueOf(resDays));
             if (refundAmount != null && refundAmount.signum() > 0) {
                 wallet.setBalance(wallet.getBalance().add(refundAmount));
                 walletRepository.save(wallet);

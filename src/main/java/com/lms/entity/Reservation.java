@@ -13,6 +13,8 @@ public class Reservation {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
     private LocalDateTime reservationDate;
+    @Column(name = "number_of_days", nullable = false)
+    private Integer numberOfDays = 14;
     @Column(length = 50)
     private String status = "Pending";
     @Column(name = "rejection_code", length = 50)
@@ -39,6 +41,8 @@ public class Reservation {
     public void setBook(Book book) { this.book = book; }
     public LocalDateTime getReservationDate() { return reservationDate; }
     public void setReservationDate(LocalDateTime reservationDate) { this.reservationDate = reservationDate; }
+    public Integer getNumberOfDays() { return numberOfDays; }
+    public void setNumberOfDays(Integer numberOfDays) { this.numberOfDays = numberOfDays; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getRejectionCode() { return rejectionCode; }
