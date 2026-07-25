@@ -469,18 +469,8 @@ public class LoanServiceImpl implements LoanService {
             List<Reservation> waitingReservations = reservationRepository
                     .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
             if (!waitingReservations.isEmpty()) {
-                Reservation nextReservation = waitingReservations.get(0);
-                nextReservation.setStatus("Ready");
-                reservationRepository.save(nextReservation);
-
-                item.setStatus("Waiting_Pickup");
+                item.setStatus("Reserved");
                 bookItemRepository.save(item);
-
-                sendInternalNotification(nextReservation.getMember(),
-                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.SYSTEM,
-                        "systemNotification.reservation.ready.title",
-                        "systemNotification.reservation.ready.content",
-                        nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
             }
         }
 

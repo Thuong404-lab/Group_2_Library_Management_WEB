@@ -55,7 +55,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     private static final List<String> BOOK_CONDITIONS =
             List.of("New", "Minor damage", "Severely damaged", "Lost book");
     private static final List<String> BOOK_ITEM_STATUSES =
-            List.of("Available", "Borrowed", "Payment_Pending", "Waiting_Pickup", "Unavailable");
+            List.of("Available", "Reserved", "Borrowed", "Payment_Pending", "Waiting_Pickup", "Unavailable");
 
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
@@ -460,6 +460,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         counts.put("Borrowed", bookItemRepository.countByStatusIgnoreCase("Borrowed"));
         counts.put("Payment_Pending", bookItemRepository.countByStatusIgnoreCase("Payment_Pending"));
         counts.put("Waiting_Pickup", bookItemRepository.countByStatusIgnoreCase("Waiting_Pickup"));
+        counts.put("Reserved", bookItemRepository.countByStatusIgnoreCase("Reserved"));
         counts.put("Unavailable", bookItemRepository.countByStatusIgnoreCase("Unavailable"));
         return counts;
     }
