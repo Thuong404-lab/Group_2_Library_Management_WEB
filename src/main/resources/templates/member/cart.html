@@ -187,6 +187,33 @@
             const checkboxes = document.querySelectorAll(".book-select-checkbox");
             const quantityInputs = document.querySelectorAll(".member-cart-quantity-input");
 
+            function refreshQuantityButtons() {
+                quantityInputs.forEach(input => {
+                    const min = parseInt(input.min) || 1;
+                    const stockMax = parseInt(input.max) || min;
+                    const quantity = parseInt(input.value) || min;
+                    const item = input.closest(".member-cart-item");
+                    const checkbox = item?.querySelector(".book-select-checkbox");
+                    let otherSelectedQuantity = 0;
+
+                    document.querySelectorAll(".book-select-checkbox:checked").forEach(candidate => {
+                        if (candidate !== checkbox) {
+                            otherSelectedQuantity += parseInt(candidate.dataset.qty) || 1;
+                        }
+                    });
+
+                    const remainingForThisItem = checkbox?.checked
+                        ? Math.max(min, maxBorrowLimit - otherSelectedQuantity)
+                        : stockMax;
+                    const effectiveMax = Math.min(stockMax, remainingForThisItem);
+                    const decreaseButton = item?.querySelector('[data-quantity-action="decrease"]');
+                    const increaseButton = item?.querySelector('[data-quantity-action="increase"]');
+
+                    if (decreaseButton) decreaseButton.disabled = quantity <= min;
+                    if (increaseButton) increaseButton.disabled = quantity >= effectiveMax;
+                });
+            }
+
             function updateQuantity(input, requestedValue) {
                 const min = parseInt(input.min) || 1;
                 const stockMax = parseInt(input.max) || min;
@@ -209,10 +236,7 @@
                     checkbox.dataset.qty = quantity;
                 }
 
-                const decreaseButton = item?.querySelector('[data-quantity-action="decrease"]');
-                const increaseButton = item?.querySelector('[data-quantity-action="increase"]');
-                if (decreaseButton) decreaseButton.disabled = quantity <= min;
-                if (increaseButton) increaseButton.disabled = quantity >= max;
+                refreshQuantityButtons();
                 calculateRealtimeFee();
             }
 
@@ -308,6 +332,7 @@
                             if (cb.checked) selectedQuantity += quantity;
                         }
                     });
+                    refreshQuantityButtons();
                     calculateRealtimeFee();
                 });
             }
@@ -330,6 +355,7 @@
                         const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
                         selectAll.checked = (checkedCount === totalCBs && totalCBs > 0);
                     }
+                    refreshQuantityButtons();
                     calculateRealtimeFee();
                 });
             });
