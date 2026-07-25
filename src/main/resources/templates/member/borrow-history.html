@@ -61,8 +61,9 @@
                 <!-- Cột 1: Thông tin sách và ảnh bìa -->
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
-                        <img th:src="${item.bookImage != null ? item.bookImage : 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=100&auto=format&fit=crop'}"
-                             class="rounded me-3 border member-borrow-history-img-width-height-fit-08" th:alt="#{book.cover}">
+                        <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
+                             class="rounded me-3 border member-borrow-history-img-width-height-fit-08" th:alt="#{book.cover}"
+                             onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                         <div>
                             <div class="font-weight-bold member-borrow-history-div-color-font-size-font-family-09" th:text="${item.bookTitle}">Borrowed book title</div>
                             <div class="text-muted small" th:text="${item.authorName}">Author</div>

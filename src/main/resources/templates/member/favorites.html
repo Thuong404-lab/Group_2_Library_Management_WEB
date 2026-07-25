@@ -46,9 +46,10 @@
                         <tr th:each="favorite : ${favorites.content}">
                             <td class="ps-3 py-3">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${favorite.book.coverImageUrl != null and !#strings.isEmpty(favorite.book.coverImageUrl) ? favorite.book.coverImageUrl : 'https://picsum.photos/seed/' + favorite.book.bookId + '/100/150'}"
+                                    <img th:src="${favorite.book.coverImageUrl != null and !#strings.isEmpty(favorite.book.coverImageUrl) ? favorite.book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                                          class="favorite-cover shadow-sm"
                                          th:alt="${favorite.book.title}"
+                                         onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'"
                                          >
 
                                     <div>
