@@ -584,6 +584,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 data.put("bookId", item.getBook().getBookId());
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
+                data.put("bookCondition", item.getBookCondition());
+                data.put("condition", localizeBookCondition(item.getBookCondition()));
                 String rawStatus = item.getStatus();
 
                 long availableCount = bookItemRepository
@@ -621,6 +623,19 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             results.add(data);
         }
         return results;
+    }
+
+    private String localizeBookCondition(String condition) {
+        if ("Minor damage".equalsIgnoreCase(condition)) {
+            return message("book.condition.minorDamage");
+        }
+        if ("Severely damaged".equalsIgnoreCase(condition)) {
+            return message("book.condition.severeDamage");
+        }
+        if ("Lost book".equalsIgnoreCase(condition)) {
+            return message("book.condition.lost");
+        }
+        return message("book.condition.good");
     }
 
     @GetMapping("/librarian/api/member-lookup")

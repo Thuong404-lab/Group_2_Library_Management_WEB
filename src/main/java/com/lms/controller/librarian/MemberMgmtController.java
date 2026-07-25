@@ -137,6 +137,28 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         return redirectToMembers(redirectAttributes, page, keyword, filterStatus, filterTier);
     }
 
+    @GetMapping("/members/edit/{id}/validate")
+    @ResponseBody
+    public Map<String, String> validateMemberUpdate(
+            @PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "") String fullName,
+            @RequestParam(required = false, defaultValue = "") String email,
+            @RequestParam(required = false, defaultValue = "") String phone,
+            @RequestParam(required = false, defaultValue = "") String username,
+            @RequestParam(required = false, defaultValue = "") String status,
+            @RequestParam(required = false) Long accountVersion,
+            @RequestParam(required = false) Long userVersion) {
+        UpdateMemberAccountRequest request = new UpdateMemberAccountRequest();
+        request.setFullName(fullName);
+        request.setEmail(email);
+        request.setPhone(phone);
+        request.setUsername(username);
+        request.setStatus(status);
+        request.setAccountVersion(accountVersion);
+        request.setUserVersion(userVersion);
+        return memberService.validateUpdate(id, request);
+    }
+
     @PostMapping("/members/edit/{id}")
     public String updateMemberAccount(
             @PathVariable Integer id,
