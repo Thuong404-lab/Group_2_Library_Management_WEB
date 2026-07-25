@@ -1482,6 +1482,7 @@
                                                             th:value="${item.bookItemId}"
                                                             th:form="${'bulkDeleteCopiesForm' + book.bookId}"
                                                             data-copy-select-item th:data-book-id="${book.bookId}"
+                                                            th:disabled="${item.status != 'Available' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"
                                                             th:aria-label="#{librarian.inventory.selectCopy}">
                                                     </td>
                                                     <td class="fw-bold font-monospace" th:text="${item.barcode}">
@@ -1511,6 +1512,7 @@
                                                             th:data-bs-target="${'#editCopyModalLibrarian' + item.bookItemId}"
                                                             th:title="#{librarian.inventory.editCopy}"><i class="bi bi-pencil-square"></i></button>
                                                         <form
+                                                            th:if="${item.status == 'Available' or item.bookCondition == 'Severely damaged' or item.bookCondition == 'Lost book'}"
                                                             th:action="@{/librarian/inventory/copies/delete/{id}(id=${book.bookId})}"
                                                             method="post" data-copy-delete-form
                                                             th:data-confirm-message="#{librarian.inventory.deleteSingleCopyConfirm}">

@@ -335,7 +335,10 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         for (BookItem item : items) {
-            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+            boolean isAvailable = STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus());
+            boolean isPermanentlyUnavailable = conditionRank(item.getBookCondition())
+                    >= conditionRank("Severely damaged");
+            if (!isAvailable && !isPermanentlyUnavailable) {
                 throw new ConflictException(messages.get("backend.inventory.deleteUnavailableCopyConflict"));
             }
             if (borrowDetailRepository.existsByBookItem_BookItemId(item.getBookItemId())) {
