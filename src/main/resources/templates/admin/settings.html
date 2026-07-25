@@ -106,7 +106,17 @@
                         <div class="form-text" th:text="#{admin.settings.vndPerBookDay}">VND / book / day</div>
                     </div>
 
-                    <div class="col-md-6 setting-field" style="order: 3">
+                    <div class="col-md-6 setting-field" style="order: 2">
+                        <label class="form-label fw-bold small text-muted text-uppercase">
+                            <span th:text="#{admin.settings.renewalFee}">Renewal Fee</span>
+                        </label>
+                        <input name="renewalFeePerDay" type="text" inputmode="numeric"
+                            class="form-control money-input" required
+                            th:value="${settingMap['RENEWAL_FEE_PER_DAY'] != null ? settingMap['RENEWAL_FEE_PER_DAY'] : (settingMap['Borrow_Fee_Per_Book'] != null ? settingMap['Borrow_Fee_Per_Book'] : 5000)}">
+                        <div class="form-text" th:text="#{admin.settings.vndPerBookDay}">VND / book / day</div>
+                    </div>
+
+                    <div class="col-md-6 setting-field" style="order: 4">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.newBookOverdueFine}">Overdue Fine</span>
                         </label>
@@ -115,7 +125,7 @@
                         <div class="form-text" th:text="#{admin.settings.overdueFineAutoHint}">Automatically equals twice the borrowing fee</div>
                     </div>
 
-                    <div class="col-md-6 setting-field" style="order: 2">
+                    <div class="col-md-6 setting-field" style="order: 3">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.reservationDeposit}">Reservation Deposit</span>
                         </label>
@@ -125,7 +135,7 @@
                         <div class="form-text" th:text="#{admin.settings.vndPerBook}">VND / book</div>
                     </div>
 
-                    <div class="col-md-6 setting-field" style="order: 4">
+                    <div class="col-md-6 setting-field" style="order: 5">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageCompensation}">Book Damage Compensation Fee</span>
                         </label>
@@ -135,7 +145,7 @@
                         <div class="form-text" th:text="#{admin.settings.severeAndLostDamageHint}">Applied equally when a book is severely damaged or lost</div>
                     </div>
 
-                    <div class="col-12 setting-field" style="order: 7">
+                    <div class="col-12 setting-field" style="order: 6">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.damageCompensationRules}">Damage compensation rules</span>
                         </label>
@@ -145,14 +155,14 @@
                         </div>
                     </div>
 
-                    <div class="col-12 settings-section-title" style="order: 8">
+                    <div class="col-12 settings-section-title" style="order: 7">
                         <h6 class="fw-bold text-classic mb-0">
                             <i class="bi bi-shield-lock me-1"></i>
                             <span th:text="#{admin.settings.accountLockingRules}">Account Locking Rules</span>
                         </h6>
                     </div>
 
-                    <div class="col-md-6 setting-field" style="order: 9">
+                    <div class="col-md-6 setting-field" style="order: 8">
                         <label class="form-label fw-bold small text-muted text-uppercase">
                             <span th:text="#{admin.settings.overdueLockLimit}">Overdue Violations Before Account
                                 Lock</span>
@@ -161,11 +171,11 @@
                             th:value="${settingMap['Overdue_Violation_Lock_Limit'] != null ? settingMap['Overdue_Violation_Lock_Limit'] : 3}">
                     </div>
 
-                    <div class="col-12 settings-action-divider" style="order: 10">
+                    <div class="col-12 settings-action-divider" style="order: 9">
                         <hr class="settings-divider">
                     </div>
 
-                    <div class="col-12 settings-form-actions" style="order: 11">
+                    <div class="col-12 settings-form-actions" style="order: 10">
                         <button type="submit" class="btn btn-classic settings-save-button">
                             <span th:text="#{admin.settings.save}">Save Settings</span>
                         </button>

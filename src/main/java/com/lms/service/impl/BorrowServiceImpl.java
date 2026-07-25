@@ -736,7 +736,8 @@ public class BorrowServiceImpl implements BorrowService {
                 .isPresent())
             throw new ConflictException(localizedMessageService.get("backend.renewal.alreadyPending"));
 
-        BigDecimal feePerDay = BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000));
+        BigDecimal feePerDay = BigDecimal.valueOf(getPositiveIntSetting(
+                "RENEWAL_FEE_PER_DAY", getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000)));
         BigDecimal fee = feePerDay.multiply(BigDecimal.valueOf(renewalDays)).setScale(2,
                 java.math.RoundingMode.HALF_UP);
         Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
