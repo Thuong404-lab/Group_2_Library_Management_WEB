@@ -709,9 +709,6 @@ public class BorrowController extends LocalizedControllerSupport {
         if (condition.contains("severely")) {
             return BigDecimal.ZERO;
         }
-        if (condition.contains("minor")) {
-            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
-        }
         return getMoneySetting("BORROW_FEE_PER_BOOK", 5000);
     }
 

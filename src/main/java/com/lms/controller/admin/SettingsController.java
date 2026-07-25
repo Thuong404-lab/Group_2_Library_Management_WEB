@@ -40,7 +40,6 @@ public class SettingsController extends LocalizedControllerSupport {
             @RequestParam Integer renewalRejectionCooldownHours,
             @RequestParam Integer renewalApprovalTimeoutHours,
             @RequestParam BigDecimal borrowFeePerBook,
-            @RequestParam BigDecimal minorDamageBorrowFee,
             @RequestParam BigDecimal damageCompensationAmount,
             @RequestParam Integer overdueViolationLockLimit,
             @RequestParam BigDecimal depositAmount,
@@ -53,7 +52,6 @@ public class SettingsController extends LocalizedControllerSupport {
                     renewalRejectionCooldownHours,
                     renewalApprovalTimeoutHours,
                     borrowFeePerBook,
-                    minorDamageBorrowFee,
                     damageCompensationAmount,
                     overdueViolationLockLimit,
                     depositAmount);
