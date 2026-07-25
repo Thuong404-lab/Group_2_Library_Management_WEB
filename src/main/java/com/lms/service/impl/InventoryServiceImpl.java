@@ -35,6 +35,7 @@ import java.util.Set;
 @Service
 public class InventoryServiceImpl implements InventoryService {
     private static final String STATUS_AVAILABLE = "Available";
+    private static final String STATUS_RESERVED = "Reserved";
     private static final String STATUS_BORROWED = "Borrowed";
     private static final String STATUS_PAYMENT_PENDING = "Payment_Pending";
     private static final String STATUS_WAITING_PICKUP = "Waiting_Pickup";
@@ -119,6 +120,7 @@ public class InventoryServiceImpl implements InventoryService {
     public Map<String, Long> getInventoryStatusCounts() {
         Map<String, Long> counts = new HashMap<>();
         counts.put(STATUS_AVAILABLE, bookItemRepository.countByStatusIgnoreCase(STATUS_AVAILABLE));
+        counts.put(STATUS_RESERVED, bookItemRepository.countByStatusIgnoreCase(STATUS_RESERVED));
         counts.put(STATUS_BORROWED, bookItemRepository.countByStatusIgnoreCase(STATUS_BORROWED));
         counts.put(STATUS_PAYMENT_PENDING, bookItemRepository.countByStatusIgnoreCase(STATUS_PAYMENT_PENDING));
         counts.put(STATUS_WAITING_PICKUP, bookItemRepository.countByStatusIgnoreCase(STATUS_WAITING_PICKUP));
@@ -545,18 +547,8 @@ public class InventoryServiceImpl implements InventoryService {
         List<com.lms.entity.Reservation> waitingList = reservationRepository.findByBook_BookIdAndStatusInOrderByReservationDateAsc(
                 bookId, List.of("Deposit_Paid", "Pending"));
         if (!waitingList.isEmpty()) {
-            com.lms.entity.Reservation nextReservation = waitingList.get(0);
-            nextReservation.setStatus("Ready");
-            reservationRepository.save(nextReservation);
-
-            item.setStatus(STATUS_WAITING_PICKUP);
+            item.setStatus(STATUS_RESERVED);
             bookItemRepository.save(item);
-
-            sendInternalNotification(nextReservation.getMember(),
-                    com.lms.enums.NotificationType.RESERVATION, com.lms.enums.NotificationEventType.RESERVATION_APPROVED, com.lms.enums.NotificationSource.SYSTEM,
-                    "systemNotification.reservation.ready.title",
-                    "systemNotification.reservation.ready.content",
-                    nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
         }
     }
 
