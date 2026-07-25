@@ -1488,9 +1488,6 @@ public class BorrowServiceImpl implements BorrowService {
         if (condition.contains("severely")) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.lostCopyUnavailable"));
         }
-        if (condition.contains("minor")) {
-            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
-        }
         return getMoneySetting("BORROW_FEE_PER_BOOK", 5000);
     }
 

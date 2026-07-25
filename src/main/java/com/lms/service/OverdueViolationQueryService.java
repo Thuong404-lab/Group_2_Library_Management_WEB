@@ -27,7 +27,6 @@ public class OverdueViolationQueryService {
 
     private final LocalizedMessageService messages;
     private static final String NEW_BOOK_OVERDUE_FINE_KEY = "New_Book_Overdue_Fine";
-    private static final String MINOR_DAMAGE_OVERDUE_FINE_KEY = "Minor_Damage_Overdue_Fine";
     private static final Set<String> OVERDUE_ELIGIBLE_STATUSES =
             Set.of("BORROWED", "OVERDUE", "RETURN_PENDING");
 
@@ -59,12 +58,7 @@ public class OverdueViolationQueryService {
     }
 
     private BigDecimal getConfiguredFinePerDay(BorrowDetail detail) {
-        boolean minorDamage = detail.getBookItem() != null
-                && detail.getBookItem().getBookCondition() != null
-                && detail.getBookItem().getBookCondition().toLowerCase(Locale.ROOT).contains("minor");
-        return minorDamage
-                ? getSettingAmount(MINOR_DAMAGE_OVERDUE_FINE_KEY, BigDecimal.valueOf(8000))
-                : getConfiguredFinePerDay();
+        return getConfiguredFinePerDay();
     }
 
     private BigDecimal getSettingAmount(String key, BigDecimal fallback) {

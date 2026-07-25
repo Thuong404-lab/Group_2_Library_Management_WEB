@@ -129,7 +129,6 @@ public class SystemServiceImpl implements SystemService {
             Integer renewalRejectionCooldownHours,
             Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
-            BigDecimal minorDamageBorrowFee,
             BigDecimal damageCompensationAmount,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount) {
@@ -140,11 +139,6 @@ public class SystemServiceImpl implements SystemService {
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
         validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
-        validateZeroOrPositive(minorDamageBorrowFee, messages.get("backend.settings.borrowFeeNonNegative"));
-        BigDecimal minimumGap = BigDecimal.valueOf(1000);
-        if (minorDamageBorrowFee.compareTo(borrowFeePerBook.subtract(minimumGap)) > 0) {
-            throw new ValidationException(messages.get("backend.settings.conditionFeeOrder"));
-        }
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
@@ -172,15 +166,9 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
                 messages.get("backend.settings.description.borrowFee"));
-        saveOrUpdateSetting("Minor_Damage_Borrow_Fee",
-                minorDamageBorrowFee.toPlainString(),
-                messages.get("backend.settings.description.minorDamageBorrowFee"));
         saveOrUpdateSetting("New_Book_Overdue_Fine",
                 borrowFeePerBook.multiply(BigDecimal.valueOf(2)).toPlainString(),
                 messages.get("backend.settings.description.newBookOverdueFine"));
-        saveOrUpdateSetting("Minor_Damage_Overdue_Fine",
-                minorDamageBorrowFee.multiply(BigDecimal.valueOf(2)).toPlainString(),
-                messages.get("backend.settings.description.minorDamageOverdueFine"));
 
         saveOrUpdateSetting("Damage_Compensation_Amount",
                 damageCompensationAmount.toPlainString(),

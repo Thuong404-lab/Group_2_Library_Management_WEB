@@ -28,7 +28,6 @@ public interface SystemService {
             Integer renewalRejectionCooldownHours,
             Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
-            BigDecimal minorDamageBorrowFee,
             BigDecimal damageCompensationAmount,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount);
