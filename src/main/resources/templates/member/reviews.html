@@ -59,9 +59,10 @@
                     <td class="ps-3 py-3">
                       <div class="d-flex align-items-center">
                         <img
-                          th:src="${review.book.coverImageUrl != null and !#strings.isEmpty(review.book.coverImageUrl) ? review.book.coverImageUrl : 'https://picsum.photos/seed/' + review.book.bookId + '/100/150'}"
+                          th:src="${review.book.coverImageUrl != null and !#strings.isEmpty(review.book.coverImageUrl) ? review.book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                           class="review-cover shadow-sm"
                           th:alt="${review.book.title}"
+                          onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'"
                         />
                         <div>
                           <h6 class="mb-2 fw-bold sent-review-title" th:text="${review.book.title}">

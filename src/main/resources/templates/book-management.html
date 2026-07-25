@@ -667,6 +667,9 @@
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Waiting_Pickup'])}">0</strong>
                                         <span th:text="#{loan.status.waitingPickup}">Waiting for Pickup</span></span>
                                     <span><strong class="app-stat-number"
+                                            th:text="${@displayNumber.count(inventoryStatusCounts['Reserved'])}">0</strong>
+                                        <span th:text="#{book.status.reserved}">Reserved</span></span>
+                                    <span><strong class="app-stat-number"
                                             th:text="${@displayNumber.count(inventoryStatusCounts['Unavailable'])}">0</strong>
                                         <span th:text="#{book.status.unavailable}">Unavailable</span></span>
                                 </div>
@@ -696,6 +699,8 @@
                                                     th:text="#{book.status.paymentPending}">Awaiting payment</option>
                                                 <option value="Waiting_Pickup" th:selected="${bookItemStatus == 'Waiting_Pickup'}"
                                                     th:text="#{loan.status.waitingPickup}">Awaiting physical copy pickup</option>
+                                                <option value="Reserved" th:selected="${bookItemStatus == 'Reserved'}"
+                                                    th:text="#{book.status.reserved}">Reserved</option>
                                                 <option value="Unavailable" th:selected="${bookItemStatus == 'Unavailable'}"
                                                     th:text="#{book.status.unavailable}">Unavailable</option>
                                             </select>
@@ -1094,6 +1099,11 @@
                                                 <span class="app-number"
                                                     th:text="${@displayNumber.count(inventoryStatusCounts['Waiting_Pickup'])}">0</span>
                                             </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="fw-semibold" th:text="#{book.status.reserved}">Reserved</span>
+                                                <span class="app-number"
+                                                    th:text="${@displayNumber.count(inventoryStatusCounts['Reserved'])}">0</span>
+                                            </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="fw-semibold"
                                                     th:text="#{book.status.unavailable}">Unavailable</span>
@@ -1217,6 +1227,7 @@
                                             <option value="Borrowed" th:text="#{loan.status.borrowed}">Borrowing</option>
                                             <option value="Payment_Pending" th:text="#{book.status.paymentPending}">Awaiting payment</option>
                                             <option value="Waiting_Pickup" th:text="#{loan.status.waitingPickup}">Awaiting physical copy pickup</option>
+                                            <option value="Reserved" th:text="#{book.status.reserved}">Reserved</option>
                                             <option value="Unavailable" th:text="#{book.status.unavailable}">Unavailable</option>
                                         </select>
                                         <form class="flex-shrink-0" th:id="${'bulkDeleteCopiesForm' + book.bookId}"
@@ -1292,13 +1303,13 @@
                                                     </td>
                                                     <td th:data-label="#{common.status}">
                                                         <span class="status-badge"
-                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Payment_Pending'} ? ' status-payment-pending' : (${item.status == 'Waiting_Pickup'} ? ' status-waiting-pickup' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive'))))"
-                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Payment_Pending' ? #messages.msg('book.status.paymentPending') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status))))}">Available</span>
+                                                            th:classappend="${item.status == 'Available'} ? ' status-active' : (${item.status == 'Reserved'} ? ' status-reserved' : (${item.status == 'Borrowed'} ? ' status-borrowed' : (${item.status == 'Payment_Pending'} ? ' status-payment-pending' : (${item.status == 'Waiting_Pickup'} ? ' status-waiting-pickup' : (${item.status == 'Unavailable'} ? ' status-zero' : ' status-inactive')))))"
+                                                            th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Reserved' ? #messages.msg('book.status.reserved') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Payment_Pending' ? #messages.msg('book.status.paymentPending') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions"
                                                         th:data-label="#{common.actions}">
                                                         <button
-                                                            th:if="${item.status != 'Borrowed' and item.status != 'Payment_Pending' and item.status != 'Waiting_Pickup' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"
+                                                            th:if="${item.status != 'Reserved' and item.status != 'Borrowed' and item.status != 'Payment_Pending' and item.status != 'Waiting_Pickup' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}"
                                                             type="button"
                                                             class="member-icon-action"
                                                             th:data-edit-copy-target="${'#editCopyModalAdmin' + item.bookItemId}"
@@ -1348,7 +1359,7 @@
                     </div>
 
                     <div class="modal fade"
-                        th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed' and status != 'Payment_Pending' and status != 'Waiting_Pickup' and bookCondition != 'Severely damaged' and bookCondition != 'Lost book'] : {}}"
+                        th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Reserved' and status != 'Borrowed' and status != 'Payment_Pending' and status != 'Waiting_Pickup' and bookCondition != 'Severely damaged' and bookCondition != 'Lost book'] : {}}"
                         th:if="${param.tab != null and param.tab[0] == 'audit'}"
                         th:id="${'editCopyModalAdmin' + item.bookItemId}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">

@@ -249,6 +249,7 @@ public class InventoryController extends LocalizedControllerSupport {
                     message("backend.inventory.auditCompleted",
                             summary.getOrDefault("Available", 0L),
                             summary.getOrDefault("Borrowed", 0L),
+                            summary.getOrDefault("Reserved", 0L),
                             summary.getOrDefault("Waiting_Pickup", 0L),
                             summary.getOrDefault("Unavailable", 0L)));
         } catch (ApplicationException ex) {

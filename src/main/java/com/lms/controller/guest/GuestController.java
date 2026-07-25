@@ -262,7 +262,7 @@ public class GuestController extends LocalizedControllerSupport {
             map.put("thumbnailUrl",
                     book.getCoverImageUrl() != null && !book.getCoverImageUrl().trim().isEmpty()
                             ? book.getCoverImageUrl()
-                            : "https://picsum.photos/seed/" + book.getBookId() + "/600/800");
+                            : "/images/book-cover-placeholder.svg");
             return map;
         }).toList();
 

@@ -660,6 +660,29 @@ public class BorrowServiceImpl implements BorrowService {
         borrow.setStatus("Active");
         borrowRepository.save(borrow);
 
+        // A reservation is fulfilled when its physical copy is handed over.
+        // Keeping it Active would make the same title appear in both the
+        // borrowing tab and the reservation tab.
+        Set<Integer> pickedUpBookIds = details.stream()
+                .map(BorrowDetail::getBook)
+                .filter(java.util.Objects::nonNull)
+                .map(Book::getBookId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (borrow.getMember() != null && borrow.getMember().getMemberId() != null
+                && !pickedUpBookIds.isEmpty()) {
+            List<Reservation> fulfilledReservations = reservationRepository
+                    .findByMemberMemberIdAndStatusInOrderByReservationDateDesc(
+                            borrow.getMember().getMemberId(), List.of("Active"));
+            fulfilledReservations.stream()
+                    .filter(reservation -> reservation.getBook() != null
+                            && pickedUpBookIds.contains(reservation.getBook().getBookId()))
+                    .forEach(reservation -> reservation.setStatus("Completed"));
+            reservationRepository.saveAll(fulfilledReservations.stream()
+                    .filter(reservation -> "Completed".equalsIgnoreCase(reservation.getStatus()))
+                    .toList());
+        }
+
         String bookNames = details.stream()
                 .map(d -> d.getBook().getTitle())
                 .collect(Collectors.joining(", "));
@@ -825,18 +848,8 @@ public class BorrowServiceImpl implements BorrowService {
             List<Reservation> waitingReservations = reservationRepository
                     .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
             if (!waitingReservations.isEmpty()) {
-                Reservation nextReservation = waitingReservations.get(0);
-                nextReservation.setStatus("Ready");
-                reservationRepository.save(nextReservation);
-
-                item.setStatus("Waiting_Pickup");
+                item.setStatus("Reserved");
                 bookItemRepository.save(item);
-
-                sendInternalNotification(nextReservation.getMember(),
-                        NotificationType.RESERVATION, NotificationEventType.RESERVATION_APPROVED, NotificationSource.SYSTEM,
-                        "systemNotification.reservation.ready.title",
-                        "systemNotification.reservation.ready.content",
-                        nextReservation.getBook() != null ? nextReservation.getBook().getTitle() : "");
             }
         }
     }
@@ -896,25 +909,28 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         // 1. Tìm bản sao sách đang ở trạng thái Waiting_Pickup hoặc Available
-        BookItem itemToHandover = bookItemRepository.findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(
-                reservation.getBook().getBookId(), "Waiting_Pickup")
-                .orElseGet(() -> bookItemRepository.findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(
-                        reservation.getBook().getBookId(), "Available")
-                        .orElseThrow(() -> new ConflictException(localizedMessageService.get("backend.borrow.noCopiesAvailableToApprove"))));
+        Integer reservedBookId = reservation.getBook().getBookId();
+        BookItem itemToHandover = bookItemRepository
+                .findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(reservedBookId, "Reserved")
+                .orElseGet(() -> bookItemRepository
+                        .findFirstByBook_BookIdAndStatusIgnoreCaseOrderByBookItemIdAsc(reservedBookId, "Available")
+                        .orElseThrow(() -> new ConflictException(
+                                localizedMessageService.get("backend.borrow.noCopiesAvailableToApprove"))));
 
         // 2. Cập nhật trạng thái bản sao sách thành Borrowed (Đã mượn)
         if (!BookItemConditionPolicy.isLendable(itemToHandover.getBookCondition())) {
             throw new ConflictException(localizedMessageService.get(
                     "backend.loan.barcodeUnavailable", itemToHandover.getBarcode()));
         }
-        itemToHandover.setStatus("Borrowed");
+        // Approval moves the reserved copy to the physical pickup queue.
+        itemToHandover.setStatus("Waiting_Pickup");
         bookItemRepository.save(itemToHandover);
 
         // 3. Tạo phiếu mượn (Borrow) mới cho độc giả
         Borrow borrow = new Borrow();
         borrow.setMember(reservation.getMember());
         borrow.setBorrowDate(LocalDateTime.now());
-        borrow.setStatus("Active");
+        borrow.setStatus("Waiting_Pickup");
         borrow = borrowRepository.save(borrow);
 
         // 4. Tạo chi tiết phiếu mượn (BorrowDetail)
@@ -926,7 +942,7 @@ public class BorrowServiceImpl implements BorrowService {
                 ? getMaxBorrowDays()
                 : Math.max(1, Math.min(reservation.getNumberOfDays(), getMaxBorrowDays()));
         detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
-        detail.setStatus("Borrowed");
+        detail.setStatus("Waiting_Pickup");
         detail.setRenewCount(0);
         borrowDetailRepository.save(detail);
 

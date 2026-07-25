@@ -33,8 +33,9 @@
                 </div>
                 <div class="member-notifications-list member-reference-list__body p-4">
                     <div class="reserve-book-summary">
-                        <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/120/160'}"
+                        <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                              th:alt="${book.title}"
+                             onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'"
                              class="reserve-book-img">
                         <div class="reserve-book-copy">
                             <h3 th:text="${book.title}">Book Title</h3>
