@@ -129,6 +129,7 @@ public class SystemServiceImpl implements SystemService {
             Integer renewalRejectionCooldownHours,
             Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
+            BigDecimal renewalFeePerDay,
             BigDecimal damageCompensationAmount,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount) {
@@ -139,6 +140,7 @@ public class SystemServiceImpl implements SystemService {
         validatePositive(renewalRejectionCooldownHours, messages.get("backend.settings.renewalCooldownPositive"));
         validatePositive(renewalApprovalTimeoutHours, messages.get("backend.settings.renewalCooldownPositive"));
         validateZeroOrPositive(borrowFeePerBook, messages.get("backend.settings.borrowFeeNonNegative"));
+        validateZeroOrPositive(renewalFeePerDay, messages.get("backend.settings.renewalFeeNonNegative"));
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
@@ -166,6 +168,9 @@ public class SystemServiceImpl implements SystemService {
         saveOrUpdateSetting("Borrow_Fee_Per_Book",
                 borrowFeePerBook.toPlainString(),
                 messages.get("backend.settings.description.borrowFee"));
+        saveOrUpdateSetting("RENEWAL_FEE_PER_DAY",
+                renewalFeePerDay.toPlainString(),
+                messages.get("backend.settings.description.renewalFee"));
         saveOrUpdateSetting("New_Book_Overdue_Fine",
                 borrowFeePerBook.multiply(BigDecimal.valueOf(2)).toPlainString(),
                 messages.get("backend.settings.description.newBookOverdueFine"));
