@@ -184,6 +184,17 @@ public class CartController extends LocalizedControllerSupport {
         model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("discountPercent", discountPercent);
         model.addAttribute("remainingBorrowLimit", remainingBorrowLimit);
+        BigDecimal borrowFeePerBook = systemSettingRepository.findBySettingKeyIgnoreCase("BORROW_FEE_PER_BOOK")
+                .map(setting -> {
+                    try {
+                        BigDecimal value = new BigDecimal(setting.getSettingValue().trim());
+                        return value.signum() >= 0 ? value : BigDecimal.valueOf(5000);
+                    } catch (Exception ignored) {
+                        return BigDecimal.valueOf(5000);
+                    }
+                })
+                .orElse(BigDecimal.valueOf(5000));
+        model.addAttribute("borrowFeePerBook", borrowFeePerBook);
 
         Integer maxBorrowDays = systemSettingRepository.findBySettingKey("MAX_BORROW_DAYS")
                 .map(s -> {

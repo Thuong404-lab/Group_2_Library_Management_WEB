@@ -132,7 +132,12 @@
                     </div>
                     <div>
                         <span th:text="#{member.cart.baseRate}">Base daily rate:</span>
-                        <strong th:text="#{member.cart.baseRateValue}">5,000 VND / day</strong>
+                        <strong>
+                            <span th:text="${#numbers.formatDecimal(borrowFeePerBook, 0, 'COMMA', 0, 'POINT')}">5,000</span>
+                            <span th:text="#{currency.vnd}">VND</span>
+                            <span>/</span>
+                            <span th:text="#{common.days}">day</span>
+                        </strong>
                     </div>
                     <div>
                         <span th:text="#{member.cart.tierDiscount}">Membership discount:</span>
@@ -174,7 +179,7 @@
 
             const discountPercent = /*[[${discountPercent}]]*/ 0.0;
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
-            const baseFeePerDay = 5000;
+            const baseFeePerDay = /*[[${borrowFeePerBook}]]*/ 5000;
             const numberLocale = /*[[${#locale.language == 'vi' ? 'vi-VN' : 'en-US'}]]*/ 'en-US';
             const currencyUnit = /*[[#{currency.vnd}]]*/ 'VND';
             const selectionRequiredMessage = /*[[#{member.cart.selectionRequired}]]*/ 'Please select at least one book to create a loan request.';
