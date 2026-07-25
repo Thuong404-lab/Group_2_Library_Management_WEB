@@ -736,7 +736,8 @@ public class BorrowServiceImpl implements BorrowService {
                 .isPresent())
             throw new ConflictException(localizedMessageService.get("backend.renewal.alreadyPending"));
 
-        BigDecimal feePerDay = BigDecimal.valueOf(getPositiveIntSetting("FEE_PER_BOOK_PER_DAY", 5000));
+        BigDecimal feePerDay = BigDecimal.valueOf(getPositiveIntSetting(
+                "RENEWAL_FEE_PER_DAY", getPositiveIntSetting("BORROW_FEE_PER_BOOK", 5000)));
         BigDecimal fee = feePerDay.multiply(BigDecimal.valueOf(renewalDays)).setScale(2,
                 java.math.RoundingMode.HALF_UP);
         Wallet wallet = walletRepository.findByMemberIdForUpdate(member.getMemberId())
@@ -842,13 +843,17 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Reservation memberSubmitReservationRequest(String username, Integer bookId) {
+    public Reservation memberSubmitReservationRequest(String username, Integer bookId, Integer numberOfDays) {
         Member member = memberRepository.findByAccountUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.account.memberNotFound")));
         Book book = bookRepository.findByIdForUpdate(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         localizedMessageService.get("backend.borrow.reservedBookNotFound")));
+        int requestedDays = numberOfDays == null ? Math.min(14, getMaxBorrowDays()) : numberOfDays;
+        if (requestedDays < 1 || requestedDays > getMaxBorrowDays()) {
+            throw new ValidationException(localizedMessageService.get("backend.borrow.invalidDays", getMaxBorrowDays()));
+        }
 
         boolean alreadyReserved = reservationRepository
                 .findByMember_MemberIdOrderByReservationDateDesc(member.getMemberId())
@@ -868,6 +873,7 @@ public class BorrowServiceImpl implements BorrowService {
         reservation.setMember(member);
         reservation.setBook(book);
         reservation.setReservationDate(LocalDateTime.now());
+        reservation.setNumberOfDays(requestedDays);
         reservation.setStatus("Pending");
         Reservation savedReservation = reservationRepository.save(reservation);
         financialService.payReservationDeposit(member.getMemberId(), savedReservation.getReservationId());
@@ -916,7 +922,9 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setBorrow(borrow);
         detail.setBook(reservation.getBook());
         detail.setBookItem(itemToHandover);
-        int borrowDays = getMaxBorrowDays();
+        int borrowDays = reservation.getNumberOfDays() == null
+                ? getMaxBorrowDays()
+                : Math.max(1, Math.min(reservation.getNumberOfDays(), getMaxBorrowDays()));
         detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
         detail.setStatus("Borrowed");
         detail.setRenewCount(0);
@@ -956,7 +964,8 @@ public class BorrowServiceImpl implements BorrowService {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             localizedMessageService.get("backend.financial.walletNotFound")));
-            BigDecimal refundAmount = financialService.getReservationDepositAmount();
+            int resDays = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+            BigDecimal refundAmount = financialService.getReservationDepositAmount().multiply(BigDecimal.valueOf(resDays));
             if (refundAmount != null && refundAmount.signum() > 0) {
                 wallet.setBalance(wallet.getBalance().add(refundAmount));
                 walletRepository.save(wallet);
@@ -1037,7 +1046,8 @@ public class BorrowServiceImpl implements BorrowService {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             localizedMessageService.get("backend.financial.walletNotFound")));
-            BigDecimal refundAmount = financialService.getReservationDepositAmount();
+            int resDays = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
+            BigDecimal refundAmount = financialService.getReservationDepositAmount().multiply(BigDecimal.valueOf(resDays));
             if (refundAmount != null && refundAmount.signum() > 0) {
                 wallet.setBalance(wallet.getBalance().add(refundAmount));
                 walletRepository.save(wallet);
@@ -1279,6 +1289,7 @@ public class BorrowServiceImpl implements BorrowService {
         dto.setBookTitle(detail.getBook().getTitle());
         dto.setAuthorName(getAuthorNames(detail.getBook()));
         dto.setBookImage(detail.getBook().getCoverImageUrl());
+        dto.setIsbn(detail.getBook().getIsbn());
         dto.setBarcodeAssigned(detail.getBookItem() != null && detail.getBookItem().getBarcode() != null
                 && !detail.getBookItem().getBarcode().isBlank());
         dto.setBookIdStr(dto.isBarcodeAssigned() ? detail.getBookItem().getBarcode()
@@ -1487,9 +1498,6 @@ public class BorrowServiceImpl implements BorrowService {
         }
         if (condition.contains("severely")) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.lostCopyUnavailable"));
-        }
-        if (condition.contains("minor")) {
-            return getMoneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
         }
         return getMoneySetting("BORROW_FEE_PER_BOOK", 5000);
     }

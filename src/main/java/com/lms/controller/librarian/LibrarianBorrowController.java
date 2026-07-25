@@ -482,9 +482,6 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         if (condition.contains("severely")) {
             return BigDecimal.ZERO;
         }
-        if (condition.contains("minor")) {
-            return moneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
-        }
         return moneySetting("BORROW_FEE_PER_BOOK", 5000);
     }
 

@@ -165,7 +165,8 @@ public class InventoryServiceImpl implements InventoryService {
         book.setTitle(title.trim());
         book.setIsbn(isbn.trim());
         book.setGenre(genre);
-        book.setStatus(STATUS_ACTIVE);
+        book.setStatus(quantity > 0
+                && BookItemConditionPolicy.isLendable(bookCondition) ? STATUS_ACTIVE : "Inactive");
         if (description != null && !description.trim().isEmpty()) {
             book.setDescription(description.trim());
         }
@@ -272,6 +273,7 @@ public class InventoryServiceImpl implements InventoryService {
             item.setShelf(shelf);
             bookItemRepository.save(item);
         }
+        synchronizeBookStatus(book);
     }
 
     @Override
@@ -316,8 +318,7 @@ public class InventoryServiceImpl implements InventoryService {
             autoAssignNewCopyIfReservationWaiting(item);
             existingBarcodes.add(barcode);
         }
-        book.setStatus(STATUS_ACTIVE);
-        bookRepository.save(book);
+        synchronizeBookStatus(book);
     }
 
     @Override
@@ -334,14 +335,35 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         for (BookItem item : items) {
-            if (!STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus())) {
+            boolean isAvailable = STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus());
+            boolean isPermanentlyUnavailable = conditionRank(item.getBookCondition())
+                    >= conditionRank("Severely damaged");
+            if (!isAvailable && !isPermanentlyUnavailable) {
                 throw new ConflictException(messages.get("backend.inventory.deleteUnavailableCopyConflict"));
             }
-            if (borrowDetailRepository.existsByBookItem_BookItemId(item.getBookItemId())) {
+            List<com.lms.entity.BorrowDetail> history =
+                    borrowDetailRepository.findByBookItem_BookItemId(item.getBookItemId());
+            boolean hasActiveLoan = history.stream().anyMatch(detail -> {
+                String status = detail.getStatus() == null ? "" : detail.getStatus().trim().toLowerCase(java.util.Locale.ROOT);
+                return status.equals("payment_pending")
+                        || status.equals("waiting_pickup")
+                        || status.equals("borrowed")
+                        || status.equals("overdue")
+                        || status.equals("return_pending")
+                        || status.equals("renew_pending");
+            });
+            if (hasActiveLoan) {
                 throw new ConflictException(messages.get("backend.inventory.deleteCopyHistoryConflict"));
             }
+            for (com.lms.entity.BorrowDetail detail : history) {
+                detail.setBookItem(null);
+            }
+            borrowDetailRepository.saveAll(history);
         }
+        borrowDetailRepository.flush();
         bookItemRepository.deleteAll(items);
+        bookItemRepository.flush();
+        synchronizeBookStatus(findBookById(bookId));
     }
 
     @Override
@@ -375,9 +397,9 @@ public class InventoryServiceImpl implements InventoryService {
 
     private void synchronizeBookStatus(Book book) {
         List<BookItem> items = bookItemRepository.findByBook_BookId(book.getBookId());
-        boolean hasLendableCopy = items.stream()
-                .anyMatch(item -> !STATUS_UNAVAILABLE.equalsIgnoreCase(item.getStatus()));
-        book.setStatus(hasLendableCopy ? STATUS_ACTIVE : "Inactive");
+        boolean hasAvailableCopy = items.stream()
+                .anyMatch(item -> STATUS_AVAILABLE.equalsIgnoreCase(item.getStatus()));
+        book.setStatus(hasAvailableCopy ? STATUS_ACTIVE : "Inactive");
         bookRepository.save(book);
     }
 
@@ -400,8 +422,7 @@ public class InventoryServiceImpl implements InventoryService {
             throw new ValidationException(messages.get("backend.inventory.statusRequired"));
         }
         Book book = findBookById(bookId);
-        book.setStatus(normalizedStatus);
-        bookRepository.save(book);
+        synchronizeBookStatus(book);
     }
 
     @Override
