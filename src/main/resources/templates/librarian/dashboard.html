@@ -1507,7 +1507,7 @@
                                                             th:text="${item.status == 'Available' ? #messages.msg('book.status.available') : (item.status == 'Borrowed' ? #messages.msg('loan.status.borrowed') : (item.status == 'Waiting_Pickup' ? #messages.msg('loan.status.waitingPickup') : (item.status == 'Unavailable' ? #messages.msg('book.status.unavailable') : item.status)))}">Available</span>
                                                     </td>
                                                     <td class="text-end member-actions">
-                                                        <button th:if="${item.status != 'Borrowed'}" type="button" class="member-icon-action" data-bs-toggle="modal"
+                                                        <button th:if="${item.status != 'Borrowed' and item.status != 'Payment_Pending' and item.status != 'Waiting_Pickup' and item.bookCondition != 'Severely damaged' and item.bookCondition != 'Lost book'}" type="button" class="member-icon-action" data-bs-toggle="modal"
                                                             th:data-bs-target="${'#editCopyModalLibrarian' + item.bookItemId}"
                                                             th:title="#{librarian.inventory.editCopy}"><i class="bi bi-pencil-square"></i></button>
                                                         <form
@@ -1544,7 +1544,7 @@
                         </div>
                     </div>
 
-                    <div class="modal fade" th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed'] : {}}" th:id="${'editCopyModalLibrarian' + item.bookItemId}" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade" th:each="item : ${bookItemsByBookId != null and bookItemsByBookId[book.bookId] != null ? bookItemsByBookId[book.bookId].?[status != 'Borrowed' and status != 'Payment_Pending' and status != 'Waiting_Pickup' and bookCondition != 'Severely damaged' and bookCondition != 'Lost book'] : {}}" th:id="${'editCopyModalLibrarian' + item.bookItemId}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header border-bottom border-color"><h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i><span th:text="#{librarian.inventory.editCopy}">Edit Copy</span> – <span th:text="${item.barcode}">Code</span></h5></div>

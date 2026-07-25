@@ -30,7 +30,6 @@ public interface SystemService {
             BigDecimal borrowFeePerBook,
             BigDecimal minorDamageBorrowFee,
             BigDecimal damageCompensationAmount,
-            Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount);
 }

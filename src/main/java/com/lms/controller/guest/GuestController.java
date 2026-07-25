@@ -143,7 +143,6 @@ public class GuestController extends LocalizedControllerSupport {
         // Pass string values or default fallbacks
         model.addAttribute("maxBorrowDays", settings.getOrDefault("Max_Borrow_Days", "14"));
         model.addAttribute("maxRenewalDays", settings.getOrDefault("Max_Renewal_Days", "7"));
-        model.addAttribute("damageCompensationThreshold", settings.getOrDefault("Damage_Compensation_Threshold", "50"));
         model.addAttribute("overdueViolationLockLimit", settings.getOrDefault("Overdue_Violation_Lock_Limit", "3"));
 
         // Parse numeric currency values

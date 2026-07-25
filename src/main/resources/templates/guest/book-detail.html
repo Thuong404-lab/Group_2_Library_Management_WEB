@@ -99,7 +99,9 @@
 
                     <!-- Add to Cart / View Cart Button -->
                     <form sec:authorize="hasRole('MEMBER')" th:if="${!bookInCart}"
-                          th:action="@{/member/cart/add}" method="post">
+                          th:action="@{/member/cart/add}" method="post" class="js-cart-add-form"
+                          th:data-view-cart-url="@{/member/cart}"
+                          th:data-view-cart-text="#{guest.bookDetail.viewCart}">
                         <input type="hidden" name="bookId" th:value="${book.bookId}" />
                         <button type="submit" class="book-detail-button book-detail-button--secondary"
                                 th:disabled="${book.status != 'Active' or availableCount == 0 or (isInactiveMember != null and isInactiveMember)}"

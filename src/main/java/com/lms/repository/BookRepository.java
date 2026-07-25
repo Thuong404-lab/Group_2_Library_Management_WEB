@@ -55,9 +55,12 @@ public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecifi
            "OR EXISTS (SELECT barcodeItem.bookItemId FROM BookItem barcodeItem " +
            "WHERE barcodeItem.book = b AND LOWER(barcodeItem.barcode) LIKE LOWER(CONCAT('%', :keyword, '%')))) " +
            "AND (:bookCondition = '' OR EXISTS (SELECT bi.bookItemId FROM BookItem bi " +
-           "WHERE bi.book = b AND bi.bookCondition = :bookCondition))")
+           "WHERE bi.book = b AND bi.bookCondition = :bookCondition)) " +
+           "AND (:bookItemStatus = '' OR EXISTS (SELECT statusItem.bookItemId FROM BookItem statusItem " +
+           "WHERE statusItem.book = b AND statusItem.status = :bookItemStatus))")
     Page<Book> searchBookItems(@Param("keyword") String keyword,
                                @Param("bookCondition") String bookCondition,
+                               @Param("bookItemStatus") String bookItemStatus,
                                Pageable pageable);
 
     @Query("SELECT d.book FROM BorrowDetail d GROUP BY d.book ORDER BY COUNT(d) DESC")

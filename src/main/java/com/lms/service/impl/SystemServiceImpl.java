@@ -131,7 +131,6 @@ public class SystemServiceImpl implements SystemService {
             BigDecimal borrowFeePerBook,
             BigDecimal minorDamageBorrowFee,
             BigDecimal damageCompensationAmount,
-            Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount) {
 
@@ -147,7 +146,6 @@ public class SystemServiceImpl implements SystemService {
             throw new ValidationException(messages.get("backend.settings.conditionFeeOrder"));
         }
         validateZeroOrPositive(damageCompensationAmount, messages.get("backend.settings.compensationNonNegative"));
-        validateDamageThreshold(damageCompensationThreshold, messages.get("backend.settings.damageThresholdRange"));
         validateZeroOrPositive(overdueViolationLockLimit, messages.get("backend.settings.overdueLimitNonNegative"));
         validateZeroOrPositive(depositAmount, messages.get("backend.settings.depositNonNegative"));
 
@@ -188,10 +186,6 @@ public class SystemServiceImpl implements SystemService {
                 damageCompensationAmount.toPlainString(),
                 messages.get("backend.settings.description.compensation"));
 
-        saveOrUpdateSetting("Damage_Compensation_Threshold",
-                String.valueOf(damageCompensationThreshold),
-                messages.get("backend.settings.description.damageThreshold"));
-
         saveOrUpdateSetting("Overdue_Violation_Lock_Limit",
                 String.valueOf(overdueViolationLockLimit),
                 messages.get("backend.settings.description.overdueLockLimit"));
@@ -224,12 +218,6 @@ public class SystemServiceImpl implements SystemService {
 
     private void validateZeroOrPositive(Integer value, String message) {
         if (value == null || value < 0) {
-            throw new ValidationException(message);
-        }
-    }
-
-    private void validateDamageThreshold(Integer value, String message) {
-        if (value == null || value < 2 || value > 4) {
             throw new ValidationException(message);
         }
     }
