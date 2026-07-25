@@ -1280,6 +1280,7 @@ public class BorrowServiceImpl implements BorrowService {
         dto.setBookTitle(detail.getBook().getTitle());
         dto.setAuthorName(getAuthorNames(detail.getBook()));
         dto.setBookImage(detail.getBook().getCoverImageUrl());
+        dto.setIsbn(detail.getBook().getIsbn());
         dto.setBarcodeAssigned(detail.getBookItem() != null && detail.getBookItem().getBarcode() != null
                 && !detail.getBookItem().getBarcode().isBlank());
         dto.setBookIdStr(dto.isBarcodeAssigned() ? detail.getBookItem().getBarcode()

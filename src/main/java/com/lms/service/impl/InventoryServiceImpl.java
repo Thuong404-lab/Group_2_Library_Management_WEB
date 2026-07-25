@@ -341,10 +341,26 @@ public class InventoryServiceImpl implements InventoryService {
             if (!isAvailable && !isPermanentlyUnavailable) {
                 throw new ConflictException(messages.get("backend.inventory.deleteUnavailableCopyConflict"));
             }
-            if (borrowDetailRepository.existsByBookItem_BookItemId(item.getBookItemId())) {
+            List<com.lms.entity.BorrowDetail> history =
+                    borrowDetailRepository.findByBookItem_BookItemId(item.getBookItemId());
+            boolean hasActiveLoan = history.stream().anyMatch(detail -> {
+                String status = detail.getStatus() == null ? "" : detail.getStatus().trim().toLowerCase(java.util.Locale.ROOT);
+                return status.equals("payment_pending")
+                        || status.equals("waiting_pickup")
+                        || status.equals("borrowed")
+                        || status.equals("overdue")
+                        || status.equals("return_pending")
+                        || status.equals("renew_pending");
+            });
+            if (hasActiveLoan) {
                 throw new ConflictException(messages.get("backend.inventory.deleteCopyHistoryConflict"));
             }
+            for (com.lms.entity.BorrowDetail detail : history) {
+                detail.setBookItem(null);
+            }
+            borrowDetailRepository.saveAll(history);
         }
+        borrowDetailRepository.flush();
         bookItemRepository.deleteAll(items);
         bookItemRepository.flush();
         synchronizeBookStatus(findBookById(bookId));

@@ -8,6 +8,7 @@ public class MemberBorrowDTO {
     private String bookTitle;
     private String authorName;
     private String bookImage;
+    private String isbn;
     private String bookIdStr;
     private String borrowIdStr;
     private boolean barcodeAssigned;
@@ -34,6 +35,8 @@ public class MemberBorrowDTO {
     public void setAuthorName(String authorName) { this.authorName = authorName; }
     public String getBookImage() { return bookImage; }
     public void setBookImage(String bookImage) { this.bookImage = bookImage; }
+    public String getIsbn() { return isbn; }
+    public void setIsbn(String isbn) { this.isbn = isbn; }
     public String getBookIdStr() { return bookIdStr; }
     public void setBookIdStr(String bookIdStr) { this.bookIdStr = bookIdStr; }
     public LocalDateTime getActionDate() { return actionDate; }
