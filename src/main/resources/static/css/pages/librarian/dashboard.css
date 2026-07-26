@@ -1288,6 +1288,11 @@
     z-index: 1;
 }
 
+.librarian-hero-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .librarian-dashboard-eyebrow {
     display: block;
     margin-bottom: 7px;
@@ -1308,7 +1313,8 @@
 
 .librarian-hero .overview-quick-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
     justify-content: flex-end;
     gap: 10px;
     margin: 0;
@@ -1321,6 +1327,21 @@
     border-radius: 10px;
     background: rgba(255, 255, 255, .08);
     color: #fff;
+    white-space: nowrap;
+}
+
+html[lang="vi"] .librarian-dashboard-page .librarian-hero h1 {
+    font-size: clamp(2rem, 2.6vw, 2.625rem);
+}
+
+html[lang="vi"] .librarian-dashboard-page .librarian-hero .overview-quick-actions {
+    gap: 8px;
+}
+
+html[lang="vi"] .librarian-dashboard-page .librarian-hero .overview-quick-action {
+    padding-right: 14px;
+    padding-left: 14px;
+    font-size: .875rem;
 }
 
 .librarian-hero .overview-quick-action:hover {
@@ -1591,12 +1612,14 @@
 
 @media (max-width: 900px) {
     .librarian-hero {
-        align-items: flex-start;
+        align-items: flex-start !important;
         flex-direction: column;
         padding: 24px;
     }
 
     .librarian-hero .overview-quick-actions {
+        align-self: flex-start !important;
+        flex-wrap: wrap;
         justify-content: flex-start;
     }
 
