@@ -21,8 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         function clearValidation() {
             fields.forEach(clearFieldState);
-            globalError.textContent = "";
-            globalError.classList.add("d-none");
+            if (globalError != null) {
+                globalError.textContent = "";
+                globalError.classList.add("d-none");
+            }
         }
 
         function showValidation(errors) {
@@ -46,8 +48,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (form.elements.namedItem(entry[0]) == null) globalMessages.push(entry[1]);
             });
             if (globalMessages.length > 0) {
-                globalError.textContent = globalMessages.join(" ");
-                globalError.classList.remove("d-none");
+                if (globalError != null) {
+                    globalError.textContent = globalMessages.join(" ");
+                    globalError.classList.remove("d-none");
+                }
             }
             if (firstInvalidField != null) firstInvalidField.focus();
         }
@@ -75,6 +79,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         form.addEventListener("submit", async function (event) {
+            // Forms without a remote validation URL use their normal POST flow.
+            if (!form.dataset.validationUrl) return;
+
             event.preventDefault();
             if (submitting) return;
 
@@ -106,8 +113,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 form.submit();
             } catch (error) {
-                globalError.textContent = form.dataset.validationUnavailableMessage;
-                globalError.classList.remove("d-none");
+                if (globalError != null) {
+                    globalError.textContent = form.dataset.validationUnavailableMessage;
+                    globalError.classList.remove("d-none");
+                }
             } finally {
                 submitButton.disabled = false;
                 submitting = false;
