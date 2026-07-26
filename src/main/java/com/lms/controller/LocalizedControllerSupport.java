@@ -1,5 +1,6 @@
 package com.lms.controller;
 
+import com.lms.exception.ApplicationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -23,7 +24,7 @@ public abstract class LocalizedControllerSupport {
     }
 
     protected String messageWithDetail(String key, Exception exception) {
-        String detail = exception == null ? "" : exception.getMessage();
+        String detail = exception instanceof ApplicationException ? exception.getMessage() : message("error.system.message");
         return message(key, detail == null ? "" : detail);
     }
 }

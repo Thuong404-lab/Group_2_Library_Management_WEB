@@ -5,7 +5,7 @@
 <head>
     <title th:text="#{librarian.reviews.heading}">Member Review Moderation</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/reviews.css(v='20260724-3')}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/reviews.css(v='20260727-status-actions')}">
 </head>
 <body>
 <main layout:fragment="content"
@@ -68,6 +68,7 @@
                     <col class="review-book-column">
                     <col class="review-member-column">
                     <col class="review-rating-column">
+                    <col class="review-status-column">
                     <col class="review-comment-column">
                     <col class="review-response-column">
                     <col class="review-actions-column">
@@ -77,6 +78,7 @@
                     <th th:text="#{librarian.reviews.book}">Book</th>
                     <th th:text="#{librarian.reviews.sender}">Sender</th>
                     <th th:text="#{member.reviews.rating}">Rating</th>
+                    <th th:text="#{common.status}">Status</th>
                     <th th:text="#{common.content}">Content</th>
                     <th th:text="#{member.reviews.librarianResponse}">Librarian Response</th>
                     <th th:text="#{common.actions}">Actions</th>
@@ -90,15 +92,9 @@
                             <span class="review-book-icon" aria-hidden="true"><i class="bi bi-book"></i></span>
                             <span th:text="${review.bookTitle}">Book title</span>
                         </div>
-                        <span class="review-status-badge mt-2"
-                              th:classappend="${review.status == 'APPROVED'} ? ' review-status-approved' : (${review.status == 'PENDING'} ? ' review-status-pending' : (${review.status == 'REJECTED'} ? ' review-status-rejected' : ' review-status-deleted'))"
-                              th:text="${#messages.msg('librarian.reviews.status.' + review.status)}">Status</span>
                         <small class="d-block mt-2 text-muted"
                                th:if="${review.createdDate != null}"
                                th:text="${#temporals.format(review.createdDate, 'dd/MM/yyyy HH:mm')}"></small>
-                        <small class="d-block mt-2 text-danger"
-                               th:if="${review.status == 'REJECTED' and review.moderationReason != null}"
-                               th:text="${review.moderationReason}"></small>
                     </td>
                     <td th:data-label="#{librarian.reviews.sender}" th:text="${review.memberName}">Sender</td>
                     <td th:data-label="#{member.reviews.rating}">
@@ -106,6 +102,14 @@
                             <i class="bi bi-star-fill" aria-hidden="true"></i>
                             <span th:text="#{librarian.reviews.rating(${review.rating})}">5 stars</span>
                         </span>
+                    </td>
+                    <td class="review-status-cell" th:data-label="#{common.status}">
+                        <span class="review-status-badge"
+                              th:classappend="${review.status == 'APPROVED'} ? ' review-status-approved' : (${review.status == 'PENDING'} ? ' review-status-pending' : (${review.status == 'REJECTED'} ? ' review-status-rejected' : ' review-status-deleted'))"
+                              th:text="${#messages.msg('librarian.reviews.status.' + review.status)}">Status</span>
+                        <small class="d-block mt-2 text-danger"
+                               th:if="${review.status == 'REJECTED' and review.moderationReason != null}"
+                               th:text="${review.moderationReason}"></small>
                     </td>
                     <td class="review-comment"
                         th:data-label="#{common.content}"
@@ -180,7 +184,7 @@
 
                             <button type="button"
                                     th:if="${review.status == 'APPROVED' or review.status == 'PENDING'}"
-                                    class="app-icon-action app-icon-action--delete review-reject-action librarian-review-delete-trigger"
+                                    class="review-reject-action librarian-review-delete-trigger"
                                     data-bs-toggle="modal"
                                     data-bs-target="#librarianDeleteReviewModal"
                                     th:data-reject-action="@{'/librarian/interaction/reviews/' + ${review.feedbackId} + '/reject'}"
@@ -188,7 +192,7 @@
                                     th:data-member-name="${review.memberName}"
                                     th:title="#{librarian.reviews.rejectAction}"
                                     th:aria-label="#{librarian.reviews.rejectAction}">
-                                <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                <span th:text="#{librarian.reviews.rejectAction}">Reject</span>
                             </button>
 
                             <form class="review-permanent-delete-form app-confirm-form"
@@ -223,7 +227,7 @@
 
                 <tbody th:if="${reviews == null or reviews.totalElements == 0}">
                 <tr>
-                    <td colspan="6" class="review-empty-cell">
+                    <td colspan="7" class="review-empty-cell">
                         <div class="app-empty-state">
                             <i class="bi bi-chat-square-text" aria-hidden="true"></i>
                             <span th:text="#{librarian.reviews.empty}">There are no reviews.</span>

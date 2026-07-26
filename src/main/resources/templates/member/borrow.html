@@ -173,6 +173,16 @@
                                             <span th:text="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitLabel') : (item.renewalRequestBlocked ? #messages.msg('loan.renew.requestBlockedLabel') : #messages.msg('loan.renew'))}">Renew</span>
                                         </button>
                                     </form>
+                                    <form th:if="${item.status == 'Borrowed' or item.status == 'Overdue'}"
+                                          th:id="'returnForm_' + ${item.id}"
+                                          th:action="@{/member/borrow/return/{id}(id=${item.id})}"
+                                          method="post" class="d-inline">
+                                        <button type="button"
+                                                class="member-ui-button member-ui-button--primary member-ui-button--compact btn-return-action"
+                                                th:attr="data-form-id='returnForm_' + ${item.id}">
+                                            <span th:text="#{loan.return.confirm}">Confirm Return</span>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
