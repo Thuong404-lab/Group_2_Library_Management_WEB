@@ -8,8 +8,11 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 
 public class MemberReviewSubmitRequest {
-    @NotNull(message = "{validation.review.bookRequired}")
+    @NotNull(message = "{validation.review.bookRequired}", groups = RequiresBookId.class)
     private Integer bookId;
+
+    public interface RequiresBookId {
+    }
 
     @NotNull(message = "{validation.review.ratingRequired}")
     @Min(value = 1, message = "{validation.review.ratingMinimum}")

@@ -633,6 +633,22 @@ public class BorrowController extends LocalizedControllerSupport {
         return "redirect:/member/borrow/management?tab=borrowing";
     }
 
+    @PostMapping("/return/{borrowDetailId}")
+    public String requestReturn(@PathVariable Integer borrowDetailId,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        try {
+            borrowService.memberSubmitReturnRequest(principal.getName(), borrowDetailId);
+            redirectAttributes.addFlashAttribute("successMessage", message("backend.return.requestSubmitted"));
+        } catch (ApplicationException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/member/borrow/management?tab=borrowing";
+    }
+
     @GetMapping("/history")
     public String viewBorrowingHistory() {
         return "redirect:/member/borrow/management?tab=history";

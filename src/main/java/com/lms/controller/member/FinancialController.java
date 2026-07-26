@@ -138,7 +138,7 @@ public class FinancialController extends LocalizedControllerSupport {
 
         try {
             financialService.payBorrowingFee(member.getMemberId(), borrowId);
-            redirectAttributes.addFlashAttribute("message", message("backend.financial.borrowFeePaid"));
+            redirectAttributes.addFlashAttribute("success", message("backend.financial.borrowFeePaid"));
         } catch (ApplicationException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -422,11 +422,18 @@ public class FinancialController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         Member member = getCurrentMember(principal);
         MemberNotificationId id = new MemberNotificationId(member.getMemberId(), notificationId);
-        memberNotificationRepository.findById(id).ifPresent(memberNotification -> {
-            memberNotification.setIsRead(true);
-            memberNotification.setReadDate(LocalDateTime.now());
-            memberNotificationRepository.save(memberNotification);
-        });
+        var memberNotification = memberNotificationRepository.findById(id)
+                .filter(item -> item.getNotification() != null
+                        && NotificationEventType.TOP_UP_SUCCESS.equals(item.getNotification().getEventType()));
+        if (memberNotification.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", message("backend.notification.notFound"));
+            return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
+        }
+        if (!Boolean.TRUE.equals(memberNotification.get().getIsRead())) {
+            memberNotification.get().setIsRead(true);
+            memberNotification.get().setReadDate(LocalDateTime.now());
+            memberNotificationRepository.save(memberNotification.get());
+        }
 
         redirectAttributes.addFlashAttribute("success", message("backend.notification.markedRead"));
         return "redirect:/member/financial/topup-notifications?page=" + Math.max(page, 0);
