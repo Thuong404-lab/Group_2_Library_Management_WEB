@@ -61,6 +61,27 @@ document.addEventListener("DOMContentLoaded", function () {
             field.addEventListener("change", function () { clearFieldState(field); });
         });
 
+        function validateLocalFields() {
+            const errors = {};
+            fields.forEach(function (field) {
+                const value = field.value == null ? "" : field.value.trim();
+                if (field.required && value === "" && field.dataset.requiredMessage) {
+                    errors[field.name] = field.dataset.requiredMessage;
+                } else if (!field.checkValidity() && field.dataset.invalidMessage) {
+                    errors[field.name] = field.dataset.invalidMessage;
+                }
+            });
+
+            const password = form.elements.namedItem("password");
+            const confirmation = form.elements.namedItem("confirmPassword");
+            if (password != null && confirmation != null
+                    && confirmation.value !== "" && password.value !== confirmation.value
+                    && form.dataset.passwordMismatchMessage) {
+                errors.confirmPassword = form.dataset.passwordMismatchMessage;
+            }
+            return errors;
+        }
+
         const passwordToggle = form.querySelector(".create-password-toggle");
         if (passwordToggle != null) {
             passwordToggle.addEventListener("click", function () {
@@ -79,7 +100,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         form.addEventListener("submit", async function (event) {
-            // Forms without a remote validation URL use their normal POST flow.
+            const localErrors = validateLocalFields();
+            if (Object.keys(localErrors).length > 0) {
+                event.preventDefault();
+                showValidation(localErrors);
+                return;
+            }
+
+            // Forms without a remote validation URL continue through their
+            // normal POST flow after client-side validation succeeds.
             if (!form.dataset.validationUrl) return;
 
             event.preventDefault();

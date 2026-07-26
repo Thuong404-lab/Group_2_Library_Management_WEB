@@ -51,7 +51,8 @@
 
                             <div class="modal-body member-modal-body">
                                 <form method="post" th:action="@{/librarian/members/create}" autocomplete="off"
-                                    id="createMemberForm" class="admin-create-account-form" novalidate>
+                                    id="createMemberForm" class="admin-create-account-form" novalidate
+                                    th:data-password-mismatch-message="#{validation.passwordMismatch}">
 
                                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                         th:value="${_csrf.token}">
@@ -69,6 +70,8 @@
                                             </label>
                                             <input class="form-control validate-field" name="fullName"
                                                 id="createMemberFullName" required maxlength="50"
+                                                th:data-required-message="#{validation.fullNameRequired}"
+                                                th:data-invalid-message="#{validation.fullNameLetters}"
                                                 th:placeholder="#{librarian.members.fullNamePlaceholder}"
                                                 th:value="${formValues != null ? formValues['fullName'] : ''}"
                                                 th:classappend="${fieldErrors != null and fieldErrors['fullName'] != null} ? 'is-invalid'">
@@ -85,6 +88,8 @@
                                             </label>
                                             <input class="form-control validate-field" name="email" type="email"
                                                 id="createMemberEmail" required
+                                                th:data-required-message="#{validation.emailRequired}"
+                                                th:data-invalid-message="#{validation.email}"
                                                 pattern="[A-Za-z0-9]+([._%+\-][A-Za-z0-9]+)*@([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                                                 placeholder="email@example.com" autocomplete="off"
                                                 onkeydown="if(event.key === ' ') event.preventDefault();"
@@ -104,6 +109,8 @@
                                             </label>
                                             <input class="form-control validate-field" name="phone"
                                                 id="createMemberPhone" required pattern="^(?!0{10}$)0[0-9]{9}$"
+                                                th:data-required-message="#{validation.phoneRequired}"
+                                                th:data-invalid-message="#{validation.phone}"
                                                 minlength="10" inputmode="numeric" placeholder="0912345678"
                                                 onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 th:value="${formValues != null ? formValues['phone'] : ''}"
@@ -121,6 +128,8 @@
                                             </label>
                                             <input class="form-control validate-field" name="username"
                                                 id="createMemberUsername" required pattern="[a-zA-Z0-9_]{3,20}"
+                                                th:data-required-message="#{validation.usernameRequired}"
+                                                th:data-invalid-message="#{validation.username}"
                                                 minlength="3" maxlength="20"
                                                 th:placeholder="#{librarian.members.usernamePlaceholder}"
                                                 autocomplete="new-password"
@@ -143,6 +152,8 @@
                                                 <input class="form-control validate-field pe-5 pr-5" name="password"
                                                     type="password" id="createMemberPassword" required minlength="6"
                                                     maxlength="50" pattern="^[!-~]+$"
+                                                    th:data-required-message="#{backend.account.passwordRequired}"
+                                                    th:data-invalid-message="#{validation.passwordMin}"
                                                     th:placeholder="#{reset.newPassword.placeholder}"
                                                     autocomplete="new-password"
                                                     style="padding-right: 2.5rem !important;"
@@ -174,6 +185,8 @@
                                             <input class="form-control validate-field" name="confirmPassword"
                                                 id="createMemberConfirmPassword" type="password" required minlength="6"
                                                 maxlength="50" pattern="^[!-~]+$" autocomplete="new-password"
+                                                th:data-required-message="#{validation.confirmPasswordRequired}"
+                                                th:data-invalid-message="#{validation.passwordMin}"
                                                 th:placeholder="#{validation.confirmPassword}"
                                                 onkeydown="if(event.key === ' ') event.preventDefault();"
                                                 oninput="this.value = this.value.replace(/[^ -~]/g, '').replace(/ /g, '');"

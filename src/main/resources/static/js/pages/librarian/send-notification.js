@@ -13,11 +13,16 @@
         const search = document.getElementById("memberSearchInput");
         const searchStatus = document.getElementById("memberSearchStatus");
         const selectedCount = document.getElementById("selectedMemberCount");
+        const recipientGroup = document.getElementById("recipientTypeGroup");
+        const recipientError = document.getElementById("recipientTypeError");
         const memberError = document.getElementById("memberIdsError");
         const submit = document.getElementById("notificationSubmit");
         const title = document.getElementById("title");
+        const titleError = document.getElementById("titleValidationMessage");
         const content = document.getElementById("content");
+        const contentError = document.getElementById("contentValidationMessage");
         const type = document.getElementById("notificationType");
+        const typeError = document.getElementById("notificationTypeError");
         const confirmDialog = document.getElementById("notificationConfirmDialog");
         const confirmRecipients = document.getElementById("notificationConfirmRecipients");
         const confirmTitle = document.getElementById("notificationConfirmMessageTitle");
@@ -44,12 +49,76 @@
         function refreshSelection() {
             selectedCount.textContent = String(selectedIds().length);
             checkboxes().forEach(function (box) { box.disabled = !selected.checked; });
-            if (memberError) memberError.textContent = "";
         }
 
         function toggleRecipients() {
             memberSection.classList.toggle("is-hidden", !selected.checked);
             refreshSelection();
+        }
+
+        function clearFieldValidation(field, errorElement) {
+            field.classList.remove("is-invalid", "is-valid");
+            field.removeAttribute("aria-invalid");
+            if (errorElement) errorElement.textContent = "";
+        }
+
+        function setFieldValidation(field, errorElement, message) {
+            field.classList.remove("is-invalid", "is-valid");
+            field.classList.add(message ? "is-invalid" : "is-valid");
+            field.setAttribute("aria-invalid", String(Boolean(message)));
+            if (errorElement) errorElement.textContent = message || "";
+        }
+
+        function containsLetter(value) {
+            return /\p{L}/u.test(value);
+        }
+
+        function comparableText(value) {
+            return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+        }
+
+        function validateForm() {
+            let firstInvalid = null;
+            const recipientMessage = all.checked || selected.checked
+                ? ""
+                : form.dataset.recipientRequired;
+            setFieldValidation(recipientGroup, recipientError, recipientMessage);
+            if (recipientMessage) firstInvalid = all;
+
+            const typeMessage = type.value ? "" : form.dataset.typeRequired;
+            setFieldValidation(type, typeError, typeMessage);
+            if (!firstInvalid && typeMessage) firstInvalid = type;
+
+            let titleMessage = "";
+            if (title.value === "") titleMessage = form.dataset.titleRequired;
+            else if (title.value.length < Number(form.dataset.titleMin)) titleMessage = form.dataset.titleMinimum;
+            else if (title.value.length > Number(form.dataset.titleMax)) titleMessage = form.dataset.titleMaximum;
+            else if (!containsLetter(title.value)) titleMessage = form.dataset.titleLetters;
+            setFieldValidation(title, titleError, titleMessage);
+            if (!firstInvalid && titleMessage) firstInvalid = title;
+
+            let contentMessage = "";
+            if (content.value === "") contentMessage = form.dataset.contentRequired;
+            else if (content.value.length < Number(form.dataset.contentMin)) contentMessage = form.dataset.contentMinimum;
+            else if (content.value.length > Number(form.dataset.contentMax)) contentMessage = form.dataset.contentMaximum;
+            else if (!containsLetter(content.value)) contentMessage = form.dataset.contentLetters;
+            else if (title.value !== "" && comparableText(content.value) === comparableText(title.value)) {
+                contentMessage = form.dataset.contentDifferent;
+            }
+            setFieldValidation(content, contentError, contentMessage);
+            if (!firstInvalid && contentMessage) firstInvalid = content;
+
+            let memberMessage = "";
+            if (selected.checked && selectedIds().length === 0) {
+                memberMessage = form.dataset.memberRequired;
+            } else if (selected.checked && selectedIds().length > maximum) {
+                memberMessage = form.dataset.memberMaximum;
+            }
+            setFieldValidation(selectedBox, memberError, memberMessage);
+            if (!firstInvalid && memberMessage) firstInvalid = search;
+
+            if (firstInvalid) firstInvalid.focus();
+            return firstInvalid == null;
         }
 
         function setSearchStatus(message) {
@@ -178,17 +247,29 @@
         });
 
         [all, selected].forEach(function (radio) {
-            radio.addEventListener("change", toggleRecipients);
+            radio.addEventListener("change", function () {
+                clearFieldValidation(recipientGroup, recipientError);
+                if (all.checked) clearFieldValidation(selectedBox, memberError);
+                toggleRecipients();
+            });
         });
-        selectedBox.addEventListener("change", refreshSelection);
+        selectedBox.addEventListener("change", function () {
+            clearFieldValidation(selectedBox, memberError);
+            refreshSelection();
+        });
+        type.addEventListener("change", function () {
+            clearFieldValidation(type, typeError);
+        });
         search.addEventListener("input", function () {
             window.clearTimeout(searchTimer);
             searchTimer = window.setTimeout(searchRecipients, 300);
         });
         title.addEventListener("input", function () {
+            clearFieldValidation(title, titleError);
             updateCounter(title, "titleCharacterCount", Number(form.dataset.titleMax));
         });
         content.addEventListener("input", function () {
+            clearFieldValidation(content, contentError);
             updateCounter(content, "contentCharacterCount", Number(form.dataset.contentMax));
         });
 
@@ -199,15 +280,8 @@
             }
             title.value = title.value.trim().replace(/\s+/g, " ");
             content.value = content.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
-            if (selected.checked && selectedIds().length === 0) {
+            if (!validateForm()) {
                 event.preventDefault();
-                memberError.textContent = form.dataset.memberRequired;
-                search.focus();
-                return;
-            }
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                form.reportValidity();
                 return;
             }
             if (!confirmationAccepted) {
