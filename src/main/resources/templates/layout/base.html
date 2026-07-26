@@ -394,25 +394,8 @@
         badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
       }
 
-      var markingAllNotifications = false;
       notificationToggle.addEventListener("click", function () {
-        if (markingAllNotifications
-            || !notificationDropdown.querySelector(".member-notification-item.is-unread")) {
-          return;
-        }
-        markingAllNotifications = true;
-        fetch("/member/interaction/notifications/mark-read", {
-          method: "POST", credentials: "same-origin", headers: notificationRequestHeaders()
-        }).then(function (response) {
-          if (!response.ok) throw new Error(notificationUpdateError);
-          notificationDropdown.querySelectorAll(".member-notification-item.is-unread")
-            .forEach(function (item) { item.classList.remove("is-unread"); });
-          updateNotificationBadge(0);
-        }).catch(function (error) {
-          console.error(error);
-        }).finally(function () {
-          markingAllNotifications = false;
-        });
+        updateNotificationBadge(0);
       });
 
       function notificationRequestHeaders() {

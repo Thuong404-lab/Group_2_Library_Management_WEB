@@ -229,8 +229,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("success", message(
                     result.duplicateRequest()
                             ? "backend.librarian.notification.duplicate"
-                            : "backend.librarian.notification.sent",
-                    result.notificationId(), result.recipientCount()));
+                            : "backend.librarian.notification.sent"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));

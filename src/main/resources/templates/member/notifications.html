@@ -198,6 +198,17 @@
         if (button) button.remove();
       }
 
+      function updateHeaderUnreadBadge(unreadCount) {
+        var badge = document.getElementById("notificationBellBadge");
+        if (Number(unreadCount) <= 0) {
+          if (badge) badge.remove();
+          return;
+        }
+        if (badge) {
+          badge.textContent = Number(unreadCount) > 99 ? "99+" : String(unreadCount);
+        }
+      }
+
       document.querySelectorAll(".member-notification-mark-read").forEach(function (button) {
         button.addEventListener("click", function () {
           button.disabled = true;
@@ -208,6 +219,7 @@
             return response.json();
           }).then(function (data) {
             markRowRead(button.closest(".member-notification-row"));
+            updateHeaderUnreadBadge(data.unreadCount);
             var markAllButton = document.getElementById("pageMarkAllNotificationsRead");
             if (markAllButton) markAllButton.disabled = Number(data.unreadCount) <= 0;
             window.AppFeedback.success(pageNotificationMarkedRead);
@@ -226,6 +238,7 @@
         }).then(function (response) {
           if (!response.ok) throw new Error(pageNotificationMarkAllError);
           rows.forEach(markRowRead);
+          updateHeaderUnreadBadge(0);
           window.AppFeedback.success(pageNotificationMarkedAllRead);
         }).catch(function () {
           markAllButton.disabled = false;
