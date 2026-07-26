@@ -1,0 +1,232 @@
+/*
+ * Shared typography contract for the Admin and Librarian applications.
+ * Keep role-specific page layout in its own stylesheet; text hierarchy belongs
+ * here so both staff areas render the same component with the same typography.
+ */
+.staff-shell {
+    --staff-text-heading: #2e1a08;
+    --staff-text-body: #513215;
+    --staff-text-muted: #78685d;
+    --staff-text-accent: #a66c35;
+    --staff-text-on-dark: #ffffff;
+    --staff-font-display: var(--app-font-display);
+    --staff-font-ui: var(--app-font-ui);
+    --staff-type-body: 1rem;
+    --staff-type-control: 0.9375rem;
+    --staff-type-action: 0.875rem;
+    --staff-type-meta: 0.8125rem;
+    --staff-type-caption: 0.75rem;
+    --staff-type-stat: 1.75rem;
+    color: var(--staff-text-body);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-body);
+    line-height: 1.5;
+}
+
+.staff-shell :is(button, input, select, textarea) {
+    font-family: inherit;
+}
+
+.staff-shell :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--staff-text-heading);
+    font-family: var(--staff-font-display);
+}
+
+/* Shared application shell */
+.staff-shell .sidebar-brand {
+    color: var(--staff-text-on-dark);
+    font-family: var(--staff-font-display);
+    font-size: 1.25rem;
+    line-height: 1.2;
+}
+
+.staff-shell .sidebar-menu > .menu-item > .menu-link {
+    min-height: 44px;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: var(--staff-font-ui);
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+
+.staff-shell .sidebar-menu .collapse .menu-link {
+    min-height: 38px;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: var(--staff-font-ui);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.staff-shell .sidebar-menu .menu-link:is(:hover, .active, .active-submenu) {
+    color: var(--staff-text-on-dark);
+}
+
+.staff-shell :is(.user-dropdown-toggle, .staff-user-name, .dropdown-item) {
+    color: var(--staff-text-heading);
+    font-family: var(--staff-font-ui);
+    font-size: 0.9375rem;
+    line-height: 1.35;
+}
+
+/* Page and section headings */
+.staff-shell :is(
+    .app-page-eyebrow,
+    .member-page-eyebrow,
+    .admin-report-eyebrow,
+    .admin-dashboard-eyebrow,
+    .overview-work-queue-header > div > span
+) {
+    color: var(--staff-text-accent);
+    font: 700 0.72rem/1.3 var(--staff-font-ui);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.staff-shell :is(
+    .app-page-title,
+    .member-page-title,
+    .admin-report-title,
+    .settings-title,
+    .page-title,
+    .finance-title,
+    .detail-page-title,
+    .borrow-page-title
+) {
+    color: var(--staff-text-heading);
+    font: 600 clamp(1.75rem, 2.4vw, 2.25rem)/1.15 var(--staff-font-display);
+    letter-spacing: -0.02em;
+}
+
+.staff-shell :is(
+    .app-page-description,
+    .member-page-description,
+    .admin-report-description,
+    .settings-description,
+    .finance-description,
+    .detail-page-description,
+    .borrow-page-description
+) {
+    color: var(--staff-text-muted);
+    font: 400 0.95rem/1.6 var(--staff-font-ui);
+}
+
+.staff-shell :is(.card-title, .modal-title) {
+    color: var(--staff-text-heading);
+    font: 600 1.25rem/1.3 var(--staff-font-display);
+}
+
+.staff-shell :is(.card-subtitle, .section-description, .form-text, .help-text) {
+    color: var(--staff-text-muted);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-meta);
+    line-height: 1.5;
+}
+
+/* Forms and actions */
+.staff-shell :is(label, .form-label) {
+    color: var(--staff-text-body);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-action);
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.staff-shell :is(.form-control, .form-select, .input-group-text) {
+    color: var(--staff-text-body);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-control);
+    line-height: 1.5;
+}
+
+.staff-shell :is(.form-control, textarea)::placeholder {
+    color: var(--staff-text-muted);
+    opacity: 1;
+}
+
+.staff-shell :is(
+    .btn,
+    .app-primary-action,
+    .app-secondary-action,
+    .member-primary-action,
+    .member-secondary-action,
+    .admin-report-action,
+    .detail-back-button,
+    .report-action
+) {
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-action);
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+/* Data-heavy components */
+.staff-shell :is(.table, .app-table, .member-table) {
+    color: var(--staff-text-body);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-action);
+}
+
+.staff-shell :is(.table, .app-table, .member-table) > thead > tr > th {
+    color: var(--staff-text-muted);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-caption);
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.staff-shell :is(.table, .app-table, .member-table) > tbody > tr > td {
+    color: var(--staff-text-body);
+    line-height: 1.45;
+}
+
+.staff-shell :is(.admin-dashboard-page, .librarian-dashboard-page) .app-stat-number {
+    color: var(--staff-text-heading);
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-stat);
+    font-weight: 700;
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: "lnum" 1, "tnum" 1;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.staff-shell :is(.admin-dashboard-page, .librarian-dashboard-page) .app-stat-number.app-money {
+    font-size: clamp(1rem, 1.55vw, var(--staff-type-stat));
+}
+
+.staff-shell :is(.badge, .status-badge, .payment-status, .audit-result, .app-pill) {
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-caption);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.staff-shell :is(.pagination, .page-link, .alert, .app-alert, .finance-alert) {
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-action);
+}
+
+.staff-shell :is(small, .small) {
+    font-family: var(--staff-font-ui);
+    font-size: var(--staff-type-meta);
+}
+
+@media (max-width: 767.98px) {
+    .staff-shell {
+        --staff-type-body: 0.9375rem;
+    }
+
+    .staff-shell :is(
+        .app-page-title,
+        .member-page-title,
+        .admin-report-title,
+        .settings-title,
+        .page-title,
+        .finance-title,
+        .detail-page-title,
+        .borrow-page-title
+    ) {
+        font-size: clamp(1.6rem, 8vw, 2rem);
+    }
+}

@@ -7,7 +7,7 @@
 
 <head>
     <title th:text="#{librarian.dashboard.title}">Librarian Overview</title>
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css(v='20260724-1')}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css(v='20260727-admin-kpi-alignment')}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/member-list.css}" />
     <link rel="stylesheet" th:href="@{/css/pages/librarian/books.css}" />
@@ -57,35 +57,38 @@
                 <nav class="overview-quick-actions" th:aria-label="#{librarian.dashboard.quickActions}">
                     <a th:href="@{/librarian/borrow/create}"
                         class="overview-quick-action overview-quick-action--primary">
-                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
                         <span th:text="#{librarian.dashboard.createLoan}">Create Loan</span>
                     </a>
                     <a th:href="@{/librarian/loan/returns}" class="overview-quick-action">
-                        <i class="bi bi-upc-scan" aria-hidden="true"></i>
                         <span th:text="#{librarian.dashboard.confirmReturn}">Confirm Return</span>
                     </a>
                     <a th:href="@{/librarian/loan/borrow-schedule}" class="overview-quick-action">
-                        <i class="bi bi-calendar3" aria-hidden="true"></i>
                         <span th:text="#{librarian.dashboard.loanSchedule}">Loan Schedule</span>
                     </a>
                 </nav>
             </header>
 
             <!-- Statistics Cards -->
-            <section class="overview-kpi-grid" aria-labelledby="librarianKpiTitle">
-                <h2 id="librarianKpiTitle" class="overview-kpi-section-title"
-                    th:text="#{librarian.dashboard.operationalKpis}">Operational indicators</h2>
-                <p class="overview-kpi-updated"
-                    th:text="${#messages.msg('librarian.dashboard.generatedAt', #temporals.format(dashboardGeneratedAt, 'dd/MM/yyyy HH:mm'))}">
-                    Data updated
-                </p>
+            <section class="overview-work-queue overview-kpi-section" aria-labelledby="librarianKpiTitle">
+                <header class="overview-work-queue-header overview-kpi-header">
+                    <div>
+                        <span th:text="#{librarian.dashboard.operationsCenter}">LIBRARIAN OPERATIONS</span>
+                        <h2 id="librarianKpiTitle"
+                            th:text="#{librarian.dashboard.operationalKpis}">Operational indicators</h2>
+                    </div>
+                    <p class="overview-kpi-updated"
+                        th:text="${#messages.msg('librarian.dashboard.generatedAt', #temporals.format(dashboardGeneratedAt, 'dd/MM/yyyy HH:mm'))}">
+                        Data updated
+                    </p>
+                </header>
 
+                <div class="overview-kpi-grid">
                 <a th:href="@{/librarian/borrow/list(status='Active')}"
                     class="overview-kpi-card overview-kpi-card--neutral">
                     <div class="overview-kpi-icon"><i class="bi bi-journal-arrow-up" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
                         <p class="overview-kpi-label" th:text="#{librarian.dashboard.activeLoans}">Active Loans</p>
-                        <strong class="overview-kpi-value" th:text="${activeBorrows ?: 0}">0</strong>
+                        <strong class="overview-kpi-value app-stat-number" th:text="${activeBorrows ?: 0}">0</strong>
                         <span class="overview-kpi-caption" th:text="#{librarian.dashboard.activeLoansCaption}">Active
                             loan records</span>
                     </div>
@@ -96,7 +99,7 @@
                     <div class="overview-kpi-icon"><i class="bi bi-check2-square" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
                         <p class="overview-kpi-label" th:text="#{librarian.dashboard.dueToday}">Due Today</p>
-                        <strong class="overview-kpi-value" th:text="${dueTodayDetails ?: 0}">0</strong>
+                        <strong class="overview-kpi-value app-stat-number" th:text="${dueTodayDetails ?: 0}">0</strong>
                         <span class="overview-kpi-caption" th:text="#{librarian.dashboard.dueTodayCaption}">Copies
                             expected today</span>
                     </div>
@@ -108,7 +111,8 @@
                     <div class="overview-kpi-copy">
                         <p class="overview-kpi-label" th:text="#{librarian.dashboard.pendingReservations}">Pending
                             Reservations</p>
-                        <strong class="overview-kpi-value" th:text="${pendingReservationRequests ?: 0}">0</strong>
+                        <strong class="overview-kpi-value app-stat-number"
+                            th:text="${pendingReservationRequests ?: 0}">0</strong>
                         <span class="overview-kpi-caption"
                             th:text="#{librarian.dashboard.pendingReservationsCaption}">Requests requiring
                             attention</span>
@@ -120,7 +124,7 @@
                     <div class="overview-kpi-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
                         <p class="overview-kpi-label" th:text="#{librarian.dashboard.overdueCopies}">Overdue Copies</p>
-                        <strong class="overview-kpi-value" th:text="${overdueDetails ?: 0}">0</strong>
+                        <strong class="overview-kpi-value app-stat-number" th:text="${overdueDetails ?: 0}">0</strong>
                         <span class="overview-kpi-caption" th:text="#{librarian.dashboard.overdueCopiesCaption}">Members
                             need to be contacted</span>
                     </div>
@@ -131,7 +135,8 @@
                     <div class="overview-kpi-icon"><i class="bi bi-wallet2" aria-hidden="true"></i></div>
                     <div class="overview-kpi-copy">
                         <p class="overview-kpi-label" th:text="#{librarian.dashboard.pendingRefunds}">Duyệt hoàn tiền cọc</p>
-                        <strong class="overview-kpi-value" th:text="${pendingRefundReservations ?: 0}">0</strong>
+                        <strong class="overview-kpi-value app-stat-number"
+                            th:text="${pendingRefundReservations ?: 0}">0</strong>
                         <span class="overview-kpi-caption" th:text="#{librarian.dashboard.pendingRefundsCaption}">Yêu cầu chờ duyệt</span>
                     </div>
                 </a>
@@ -142,11 +147,12 @@
                     <div class="overview-kpi-copy">
                         <p class="overview-kpi-label" th:text="#{librarian.dashboard.availableCopies}">Available Copies
                         </p>
-                        <strong class="overview-kpi-value" th:text="${availableItems ?: 0}">0</strong>
+                        <strong class="overview-kpi-value app-stat-number" th:text="${availableItems ?: 0}">0</strong>
                         <span class="overview-kpi-caption" th:text="#{librarian.dashboard.availableCopiesCaption}">Ready
                             to issue</span>
                     </div>
                 </a>
+                </div>
             </section>
 
             <section class="overview-work-queue" aria-labelledby="workQueueTitle">
@@ -162,35 +168,37 @@
                     <a th:href="@{/librarian/members/refunds}" class="overview-work-item"
                         th:classappend="${pendingRefundReservations > 0} ? ' is-urgent' : ''">
                         <i class="bi bi-wallet2" aria-hidden="true"></i>
-                        <div><strong th:text="${pendingRefundReservations ?: 0}">0</strong><span
+                        <div><strong class="app-stat-number"
+                                th:text="${pendingRefundReservations ?: 0}">0</strong><span
                                 th:text="#{librarian.dashboard.pendingRefunds}">Duyệt hoàn tiền cọc</span></div>
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </a>
                     <a th:href="@{/librarian/borrow/create(tab='returns')}" class="overview-work-item"
                         th:classappend="${pendingReturns > 0} ? ' is-urgent'">
                         <i class="bi bi-box-arrow-in-left" aria-hidden="true"></i>
-                        <div><strong th:text="${pendingReturns ?: 0}">0</strong><span
+                        <div><strong class="app-stat-number" th:text="${pendingReturns ?: 0}">0</strong><span
                                 th:text="#{librarian.dashboard.pendingReturns}">Return requests</span></div>
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </a>
                     <a th:href="@{/librarian/borrow/create}" class="overview-work-item"
                         th:classappend="${pendingRenewals > 0} ? ' has-work'">
                         <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-                        <div><strong th:text="${pendingRenewals ?: 0}">0</strong><span
+                        <div><strong class="app-stat-number" th:text="${pendingRenewals ?: 0}">0</strong><span
                                 th:text="#{librarian.dashboard.pendingRenewals}">Renewal requests</span></div>
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </a>
                     <a th:href="@{/librarian/interaction/acquisition-requests}" class="overview-work-item"
                         th:classappend="${pendingAcquisitionRequests > 0} ? ' has-work'">
                         <i class="bi bi-journal-plus" aria-hidden="true"></i>
-                        <div><strong th:text="${pendingAcquisitionRequests ?: 0}">0</strong><span
+                        <div><strong class="app-stat-number"
+                                th:text="${pendingAcquisitionRequests ?: 0}">0</strong><span
                                 th:text="#{librarian.dashboard.pendingAcquisitions}">Book suggestions</span></div>
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </a>
                     <a th:href="@{/librarian/interaction/reviews}" class="overview-work-item"
                         th:classappend="${unansweredReviews > 0} ? ' has-work'">
                         <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        <div><strong th:text="${unansweredReviews ?: 0}">0</strong><span
+                        <div><strong class="app-stat-number" th:text="${unansweredReviews ?: 0}">0</strong><span
                                 th:text="#{librarian.dashboard.unansweredReviews}">Reviews without response</span></div>
                         <i class="bi bi-chevron-right" aria-hidden="true"></i>
                     </a>
@@ -415,7 +423,7 @@
                                 </div>
                                 <button type="button" class="btn member-primary-action" data-bs-toggle="modal"
                                     data-bs-target="#addBookModal">
-                                    <i class="bi bi-plus-lg" aria-hidden="true"></i> <span
+                                    <span
                                         th:text="#{librarian.inventory.addBook}">Add Book</span>
                                 </button>
                             </header>
@@ -627,12 +635,12 @@
                                 <div class="book-category-actions">
                                     <button type="button" class="btn member-primary-action book-category-action"
                                         data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                                        <i class="bi bi-plus-lg" aria-hidden="true"></i> <span
+                                        <span
                                             th:text="#{librarian.inventory.addCategory}">Add Category</span>
                                     </button>
                                     <button type="button" class="btn member-primary-action book-category-action"
                                         data-bs-toggle="modal" data-bs-target="#addGenreModal">
-                                        <i class="bi bi-plus-lg" aria-hidden="true"></i> <span
+                                        <span
                                             th:text="#{librarian.inventory.addGenre}">Add Genre</span>
                                     </button>
                                 </div>
@@ -1768,7 +1776,7 @@
                     </div>
                     <button type="button" class="btn member-primary-action storage-add-action text-nowrap"
                         data-bs-toggle="modal" data-bs-target="#addStorageModal">
-                        <i class="bi bi-plus-lg" aria-hidden="true"></i> <span th:text="#{librarian.storage.addNew}">Add
+                        <span th:text="#{librarian.storage.addNew}">Add
                             New Location</span>
                     </button>
                 </header>
