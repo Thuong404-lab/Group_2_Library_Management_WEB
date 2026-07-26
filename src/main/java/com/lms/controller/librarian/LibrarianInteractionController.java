@@ -161,6 +161,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
 
     @GetMapping("/notifications/new")
     public String notificationForm(
+            @RequestParam(required = false, defaultValue = "") String historyType,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (!model.containsAttribute("notificationRequest")) {
@@ -174,7 +175,12 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         if (request.getRequestToken() == null) request.setRequestToken(UUID.randomUUID().toString());
         model.addAttribute("selectedMembers", librarianInteractionService.getNotificationRecipients(request.getMemberIds()));
         model.addAttribute("activeMemberCount", librarianInteractionService.countActiveMembers());
-        model.addAttribute("recentNotifications", librarianInteractionService.getRecentManualNotifications());
+        NotificationType selectedHistoryType = parseManualNotificationType(historyType);
+        model.addAttribute("recentNotifications",
+                librarianInteractionService.getRecentManualNotifications(selectedHistoryType));
+        model.addAttribute("notificationHistoryTypes", NotificationType.manualSelectableValues());
+        model.addAttribute("selectedHistoryType",
+                selectedHistoryType == null ? "" : selectedHistoryType.name());
         model.addAttribute("notificationTitleMin", NotificationComposePolicy.TITLE_MIN_LENGTH);
         model.addAttribute("notificationTitleMax", NotificationComposePolicy.TITLE_MAX_LENGTH);
         model.addAttribute("notificationContentMin", NotificationComposePolicy.CONTENT_MIN_LENGTH);
@@ -200,6 +206,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
     @PostMapping("/notifications")
     public String sendNotificationToMembers(
             @ModelAttribute("notificationRequest") LibrarianNotificationSendRequest request,
+            @RequestParam(required = false, defaultValue = "") String historyType,
             Principal principal,
             RedirectAttributes flash) {
 
@@ -208,7 +215,8 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         if (!fieldErrors.isEmpty()) {
             flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("notificationFieldErrors", fieldErrors);
-            return "redirect:/librarian/interaction/notifications/new";
+            flash.addFlashAttribute("openNotificationComposer", true);
+            return notificationRedirect(historyType, flash);
         }
 
         try {
@@ -226,9 +234,10 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         } catch (ApplicationException e) {
             flash.addFlashAttribute("notificationRequest", request);
             flash.addFlashAttribute("error", message("backend.errorWithDetail", e.getMessage()));
+            flash.addFlashAttribute("openNotificationComposer", true);
         }
 
-        return "redirect:/librarian/interaction/notifications/new";
+        return notificationRedirect(historyType, flash);
     }
 
     @GetMapping("/acquisition-requests")
@@ -291,6 +300,24 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
                 .forEach((field, key) -> fieldErrors.put(field, message(key,
                         NotificationComposePolicy.MAX_SELECTED_RECIPIENTS)));
         return fieldErrors;
+    }
+
+    private NotificationType parseManualNotificationType(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            NotificationType type = NotificationType.valueOf(value.strip().toUpperCase(Locale.ROOT));
+            return type.isManualSelectable() ? type : null;
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private String notificationRedirect(String historyType, RedirectAttributes flash) {
+        NotificationType selectedType = parseManualNotificationType(historyType);
+        if (selectedType != null) {
+            flash.addAttribute("historyType", selectedType.name());
+        }
+        return "redirect:/librarian/interaction/notifications/new";
     }
 
     private String reviewRedirect(int page, String status) {

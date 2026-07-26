@@ -5,6 +5,14 @@
         const form = document.getElementById("notificationForm");
         if (!form) return;
 
+        const composeModal = document.getElementById("notificationComposeModal");
+        const historyFilterForm = document.getElementById("notificationHistoryFilter");
+        const historyType = document.getElementById("historyType");
+        const historyTable = document.querySelector(".notification-history-table-wrap");
+        const historyRows = Array.from(document.querySelectorAll(
+            ".notification-history-table tbody tr[data-notification-type]"
+        ));
+        const historyFilterEmpty = document.getElementById("notificationHistoryFilterEmpty");
         const all = document.getElementById("recipientAll");
         const selected = document.getElementById("recipientSelected");
         const memberSection = document.getElementById("memberListBox");
@@ -49,6 +57,24 @@
         function refreshSelection() {
             selectedCount.textContent = String(selectedIds().length);
             checkboxes().forEach(function (box) { box.disabled = !selected.checked; });
+        }
+
+        function applyHistoryFilter() {
+            if (!historyType || historyRows.length === 0) return;
+            const selectedType = historyType.value;
+            let visibleCount = 0;
+            historyRows.forEach(function (row) {
+                const visible = selectedType === "" || row.dataset.notificationType === selectedType;
+                row.hidden = !visible;
+                if (visible) visibleCount++;
+            });
+            if (historyTable) historyTable.hidden = visibleCount === 0;
+            if (historyFilterEmpty) historyFilterEmpty.hidden = visibleCount !== 0;
+
+            const url = new URL(window.location.href);
+            if (selectedType) url.searchParams.set("historyType", selectedType);
+            else url.searchParams.delete("historyType");
+            window.history.replaceState({}, "", url);
         }
 
         function toggleRecipients() {
@@ -253,6 +279,14 @@
                 toggleRecipients();
             });
         });
+
+        if (historyFilterForm) {
+            historyFilterForm.addEventListener("submit", function (event) {
+                if (historyFilterForm.dataset.serverFilter === "true") return;
+                event.preventDefault();
+                applyHistoryFilter();
+            });
+        }
         selectedBox.addEventListener("change", function () {
             clearFieldValidation(selectedBox, memberError);
             refreshSelection();
@@ -300,5 +334,9 @@
         refreshSelection();
         updateCounter(title, "titleCharacterCount", Number(form.dataset.titleMax));
         updateCounter(content, "contentCharacterCount", Number(form.dataset.contentMax));
+
+        if (composeModal && composeModal.dataset.reopen === "true" && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(composeModal).show();
+        }
     });
 }());
