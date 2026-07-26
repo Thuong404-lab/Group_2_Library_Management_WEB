@@ -53,6 +53,106 @@
     color: #ffffff;
 }
 
+/*
+ * Canonical Admin banner workspace and type scale.
+ * Page styles may provide their own content, but every Admin banner must keep
+ * the same width, vertical rhythm, and text hierarchy.
+ */
+.staff-shell--admin :is(
+    .admin-dashboard-page,
+    .admin-member-list-page,
+    .tiers-page,
+    .admin-profile-page,
+    .settings-page,
+    .admin-report-page,
+    .admin-payment-page,
+    .book-inventory-page
+) {
+    box-sizing: border-box;
+    width: calc(100% - 32px) !important;
+    max-width: 1480px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    padding: 24px 0 56px !important;
+}
+
+.staff-shell--admin :is(
+    .admin-hero-copy,
+    .admin-member-list-hero > div:first-child,
+    .tiers-hero-copy,
+    .admin-profile-hero-copy,
+    .settings-hero-copy,
+    .admin-report-header > div:first-child,
+    .admin-payment-page .app-page-header > div:first-child,
+    .inventory-hero-copy
+) {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: 820px;
+}
+
+.staff-shell--admin :is(
+    .admin-dashboard-eyebrow,
+    .admin-member-list-hero .member-page-eyebrow,
+    .tiers-eyebrow,
+    .admin-profile-eyebrow,
+    .settings-eyebrow,
+    .admin-report-eyebrow,
+    .payment-page-eyebrow,
+    .inventory-hero .member-page-eyebrow
+) {
+    display: block;
+    margin: 0 0 9px !important;
+    color: rgba(255, 255, 255, .82) !important;
+    font-family: var(--app-font-ui) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 1.5px !important;
+    text-transform: uppercase;
+}
+
+.staff-shell--admin :is(
+    .admin-hero h1,
+    .admin-member-list-hero .member-page-title,
+    .tiers-hero h1,
+    .admin-profile-hero h1,
+    .settings-hero .settings-title,
+    .admin-report-header .admin-report-title,
+    .admin-payment-page .app-page-header .app-page-title,
+    .inventory-hero .member-page-title
+) {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-family: var(--app-font-display) !important;
+    font-size: clamp(34px, 4vw, 48px) !important;
+    font-weight: 500 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -.02em !important;
+}
+
+.staff-shell--admin :is(
+    .admin-hero p,
+    .admin-member-list-hero .member-page-description,
+    .tiers-hero p,
+    .admin-profile-hero p,
+    .settings-hero .settings-description,
+    .admin-report-header .admin-report-description,
+    .admin-payment-page .app-page-header .app-page-description,
+    .inventory-hero .member-page-description
+) {
+    max-width: 720px;
+    margin: 10px 0 0 !important;
+    color: rgba(255, 255, 255, .82) !important;
+    font-family: var(--app-font-ui) !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    line-height: 1.55 !important;
+}
+
 .staff-shell--admin .admin-report-header .admin-report-eyebrow {
     color: rgba(255, 255, 255, .82) !important;
 }
@@ -88,6 +188,7 @@
 .staff-shell :is(
     .admin-hero-actions,
     .member-page-actions,
+    .app-page-actions,
     .admin-report-actions,
     .overview-quick-actions,
     .report-export-actions,
@@ -100,6 +201,8 @@
 .staff-shell :is(
     .admin-action,
     .member-page-actions > :is(a, button),
+    .app-page-actions > :is(a, button),
+    .admin-payment-page .app-page-header > form > :is(a, button),
     .profile-hero-action,
     .admin-report-actions > :is(a, button),
     .overview-quick-action,
@@ -122,6 +225,8 @@
 .staff-shell :is(
     .admin-action,
     .member-page-actions > :is(a, button),
+    .app-page-actions > :is(a, button),
+    .admin-payment-page .app-page-header > form > :is(a, button),
     .profile-hero-action,
     .admin-report-actions > :is(a, button),
     .overview-quick-action,
@@ -141,6 +246,8 @@
 .staff-shell :is(
     .admin-action,
     .member-page-actions > :is(a, button),
+    .app-page-actions > :is(a, button),
+    .admin-payment-page .app-page-header > form > :is(a, button),
     .profile-hero-action,
     .admin-report-actions > :is(a, button),
     .overview-quick-action,
@@ -162,6 +269,8 @@
 .staff-shell :is(
     .admin-action,
     .member-page-actions > :is(a, button),
+    .app-page-actions > :is(a, button),
+    .admin-payment-page .app-page-header > form > :is(a, button),
     .profile-hero-action,
     .admin-report-actions > :is(a, button),
     .overview-quick-action,
@@ -185,6 +294,20 @@
 }
 
 @media (max-width: 767.98px) {
+    .staff-shell--admin :is(
+        .admin-dashboard-page,
+        .admin-member-list-page,
+        .tiers-page,
+        .admin-profile-page,
+        .settings-page,
+        .admin-report-page,
+        .admin-payment-page,
+        .book-inventory-page
+    ) {
+        width: calc(100% - 24px) !important;
+        padding: 16px 0 40px !important;
+    }
+
     .staff-shell :is(
         .admin-hero,
         .admin-member-list-hero,
@@ -219,6 +342,19 @@
         border-radius: 14px !important;
     }
 
+    .staff-shell--admin :is(
+        .admin-hero h1,
+        .admin-member-list-hero .member-page-title,
+        .tiers-hero h1,
+        .admin-profile-hero h1,
+        .settings-hero .settings-title,
+        .admin-report-header .admin-report-title,
+        .admin-payment-page .app-page-header .app-page-title,
+        .inventory-hero .member-page-title
+    ) {
+        font-size: clamp(30px, 9vw, 38px) !important;
+    }
+
     .staff-shell :is(
         .admin-hero,
         .admin-member-list-hero,
@@ -242,6 +378,7 @@
     .staff-shell :is(
         .admin-hero-actions,
         .member-page-actions,
+        .app-page-actions,
         .admin-report-actions,
         .overview-quick-actions,
         .report-export-actions,
@@ -253,6 +390,8 @@
     .staff-shell :is(
         .admin-action,
         .member-page-actions > :is(a, button),
+        .app-page-actions > :is(a, button),
+        .admin-payment-page .app-page-header > form > :is(a, button),
         .profile-hero-action,
         .admin-report-actions > :is(a, button),
         .overview-quick-action,
@@ -266,5 +405,35 @@
         .storage-form-hero > :is(a.btn, button.btn)
     ) {
         align-self: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .staff-shell--admin :is(
+        .admin-dashboard-page,
+        .admin-member-list-page,
+        .tiers-page,
+        .admin-profile-page,
+        .settings-page,
+        .admin-report-page,
+        .admin-payment-page,
+        .book-inventory-page
+    ) {
+        width: calc(100% - 20px) !important;
+        padding-top: 10px !important;
+    }
+
+    .staff-shell--admin :is(
+        .admin-hero,
+        .admin-member-list-hero,
+        .tiers-hero,
+        .admin-profile-hero,
+        .settings-hero,
+        .admin-report-header,
+        .admin-payment-page .app-page-header,
+        .inventory-hero
+    ) {
+        margin-bottom: 18px !important;
+        padding: 24px 18px !important;
     }
 }
