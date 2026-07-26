@@ -283,8 +283,12 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional(readOnly = true)
-    public List<LibrarianNotificationHistoryResponse> getRecentManualNotifications() {
-        return notificationRepository.findTop10ByEventTypeOrderByCreatedDateDesc(NotificationEventType.MANUAL)
+    public List<LibrarianNotificationHistoryResponse> getRecentManualNotifications(NotificationType notificationType) {
+        List<Notification> notifications = notificationType == null
+                ? notificationRepository.findTop10ByEventTypeOrderByCreatedDateDesc(NotificationEventType.MANUAL)
+                : notificationRepository.findTop10ByEventTypeAndNotificationTypeOrderByCreatedDateDesc(
+                        NotificationEventType.MANUAL, notificationType);
+        return notifications
                 .stream().map(notification -> new LibrarianNotificationHistoryResponse(
                         notification.getNotificationId(), notification.getTitle(), notification.getNotificationType(),
                         notification.getStaff() != null && notification.getStaff().getUser() != null

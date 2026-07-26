@@ -19,8 +19,6 @@
         </button>
     </header>
 
-    <div th:if="${error}" class="member-alert is-error" th:text="${error}"></div>
-
     <!-- My Requests History Section -->
     <section class="member-request-history member-reference-list" aria-labelledby="request-history-title">
         <div class="member-request-history-heading member-reference-list__header">
@@ -58,9 +56,15 @@
                             th:data-request-reason="${request.requestReason}"
                             th:data-reference-url="${request.referenceUrl}"
                             th:text="#{common.edit}">Edit</button>
-                    <form th:action="@{/member/interaction/acquisition-requests/{id}/cancel(id=${request.requestId})}" method="post"
-                          onsubmit="return confirm(this.dataset.confirmMessage);"
-                          th:data-confirm-message="#{member.acquisition.cancelConfirm}">
+                    <form class="app-confirm-form"
+                          th:action="@{/member/interaction/acquisition-requests/{id}/cancel(id=${request.requestId})}"
+                          method="post"
+                          th:data-confirm-title="#{member.acquisition.cancel}"
+                          th:data-confirm-subject-label="#{book.title}"
+                          th:data-confirm-subject="${request.title}"
+                          th:data-confirm-message="#{member.acquisition.cancelConfirm}"
+                          th:data-confirm-action="#{member.acquisition.cancel}"
+                          data-confirm-tone="danger">
                         <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <button type="submit" class="member-ui-button member-ui-button--danger-outline"
@@ -99,7 +103,8 @@
                       th:object="${acquisitionRequest}" method="post" novalidate>
                     <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
                     <div class="modal-body">
-                        <div th:if="${error}" class="member-alert acquisition-inline-alert is-error" role="alert" th:text="${error}"></div>
+                        <div th:if="${acquisitionError}" class="member-alert acquisition-inline-alert is-error"
+                             role="alert" th:text="${acquisitionError}"></div>
                         
                         <div class="member-form-grid">
                             <!-- 1. Tên sách * -->

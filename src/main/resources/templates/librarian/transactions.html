@@ -5,7 +5,7 @@
     <!-- UC-14.3 UI maintained by Pham Kien Quoc. -->
     <title th:text="#{librarian.transactions.title}">Transaction Management</title>
     <link rel="stylesheet" th:href="@{/css/librarian-finance.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/transactions.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/transactions.css(v='20260727-balanced-filter-layout')}">
 </head>
 <body>
 <div layout:fragment="content" th:with="activeMenu='transactions'" class="finance-page transaction-page">
@@ -15,14 +15,18 @@
             <h2 class="finance-title" th:text="#{librarian.transactions.heading}">Transaction Management</h2>
             <div class="finance-description" th:text="#{librarian.transactions.description}">Track wallet transactions, borrowing fees, fines, and top-ups.</div>
         </div>
-        <div class="transaction-hero-summary" th:if="${transactionPage != null}">
-            <i class="bi bi-receipt" aria-hidden="true"></i>
-            <strong th:text="${transactionPage.totalElements}">0</strong>
-            <span th:text="#{transaction.transactions}">Transactions</span>
-        </div>
     </header>
 
     <section class="card-classic finance-card finance-management-card transaction-filter-card mb-4" th:aria-label="#{common.filter}">
+        <div class="member-summary-chips inventory-summary transaction-summary-chips"
+             th:if="${transactionPage != null}"
+             th:aria-label="#{transaction.transactions}">
+            <span>
+                <strong class="app-stat-number"
+                        th:text="${@displayNumber.count(transactionPage.totalElements)}">0</strong>
+                <span th:text="#{transaction.transactions}">Transactions</span>
+            </span>
+        </div>
         <form method="get" th:action="@{/librarian/members/transactions}" class="transaction-filter-form">
             <div class="transaction-filter-field transaction-search-filter">
                 <label for="transactionSearch" th:text="#{librarian.transactions.searchLabel}">Search</label>

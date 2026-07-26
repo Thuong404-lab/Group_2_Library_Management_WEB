@@ -73,53 +73,80 @@
     font-size: 15px;
 }
 
-.transaction-page .transaction-hero-summary {
-    display: grid;
-    min-width: 155px;
-    padding: 16px 20px;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 2px 12px;
-    border: 1px solid rgba(255, 255, 255, .28);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, .12);
-    color: #fff;
-    backdrop-filter: blur(4px);
-}
-
-.transaction-page .transaction-hero-summary > i {
-    grid-row: 1 / span 2;
-    font-size: 26px;
-}
-
-.transaction-page .transaction-hero-summary > strong {
-    font-family: var(--app-font-display);
-    font-size: 28px;
-    font-weight: 500;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.transaction-page .transaction-hero-summary > span {
-    color: rgba(255, 255, 255, .82);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .04em;
-}
-
 .transaction-page .transaction-filter-card {
-    padding: 22px 24px !important;
+    padding: 26px 30px !important;
+}
+
+.transaction-page .member-summary-chips.inventory-summary.transaction-summary-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin: 0 0 24px;
+}
+
+.transaction-page .member-summary-chips.inventory-summary.transaction-summary-chips > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 110px;
+    min-height: 34px;
+    padding: 7px 14px;
+    flex: 0 0 auto;
+    gap: 6px;
+    border: 1px solid #e6dfd8;
+    border-radius: 999px;
+    background: #f8f3ed;
+    color: #3d3d3a;
+    box-shadow: none;
+    font-family: var(--member-font-ui, var(--app-font-ui));
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.transaction-page .member-summary-chips.inventory-summary.transaction-summary-chips strong {
+    margin-right: 4px;
+    color: #141413;
+    font-size: inherit;
+    font-weight: 600;
+    line-height: inherit;
+}
+
+.transaction-page .member-summary-chips.inventory-summary.transaction-summary-chips > span > span {
+    display: inline;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
 }
 
 .transaction-page .transaction-filter-form {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
     align-items: end;
-    gap: 16px 12px;
+    gap: 18px 14px;
+}
+
+.transaction-page .transaction-filter-field {
+    min-width: 0;
+    grid-column: span 2;
 }
 
 .transaction-page .transaction-search-filter {
-    grid-column: span 2;
+    grid-column: span 4;
+}
+
+.transaction-page .transaction-type-filter {
+    width: 100%;
+    max-width: none;
 }
 
 .transaction-page .transaction-filter-field > label {
@@ -154,13 +181,14 @@
 
 .transaction-page .transaction-filter-field > .form-select,
 .transaction-page .transaction-filter-field > .form-control {
+    width: 100%;
     height: 48px;
     border-radius: 10px;
 }
 
 .transaction-page .transaction-filter-actions {
     display: flex;
-    grid-column: span 3;
+    grid-column: span 6;
     align-items: center;
     gap: 10px;
 }
@@ -268,15 +296,22 @@
     background: #fffdfb;
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
     .transaction-page .transaction-filter-form {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .transaction-page .transaction-filter-field {
+        grid-column: auto;
     }
 
     .transaction-page .transaction-search-filter,
     .transaction-page .transaction-filter-actions {
         grid-column: span 2;
     }
+}
+
+@media (max-width: 991.98px) {
 
     .transaction-page .transaction-table thead th,
     .transaction-page .transaction-table tbody td {
@@ -296,23 +331,6 @@
         flex-direction: column;
         padding: 26px 24px;
         border-radius: 14px;
-    }
-
-    .transaction-page .transaction-hero-summary {
-        min-width: 0;
-        width: 100%;
-        margin-top: 18px;
-        grid-template-columns: auto auto 1fr;
-        justify-content: flex-start;
-    }
-
-    .transaction-page .transaction-hero-summary > i {
-        grid-row: auto;
-        font-size: 20px;
-    }
-
-    .transaction-page .transaction-hero-summary > strong {
-        font-size: 22px;
     }
 
     .transaction-page .transaction-filter-card {

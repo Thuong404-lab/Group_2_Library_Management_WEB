@@ -1547,14 +1547,14 @@ public class BorrowServiceImpl implements BorrowService {
     public void memberSubmitReturnRequest(String username, Integer borrowDetailId) {
         Integer memberId = getMemberIdByUsername(username);
         BorrowDetail detail = borrowDetailRepository.findById(borrowDetailId)
-                .orElseThrow(
-                        () -> new IllegalArgumentException(localizedMessageService.get("backend.loan.detailNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.detailNotFound")));
         if (memberId == null || detail.getBorrow() == null || detail.getBorrow().getMember() == null
                 || !memberId.equals(detail.getBorrow().getMember().getMemberId())) {
-            throw new IllegalArgumentException(localizedMessageService.get("backend.return.requestForbidden"));
+            throw new ForbiddenException(localizedMessageService.get("backend.return.requestForbidden"));
         }
         if (!"Borrowed".equalsIgnoreCase(detail.getStatus()) && !"Overdue".equalsIgnoreCase(detail.getStatus())) {
-            throw new IllegalArgumentException(localizedMessageService.get("backend.return.invalidRequestStatus"));
+            throw new ConflictException(localizedMessageService.get("backend.return.invalidRequestStatus"));
         }
 
         detail.setStatus("Return_Pending");
