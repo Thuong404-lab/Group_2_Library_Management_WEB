@@ -217,6 +217,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     List<Transaction> findPendingFineTransactionsByBorrowId(@Param("borrowId") Integer borrowId,
             @Param("types") List<String> types);
 
+    @Query("""
+            select count(t)
+            from Transaction t
+            where t.borrowDetail.borrowDetailId = :borrowDetailId
+              and upper(t.transactionType) in :types
+              and lower(t.status) = 'pending'
+            """)
+    long countPendingFineTransactionsByBorrowDetailId(@Param("borrowDetailId") Integer borrowDetailId,
+            @Param("types") List<String> types);
+
     Optional<Transaction> findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
             Integer borrowId,
             String transactionType,
