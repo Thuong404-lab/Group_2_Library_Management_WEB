@@ -980,8 +980,8 @@ public class BorrowServiceImpl implements BorrowService {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             localizedMessageService.get("backend.financial.walletNotFound")));
-            int resDays = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
-            BigDecimal refundAmount = financialService.getReservationDepositAmount().multiply(BigDecimal.valueOf(resDays));
+            BigDecimal refundAmount = financialService.getPaidReservationDepositAmount(
+                    member.getMemberId(), reservation.getReservationId());
             if (refundAmount != null && refundAmount.signum() > 0) {
                 wallet.setBalance(wallet.getBalance().add(refundAmount));
                 walletRepository.save(wallet);
@@ -1062,8 +1062,8 @@ public class BorrowServiceImpl implements BorrowService {
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             localizedMessageService.get("backend.financial.walletNotFound")));
-            int resDays = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
-            BigDecimal refundAmount = financialService.getReservationDepositAmount().multiply(BigDecimal.valueOf(resDays));
+            BigDecimal refundAmount = financialService.getPaidReservationDepositAmount(
+                    member.getMemberId(), reservation.getReservationId());
             if (refundAmount != null && refundAmount.signum() > 0) {
                 wallet.setBalance(wallet.getBalance().add(refundAmount));
                 walletRepository.save(wallet);

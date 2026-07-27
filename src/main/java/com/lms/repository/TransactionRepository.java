@@ -25,6 +25,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
     boolean existsByReferenceCode(String referenceCode);
 
+    Optional<Transaction> findFirstByReferenceCodeAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+            String referenceCode, String transactionType, String status);
+
     Optional<Transaction> findFirstByBorrowDetailBorrowDetailIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
             Integer borrowDetailId, String transactionType, String status);
 

@@ -255,8 +255,14 @@ public class FinancialServiceImpl implements FinancialService {
         wallet.setBalance(currentBalance.subtract(depositAmount));
         walletRepository.save(wallet);
 
-        saveWalletTransaction(wallet, null, DEPOSIT_TYPE, depositAmount.negate(), COMPLETED_STATUS);
+        Transaction depositTransaction = saveWalletTransaction(
+                wallet, null, DEPOSIT_TYPE, depositAmount.negate(), COMPLETED_STATUS);
+        depositTransaction.setReferenceCode(reservationDepositReference(reservationId));
+        depositTransaction.setBalanceBefore(currentBalance);
+        depositTransaction.setBalanceAfter(wallet.getBalance());
+        transactionRepository.save(depositTransaction);
 
+        reservation.setDepositAmount(depositAmount);
         reservation.setStatus("Deposit_Paid");
         reservationRepository.save(reservation);
 
@@ -601,8 +607,7 @@ public class FinancialServiceImpl implements FinancialService {
 
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        int days = (reservation.getNumberOfDays() != null && reservation.getNumberOfDays() > 0) ? reservation.getNumberOfDays() : 14;
-        BigDecimal refundAmount = getReservationDepositAmount().multiply(BigDecimal.valueOf(days));
+        BigDecimal refundAmount = resolvePaidReservationDepositAmount(reservation);
         if (refundAmount.signum() <= 0) {
             throw new ValidationException(localizedMessageService.get("backend.financial.invalidRefundAmount"));
         }
@@ -637,6 +642,19 @@ public class FinancialServiceImpl implements FinancialService {
         return reservationRepository.findByStatusInOrderByReservationDateAsc(List.of("Refund_Pending"));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal getPaidReservationDepositAmount(Integer memberId, Integer reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.financial.reservationNotFound", reservationId)));
+        if (reservation.getMember() == null || reservation.getMember().getMemberId() == null
+                || !reservation.getMember().getMemberId().equals(memberId)) {
+            throw new ForbiddenException(localizedMessageService.get("backend.financial.reservationOwnerMismatch"));
+        }
+        return resolvePaidReservationDepositAmount(reservation);
+    }
+
     private Borrow findBorrowForMember(Integer memberId, Integer borrowId) {
         Borrow borrow = borrowRepository.findById(borrowId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.loan.notFoundById", borrowId)));
@@ -667,6 +685,30 @@ public class FinancialServiceImpl implements FinancialService {
                 .or(() -> memberRepository.findByUserEmail(lookup))
                 .or(() -> memberRepository.findByAccountUsername(lookup))
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.memberLookupNotFound", lookup)));
+    }
+
+    /**
+     * The ledger amount is the source of truth for legacy rows. New rows always
+     * have the reservation snapshot populated when the deposit is deducted.
+     */
+    private BigDecimal resolvePaidReservationDepositAmount(Reservation reservation) {
+        BigDecimal snapshot = reservation.getDepositAmount();
+        if (snapshot != null && snapshot.signum() > 0) {
+            return snapshot.abs();
+        }
+
+        return transactionRepository
+                .findFirstByReferenceCodeAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionIdDesc(
+                        reservationDepositReference(reservation.getReservationId()), DEPOSIT_TYPE, COMPLETED_STATUS)
+                .map(Transaction::getAmount)
+                .map(BigDecimal::abs)
+                .filter(amount -> amount.signum() > 0)
+                .orElseThrow(() -> new ConflictException(
+                        localizedMessageService.get("backend.financial.depositSnapshotMissing")));
+    }
+
+    private String reservationDepositReference(Integer reservationId) {
+        return "RSV-DEPOSIT-" + reservationId;
     }
 
     private Wallet createWalletForMember(Member member) {
