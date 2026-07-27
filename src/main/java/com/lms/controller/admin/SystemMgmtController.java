@@ -6,7 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * SystemMgmtController - Quản lý Hệ thống (Backup/Restore)
+ * SystemMgmtController - Quản lý Hệ thống
  * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
  */
 @Controller

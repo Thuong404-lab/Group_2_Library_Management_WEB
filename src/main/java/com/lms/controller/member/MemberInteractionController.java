@@ -103,16 +103,21 @@ public class MemberInteractionController extends LocalizedControllerSupport {
     @PostMapping("/notifications/delete-selected")
     public String deleteSelectedNotifications(
             @RequestParam(required = false) List<Integer> notificationIds,
+            @RequestParam(defaultValue = "false") boolean deleteAll,
             @RequestParam(defaultValue = "all") String source,
             @RequestParam(defaultValue = "ALL") String type,
             Principal principal,
             RedirectAttributes flash) {
-        int deletedCount = memberNotificationService.deleteSelectedNotifications(
-                principal.getName(), notificationIds);
+        int deletedCount = deleteAll
+                ? memberNotificationService.deleteAllNotifications(principal.getName())
+                : memberNotificationService.deleteSelectedNotifications(
+                        principal.getName(), notificationIds);
         flash.addFlashAttribute(
                 deletedCount > 0 ? "success" : "error",
                 message(deletedCount > 0
-                        ? "backend.notification.deletedSelected"
+                        ? (deleteAll
+                                ? "backend.notification.deletedAll"
+                                : "backend.notification.deletedSelected")
                         : "backend.notification.selectToDelete", deletedCount));
         return notificationRedirect(source, type);
     }

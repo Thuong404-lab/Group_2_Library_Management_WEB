@@ -141,9 +141,6 @@ public class ProfileServiceImpl implements ProfileService {
         if (normalized.length() < 3 || normalized.length() > 100) {
             throw new ValidationException("username", messages.get("validation.usernameLength"));
         }
-        if (!normalized.matches("^[a-zA-Z0-9_.]+$")) {
-            throw new ValidationException("username", messages.get("validation.usernameFormat"));
-        }
         if (!normalized.equals(currentUsername)
                 && (memberAccountRepository.findByUsername(normalized).isPresent()
                 || staffAccountRepository.findByUsername(normalized).isPresent())) {

@@ -6,14 +6,21 @@ public class AdminMemberAccountCreateRequest {
     private final String phone;
     private final String username;
     private final String password;
+    private final String confirmPassword;
 
     public AdminMemberAccountCreateRequest(String fullName, String email, String phone,
             String username, String password) {
+        this(fullName, email, phone, username, password, "");
+    }
+
+    public AdminMemberAccountCreateRequest(String fullName, String email, String phone,
+            String username, String password, String confirmPassword) {
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
         this.username = username;
         this.password = password;
+        this.confirmPassword = confirmPassword;
     }
 
     public String getFullName() { return fullName; }
@@ -21,4 +28,5 @@ public class AdminMemberAccountCreateRequest {
     public String getPhone() { return phone; }
     public String getUsername() { return username; }
     public String getPassword() { return password; }
+    public String getConfirmPassword() { return confirmPassword; }
 }

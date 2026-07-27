@@ -20,6 +20,7 @@ import com.lms.repository.TransactionRepository;
 import com.lms.service.ReportService;
 import com.lms.service.LocalizedMessageService;
 import com.lms.util.FinancialTransactionPolicy;
+import com.lms.util.ReportPeriodPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -48,8 +49,6 @@ import java.util.Map;
 public class ReportServiceImpl implements ReportService {
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
-    private static final long MAX_REPORT_RANGE_DAYS = 1_826;
-
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final TransactionRepository transactionRepository;
@@ -417,18 +416,25 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private LocalDate[] normalizeDateRange(LocalDate fromDate, LocalDate toDate) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ReportPeriodPolicy.LIBRARY_ZONE);
+        if ((fromDate == null) != (toDate == null)) {
+            throw new ValidationException(messages.get("backend.report.dateRangeRequired"));
+        }
         if ((fromDate != null && fromDate.isAfter(today))
                 || (toDate != null && toDate.isAfter(today))) {
             throw new ValidationException(messages.get("backend.report.futureDate"));
         }
-        LocalDate normalizedToDate = toDate == null ? LocalDate.now() : toDate;
-        LocalDate normalizedFromDate = fromDate == null ? normalizedToDate.minusDays(29) : fromDate;
+        LocalDate normalizedToDate = toDate == null ? today : toDate;
+        LocalDate normalizedFromDate = fromDate == null
+                ? normalizedToDate.minusDays(ReportPeriodPolicy.DEFAULT_LOOKBACK_DAYS)
+                : fromDate;
         if (normalizedFromDate.isAfter(normalizedToDate)) {
             throw new ValidationException(messages.get("backend.report.invalidRange"));
         }
-        if (ChronoUnit.DAYS.between(normalizedFromDate, normalizedToDate) > MAX_REPORT_RANGE_DAYS) {
-            throw new ValidationException(messages.get("backend.report.rangeTooLarge", MAX_REPORT_RANGE_DAYS));
+        if (ChronoUnit.DAYS.between(normalizedFromDate, normalizedToDate)
+                > ReportPeriodPolicy.MAX_RANGE_DAYS) {
+            throw new ValidationException(messages.get(
+                    "backend.report.rangeTooLarge", ReportPeriodPolicy.MAX_RANGE_DAYS));
         }
         return new LocalDate[] { normalizedFromDate, normalizedToDate };
     }
