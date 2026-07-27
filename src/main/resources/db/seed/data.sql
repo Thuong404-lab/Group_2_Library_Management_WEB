@@ -386,7 +386,7 @@ BEGIN TRY
       (6,2,N'Reservation ready',N'Your reserved book is ready for collection.',DATEADD(hour,-6,@Now),'Active',N'RESERVATION',N'LIBRARIAN',N'RESERVATION_APPROVED',NULL,NULL,NULL),
       (7,NULL,N'Wallet top-up successful',N'The demonstration wallet top-up was completed.',DATEADD(day,-3,@Now),'Active',N'FINANCE',N'SYSTEM',N'TOP_UP_SUCCESS',NULL,NULL,NULL),
       (8,2,N'Review response',N'A librarian responded to your review.',DATEADD(day,-14,@Now),'Active',N'REVIEW',N'LIBRARIAN',N'REVIEW_REPLIED',NULL,NULL,NULL),
-      (9,2,N'Book suggestion approved',N'Your suggestion was added to the acquisition plan.',DATEADD(day,-10,@Now),'Active',N'ACQUISITION',N'LIBRARIAN',N'ACQUISITION_APPROVED',NULL,NULL,NULL),
+      (9,2,N'Book request approved',N'Your book request was accepted for collection planning.',DATEADD(day,-10,@Now),'Active',N'ACQUISITION',N'LIBRARIAN',N'ACQUISITION_APPROVED',NULL,NULL,NULL),
       (10,NULL,N'Scheduled maintenance',N'The demonstration system will be maintained this weekend.',DATEADD(hour,-12,@Now),'Active',N'MAINTENANCE',N'SYSTEM',N'GENERAL',NULL,NULL,NULL),
       (11,3,N'Renewal approved',N'Your book renewal request was approved.',DATEADD(day,-2,@Now),'Active',N'LOAN',N'LIBRARIAN',N'RENEWAL_APPROVED',NULL,NULL,NULL),
       (12,NULL,N'Reservation deposit refunded',N'The reservation deposit was returned to your wallet.',DATEADD(day,-1,@Now),'Active',N'RESERVATION',N'SYSTEM',N'RESERVATION_REFUNDED',NULL,NULL,NULL);

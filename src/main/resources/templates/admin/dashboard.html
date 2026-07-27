@@ -105,42 +105,6 @@
                 </article>
             </div>
         </section>
-        <section class="admin-attention" aria-labelledby="attentionTitle">
-            <header class="admin-section-heading">
-                <div>
-                    <span th:text="#{admin.dashboard.requiresAttention}">REQUIRES ATTENTION</span>
-                    <h2 id="attentionTitle" th:text="#{admin.dashboard.riskOverview}">Risk overview</h2>
-                </div>
-                <p th:text="#{admin.dashboard.riskDescription}">Items that may require an administrator or librarian to
-                    act.</p>
-            </header>
-            <div class="admin-attention-grid">
-                <a th:href="@{/admin/reports}" class="admin-attention-item"
-                    th:classappend="${overdueItems > 0} ? ' has-warning'">
-                    <i class="bi bi-alarm"></i>
-                    <div><strong class="app-stat-number" th:text="${@displayNumber.count(overdueItems)}">0</strong><span
-                            th:text="#{admin.dashboard.overdueItems}">Overdue copies</span></div>
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-                <a th:href="@{/admin/books}" class="admin-attention-item"
-                    th:classappend="${attentionItems > 0} ? ' has-danger'">
-                    <i class="bi bi-exclamation-diamond"></i>
-                    <div><strong class="app-stat-number"
-                            th:text="${@displayNumber.count(attentionItems)}">0</strong><span
-                            th:text="#{admin.dashboard.inventoryIssues}">Lost or damaged copies</span></div>
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-                <a th:href="@{/admin/member-list}" class="admin-attention-item"
-                    th:classappend="${blockedAccounts > 0} ? ' has-warning'">
-                    <i class="bi bi-person-lock"></i>
-                    <div><strong class="app-stat-number"
-                            th:text="${@displayNumber.count(blockedAccounts)}">0</strong><span
-                            th:text="#{admin.dashboard.blockedAccounts}">Blocked accounts</span></div>
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-        </section>
-
         <div class="admin-dashboard-grid">
             <section class="admin-panel admin-chart-panel" aria-labelledby="circulationTitle">
                 <header class="admin-panel-header">

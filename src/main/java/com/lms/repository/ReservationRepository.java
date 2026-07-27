@@ -80,4 +80,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Intege
             where upper(r.status) in :statuses
             """)
     long countByNormalizedStatuses(@Param("statuses") List<String> statuses);
+
+    @Query("SELECT DISTINCT r.status FROM Reservation r WHERE r.status IS NOT NULL")
+    List<String> findDistinctStatuses();
 }

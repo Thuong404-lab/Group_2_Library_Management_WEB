@@ -40,8 +40,8 @@ public class LibrarianDashboardController {
         if ("reviews".equals(normalizedSection)) {
             return "redirect:/librarian/interaction/reviews";
         }
-        if ("acquisition".equals(normalizedSection)) {
-            return "redirect:/librarian/interaction/acquisition-requests";
+        if ("book-requests".equals(normalizedSection) || "acquisition".equals(normalizedSection)) {
+            return "redirect:/librarian/interaction/book-requests";
         }
         if ("reports".equals(normalizedSection) || "statistics".equals(normalizedSection)) {
             return "redirect:/librarian/reports";

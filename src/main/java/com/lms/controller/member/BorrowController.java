@@ -149,30 +149,46 @@ public class BorrowController extends LocalizedControllerSupport {
 
         model.addAttribute("minDate", minDate.toString());
         model.addAttribute("maxDate", maxDate.toString());
+        model.addAttribute("yesterdayStr", java.time.LocalDate.now().minusDays(1).toString());
+        model.addAttribute("todayStr", java.time.LocalDate.now().toString());
 
         List<StatusOption> statusOptions = new java.util.ArrayList<>();
+        statusOptions.add(new StatusOption("", "common.allStatuses"));
         if ("reserved".equalsIgnoreCase(tab)) {
-            statusOptions.add(new StatusOption("", "common.allStatuses"));
-            statusOptions.add(new StatusOption("Pending", "reservation.status.preparing"));
-            statusOptions.add(new StatusOption("Deposit_Paid", "reservation.status.depositPaid"));
-            statusOptions.add(new StatusOption("Refund_Pending", "reservation.status.refundPending"));
-            statusOptions.add(new StatusOption("Ready", "reservation.status.ready"));
-            statusOptions.add(new StatusOption("Canceled", "reservation.status.canceled"));
-            statusOptions.add(new StatusOption("Completed", "reservation.status.completed"));
+            List<String> dbStatuses = reservationRepository.findDistinctStatuses();
+            java.util.Set<String> seenLabelKeys = new java.util.HashSet<>();
+            for (String s : dbStatuses) {
+                if (s == null || s.trim().isEmpty()) continue;
+                String labelKey = getDynamicLabelKey(s, "reservation");
+                if (seenLabelKeys.add(labelKey)) {
+                    statusOptions.add(new StatusOption(s, labelKey));
+                }
+            }
         } else if ("history".equalsIgnoreCase(tab)) {
-            statusOptions.add(new StatusOption("", "common.allStatuses"));
-            statusOptions.add(new StatusOption("Returned", "loan.status.returned"));
-            statusOptions.add(new StatusOption("Lost", "loan.status.lost"));
-            statusOptions.add(new StatusOption("Canceled", "reservation.status.canceled"));
+            List<String> dbStatuses = borrowDetailRepository.findDistinctStatuses();
+            java.util.Set<String> seenLabelKeys = new java.util.HashSet<>();
+            for (String s : dbStatuses) {
+                if (s == null || s.trim().isEmpty()) continue;
+                String labelKey = getDynamicLabelKey(s, "loan");
+                if (seenLabelKeys.add(labelKey)) {
+                    statusOptions.add(new StatusOption(s, labelKey));
+                }
+            }
         } else { // borrowing
-            statusOptions.add(new StatusOption("", "common.allStatuses"));
-            statusOptions.add(new StatusOption("Borrowed", "loan.status.borrowed"));
-            statusOptions.add(new StatusOption("Due_Soon", "loan.status.dueSoon"));
-            statusOptions.add(new StatusOption("Overdue", "loan.status.overdue"));
-            statusOptions.add(new StatusOption("Pending", "loan.status.pendingBorrow"));
-            statusOptions.add(new StatusOption("Waiting_Pickup", "loan.status.waitingPickup"));
-            statusOptions.add(new StatusOption("Return_Pending", "loan.status.pendingReturn"));
-            statusOptions.add(new StatusOption("Renew_Pending", "loan.status.pendingRenewal"));
+            List<String> dbStatuses = borrowDetailRepository.findDistinctStatuses();
+            List<String> historyStatuses = java.util.Arrays.asList("Returned", "Lost", "Canceled", "Cancelled", "Rejected");
+            java.util.Set<String> seenLabelKeys = new java.util.HashSet<>();
+            for (String s : dbStatuses) {
+                if (s == null || s.trim().isEmpty() || historyStatuses.contains(s)) continue;
+                String labelKey = getDynamicLabelKey(s, "loan");
+                if (seenLabelKeys.add(labelKey)) {
+                    statusOptions.add(new StatusOption(s, labelKey));
+                    if ("Borrowed".equalsIgnoreCase(s)) {
+                        statusOptions.add(new StatusOption("Due_Soon", "loan.status.dueSoon"));
+                        seenLabelKeys.add("loan.status.dueSoon");
+                    }
+                }
+            }
         }
         model.addAttribute("statusOptions", statusOptions);
 
@@ -191,25 +207,9 @@ public class BorrowController extends LocalizedControllerSupport {
         try {
             if (fromDate != null && !fromDate.trim().isEmpty()) {
                 from = java.time.LocalDate.parse(fromDate.trim());
-                if (from.isBefore(minDate)) {
-                    from = minDate;
-                    fromDate = minDate.toString();
-                }
-                if (from.isAfter(maxDate)) {
-                    from = maxDate;
-                    fromDate = maxDate.toString();
-                }
             }
             if (toDate != null && !toDate.trim().isEmpty()) {
                 to = java.time.LocalDate.parse(toDate.trim());
-                if (to.isBefore(minDate)) {
-                    to = minDate;
-                    toDate = minDate.toString();
-                }
-                if (to.isAfter(maxDate)) {
-                    to = maxDate;
-                    toDate = maxDate.toString();
-                }
             }
         } catch (Exception ignored) {
         }
@@ -232,6 +232,8 @@ public class BorrowController extends LocalizedControllerSupport {
                         matchesStatus = "Borrowed".equalsIgnoreCase(item.getStatus()) && item.getDaysLeft() <= 2;
                     } else if ("Borrowed".equalsIgnoreCase(status)) {
                         matchesStatus = "Borrowed".equalsIgnoreCase(item.getStatus()) && item.getDaysLeft() > 2;
+                    } else if ("Canceled".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
+                        matchesStatus = "Canceled".equalsIgnoreCase(item.getStatus()) || "Cancelled".equalsIgnoreCase(item.getStatus());
                     } else {
                         matchesStatus = status.equalsIgnoreCase(item.getStatus());
                     }
@@ -239,11 +241,17 @@ public class BorrowController extends LocalizedControllerSupport {
                     if ("Ready".equalsIgnoreCase(status)) {
                         matchesStatus = "Ready".equalsIgnoreCase(item.getStatus())
                                 || "Active".equalsIgnoreCase(item.getStatus());
+                    } else if ("Canceled".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
+                        matchesStatus = "Canceled".equalsIgnoreCase(item.getStatus()) || "Cancelled".equalsIgnoreCase(item.getStatus());
                     } else {
                         matchesStatus = status.equalsIgnoreCase(item.getStatus());
                     }
                 } else {
-                    matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                    if ("Canceled".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
+                        matchesStatus = "Canceled".equalsIgnoreCase(item.getStatus()) || "Cancelled".equalsIgnoreCase(item.getStatus());
+                    } else {
+                        matchesStatus = status.equalsIgnoreCase(item.getStatus());
+                    }
                 }
             }
 
@@ -761,6 +769,24 @@ public class BorrowController extends LocalizedControllerSupport {
                 .filter(value -> value > 0)
                 .findFirst()
                 .orElse(14); // Giá trị mặc định nếu database chưa có key này
+    }
+
+    private String getDynamicLabelKey(String status, String type) {
+        if (status == null || status.trim().isEmpty()) return "";
+        // Map known tricky ones
+        if ("Return_Pending".equalsIgnoreCase(status)) return "loan.status.pendingReturn";
+        if ("Renew_Pending".equalsIgnoreCase(status)) return "loan.status.pendingRenewal";
+        if ("Waiting_Pickup".equalsIgnoreCase(status)) return "loan.status.waitingPickup";
+        if ("Deposit_Paid".equalsIgnoreCase(status)) return "reservation.status.depositPaid";
+        if ("Refund_Pending".equalsIgnoreCase(status)) return "reservation.status.refundPending";
+        if ("Rejected".equalsIgnoreCase(status)) return "request.status.rejected";
+        if ("Canceled".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) return "reservation.status.canceled";
+        if ("Returned".equalsIgnoreCase(status)) return "loan.status.returned";
+        if ("Pending".equalsIgnoreCase(status) && "loan".equals(type)) return "loan.status.pendingBorrow";
+        if ("Pending".equalsIgnoreCase(status) && "reservation".equals(type)) return "reservation.status.preparing";
+
+        // Generic fallback mapping: loan.status.borrowed, loan.status.returned, etc.
+        return type + ".status." + status.toLowerCase();
     }
 
     public static class StatusOption {
