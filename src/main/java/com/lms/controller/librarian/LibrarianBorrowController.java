@@ -4,6 +4,7 @@ import com.lms.exception.ApplicationException;
 import com.lms.controller.LocalizedControllerSupport;
 
 import com.lms.dto.request.BorrowRequest;
+import com.lms.dto.response.ReservationRequestDTO;
 import com.lms.entity.Borrow;
 import com.lms.entity.Transaction;
 import com.lms.repository.BorrowRepository;
@@ -153,6 +154,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             @RequestParam(value = "pickupId", required = false) Integer pickupId,
             @RequestParam(value = "renewId", required = false) Integer renewId,
             @RequestParam(value = "reservationId", required = false) Integer reservationId,
+            @RequestParam(value = "reservationStatus", required = false) String reservationStatus,
             Model model,
             HttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -180,7 +182,16 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
         // Đổi tên thuộc tính từ 'pendingReservations' -> 'activeReservations' và bọc
         // qua DTO phù hợp với template
-        model.addAttribute("activeReservations", borrowService.getPendingReservationDTOs());
+        List<ReservationRequestDTO> activeReservations = borrowService.getPendingReservationDTOs();
+        String normalizedReservationStatus = normalizeReservationStatusFilter(reservationStatus);
+        if (!normalizedReservationStatus.isBlank()) {
+            activeReservations = activeReservations.stream()
+                    .filter(reservation -> normalizedReservationStatus.equalsIgnoreCase(
+                            normalizeReservationStatusFilter(reservation.getStatus())))
+                    .toList();
+        }
+        model.addAttribute("activeReservations", activeReservations);
+        model.addAttribute("reservationStatus", normalizedReservationStatus);
 
         // Bước 2 & 3: Khi click chọn 1 member, nạp thông tin chi tiết và danh sách sách
         // muốn mượn qua cột phải
@@ -251,6 +262,14 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
 
         model.addAttribute("activeMenu", "borrow-desk");
         return "librarian/create-borrow";
+    }
+
+    private String normalizeReservationStatusFilter(String status) {
+        if (status == null || status.isBlank()) {
+            return "";
+        }
+        String normalized = status.trim().toUpperCase(java.util.Locale.ROOT).replace('-', '_');
+        return Set.of("PENDING", "DEPOSIT_PAID", "READY").contains(normalized) ? normalized : "";
     }
 
     private void populateMemberStats(Model model, com.lms.entity.Member member, java.util.Map<Integer, String> usernameByMemberId) {
