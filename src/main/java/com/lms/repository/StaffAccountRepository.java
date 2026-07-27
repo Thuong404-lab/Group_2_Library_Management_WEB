@@ -41,7 +41,9 @@ public interface StaffAccountRepository extends JpaRepository<StaffAccount, Inte
               AND (:status = '' OR LOWER(account.status) = LOWER(:status))
               AND (:keyword = ''
                    OR LOWER(account.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                   OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))
             """,
             countQuery = """
             SELECT COUNT(account)
@@ -52,7 +54,9 @@ public interface StaffAccountRepository extends JpaRepository<StaffAccount, Inte
               AND (:status = '' OR LOWER(account.status) = LOWER(:status))
               AND (:keyword = ''
                    OR LOWER(account.username) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                   OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                   OR LOWER(user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(user.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))
             """)
     Page<StaffAccount> searchDirectory(
             @Param("staffType") String staffType,
