@@ -33,6 +33,15 @@ class RegisterRequestValidationTest {
         assertTrue(validator.validate(request).stream()
                 .anyMatch(error -> error.getPropertyPath().toString().equals("username")));
     }
+
+    @Test
+    void rejectsAccentedCharactersInUsername() {
+        RegisterRequest request = validRequest();
+        request.setUsername("nguyễn123");
+
+        assertTrue(validator.validate(request).stream()
+                .anyMatch(error -> error.getPropertyPath().toString().equals("username")));
+    }
     @Test
     void rejectsInvalidRegistrationFields() {
         RegisterRequest request = validRequest();

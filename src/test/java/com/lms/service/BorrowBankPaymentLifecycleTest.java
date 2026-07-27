@@ -12,6 +12,7 @@ import com.lms.enums.UserStatus;
 import com.lms.entity.Wallet;
 import com.lms.entity.Staff;
 import com.lms.entity.StaffAccount;
+import com.lms.entity.Transaction;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
@@ -171,7 +172,7 @@ class BorrowBankPaymentLifecycleTest {
     }
 
     @Test
-    void memberBankCheckoutReservesEverySelectedPhysicalCopy() {
+    void memberBankCheckoutDoesNotAssignPhysicalCopiesBeforeApproval() {
         Member member = new Member();
         member.setMemberId(7);
         User user = new User();
@@ -183,20 +184,10 @@ class BorrowBankPaymentLifecycleTest {
         book.setTitle("Clean Code");
         book.setStatus("Active");
 
-        BookItem firstCopy = new BookItem();
-        firstCopy.setBookItemId(101);
-        firstCopy.setBook(book);
-        firstCopy.setStatus("Available");
-        BookItem secondCopy = new BookItem();
-        secondCopy.setBookItemId(102);
-        secondCopy.setBook(book);
-        secondCopy.setStatus("Available");
-
         when(memberRepository.findByAccountUsernameForUpdate("member01")).thenReturn(Optional.of(member));
         when(borrowDetailRepository.countActiveBorrowedBooks(7)).thenReturn(0L);
         when(bookRepository.findByIdForUpdate(11)).thenReturn(Optional.of(book));
-        when(bookItemRepository.findAvailableByBookIdForUpdate(11))
-                .thenReturn(List.of(firstCopy, secondCopy));
+        when(bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Available")).thenReturn(2L);
         when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> {
             Borrow saved = invocation.getArgument(0);
             saved.setBorrowId(42);
@@ -206,13 +197,44 @@ class BorrowBankPaymentLifecycleTest {
         Borrow result = service.memberSubmitBankMultiBookBorrowRequest("member01", List.of(11, 11), 14);
 
         assertThat(result.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(firstCopy.getStatus()).isEqualTo("Payment_Pending");
-        assertThat(secondCopy.getStatus()).isEqualTo("Payment_Pending");
         ArgumentCaptor<BorrowDetail> details = ArgumentCaptor.forClass(BorrowDetail.class);
         verify(borrowDetailRepository, times(2)).save(details.capture());
         assertThat(details.getAllValues())
-                .extracting(BorrowDetail::getBookItem)
-                .containsExactly(firstCopy, secondCopy);
+                .allSatisfy(detail -> {
+                    assertThat(detail.getBookItem()).isNull();
+                    assertThat(detail.getStatus()).isEqualTo("Payment_Pending");
+                });
+        verify(bookItemRepository, never()).findAvailableByBookIdForUpdate(11);
+        verify(bookItemRepository, never()).save(any(BookItem.class));
+    }
+
+    @Test
+    void paidOnlineBankRequestReturnsToPendingApprovalWithoutBarcode() {
+        Member member = new Member();
+        member.setMemberId(7);
+        Borrow borrow = new Borrow();
+        borrow.setBorrowId(42);
+        borrow.setMember(member);
+        borrow.setStatus("Payment_Pending");
+
+        Book book = new Book();
+        book.setTitle("Clean Code");
+        BorrowDetail detail = new BorrowDetail();
+        detail.setBorrow(borrow);
+        detail.setBook(book);
+        detail.setBookItem(null);
+        detail.setStatus("Payment_Pending");
+
+        when(borrowRepository.findById(42)).thenReturn(Optional.of(borrow));
+        when(borrowDetailRepository.findByBorrowId(42)).thenReturn(List.of(detail));
+        when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Borrow result = service.markPendingBankBorrowPaidForApproval(42);
+
+        assertThat(result.getStatus()).isEqualTo("Pending");
+        assertThat(detail.getStatus()).isEqualTo("Pending");
+        assertThat(detail.getBookItem()).isNull();
+        verify(bookItemRepository, never()).save(any(BookItem.class));
     }
 
     @Test
@@ -265,6 +287,61 @@ class BorrowBankPaymentLifecycleTest {
         assertThat(result.getStatus()).isEqualTo("Pending");
         verify(borrowDetailRepository).save(any(BorrowDetail.class));
     }
+
+    @Test
+    void approvingPrepaidOnlineRequestCompletesHeldPaymentWithoutChargingWalletAgain() {
+        Member member = new Member();
+        member.setMemberId(7);
+        Borrow borrow = new Borrow();
+        borrow.setBorrowId(42);
+        borrow.setMember(member);
+        borrow.setStatus("Pending");
+        borrow.setBorrowDate(LocalDateTime.now());
+
+        Book book = new Book();
+        book.setBookId(11);
+        book.setTitle("Clean Code");
+        BookItem item = new BookItem();
+        item.setBook(book);
+        item.setBarcode("BC-001");
+        item.setStatus("Available");
+
+        BorrowDetail detail = new BorrowDetail();
+        detail.setBorrow(borrow);
+        detail.setBook(book);
+        detail.setBookItem(null);
+        detail.setStatus("Pending");
+        detail.setDueDate(borrow.getBorrowDate().plusDays(14));
+
+        Transaction heldPayment = new Transaction();
+        heldPayment.setBorrow(borrow);
+        heldPayment.setAmount(BigDecimal.valueOf(-70_000));
+        heldPayment.setStatus("Held");
+
+        when(borrowRepository.findById(42)).thenReturn(Optional.of(borrow));
+        when(borrowDetailRepository.findByBorrowId(42)).thenReturn(List.of(detail));
+        when(bookItemRepository.findByBarcodeForUpdate("BC-001")).thenReturn(Optional.of(item));
+        when(bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(11, "Available")).thenReturn(1L);
+        when(transactionRepository
+                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+                        42, "BORROW_FEE", "Held"))
+                .thenReturn(Optional.of(heldPayment));
+        when(borrowRepository.save(any(Borrow.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification notification = invocation.getArgument(0);
+            notification.setNotificationId(99);
+            return notification;
+        });
+
+        service.approvePendingRequest(42, List.of("BC-001"), "librarian");
+
+        assertThat(heldPayment.getStatus()).isEqualTo("Completed");
+        assertThat(detail.getBookItem()).isSameAs(item);
+        assertThat(borrow.getStatus()).isEqualTo("Waiting_Pickup");
+        verify(walletRepository, never()).save(any(Wallet.class));
+        verify(transactionRepository).save(heldPayment);
+    }
+
 
     @Test
     void paidBankCheckoutActivatesBorrowAndStartsLoanPeriodAtPaymentTime() {

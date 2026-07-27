@@ -16,6 +16,7 @@ public class UpdateMemberAccountRequest {
 
         @NotBlank(message = "{validation.usernameRequired}")
         @Size(min = 3, max = 20, message = "{validation.usernameLength}")
+        @Pattern(regexp = "^[\\x21-\\x7E]+$", message = "{validation.username}")
         private String username;
 
         @NotBlank(message = "{validation.emailRequired}")

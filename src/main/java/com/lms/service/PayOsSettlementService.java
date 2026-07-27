@@ -208,7 +208,11 @@ public class PayOsSettlementService {
                 && !"PAYMENT_PENDING".equals(status)) {
             throw new ConflictException(localizedMessageService.get("backend.payment.loanNotPayable"));
         }
-        if (transactionRepository.hasCompletedBorrowFee(memberId, borrowId)) {
+        if (transactionRepository.hasCompletedBorrowFee(memberId, borrowId)
+                || transactionRepository
+                        .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+                                borrowId, "BORROW_FEE", "Held")
+                        .isPresent()) {
             throw new ConflictException(localizedMessageService.get("backend.financial.borrowFeeAlreadyPaid"));
         }
         BigDecimal amount = requirePositiveWholeVnd(payment.getAmount());
@@ -217,9 +221,22 @@ public class PayOsSettlementService {
         }
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate());
-        membershipService.synchronizeMemberTier(memberId);
-        borrowService.activatePendingBankBorrow(borrowId);
+        boolean onlineRequestAwaitingApproval = payment.getInitiatedByStaff() == null
+                && "PAYMENT_PENDING".equals(status);
+        Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate(),
+                onlineRequestAwaitingApproval ? "Held" : COMPLETED);
+        transaction.setChannel("PAYOS");
+        transaction.setReferenceCode("KQPAY-BORROW-" + payment.getOrderCode());
+        transaction.setPerformedByStaff(payment.getInitiatedByStaff());
+        transaction.setPaidAt(payment.getPaidAt() == null ? LocalDateTime.now() : payment.getPaidAt());
+        transaction = transactionRepository.save(transaction);
+
+        if (onlineRequestAwaitingApproval) {
+            borrowService.markPendingBankBorrowPaidForApproval(borrowId);
+        } else {
+            membershipService.synchronizeMemberTier(memberId);
+            borrowService.activatePendingBankBorrow(borrowId);
+        }
         return transaction;
     }
 
@@ -232,12 +249,16 @@ public class PayOsSettlementService {
     }
 
     private Transaction saveTransaction(Wallet wallet, Borrow borrow, String type, BigDecimal amount) {
+        return saveTransaction(wallet, borrow, type, amount, COMPLETED);
+    }
+
+    private Transaction saveTransaction(Wallet wallet, Borrow borrow, String type, BigDecimal amount, String status) {
         Transaction transaction = new Transaction();
         transaction.setWallet(wallet);
         transaction.setBorrow(borrow);
         transaction.setTransactionType(type);
         transaction.setAmount(amount);
-        transaction.setStatus(COMPLETED);
+        transaction.setStatus(status);
         transaction.setTransactionDate(LocalDateTime.now());
         return transactionRepository.save(transaction);
     }

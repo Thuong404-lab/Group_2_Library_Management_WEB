@@ -554,6 +554,8 @@ public class AccountServiceImpl implements AccountService {
             errors.put("username", messages.get("validation.usernameRequired"));
         } else if (username.length() < 3 || username.length() > 20) {
             errors.put("username", messages.get("validation.usernameLength"));
+        } else if (!username.matches("^[\\x21-\\x7E]+$")) {
+            errors.put("username", messages.get("validation.username"));
         }
     }
 

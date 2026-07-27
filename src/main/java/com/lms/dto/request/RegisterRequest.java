@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
     @NotBlank(message = "{validation.usernameRequired}")
-    @Pattern(regexp = "^(?:|\\S{3,20})$", message = "{validation.username}")
+    @Pattern(regexp = "^[\\x21-\\x7E]{3,20}$", message = "{validation.username}")
     private String username;
     @NotBlank(message = "{backend.account.passwordRequired}")
     @Pattern(regexp = "^$|^.{6,}$", message = "{validation.passwordMin}")
