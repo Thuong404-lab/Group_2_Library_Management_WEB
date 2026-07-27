@@ -84,8 +84,11 @@ public class AuthServiceImpl implements AuthService {
         String phone = request.getPhone() != null ? request.getPhone().trim() : null;
         String fullName = request.getFullName() != null ? request.getFullName().trim() : null;
 
-        if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
-            throw new AuthException(messages.get("validation.username"));
+        if (username == null || username.isEmpty()) {
+            throw new AuthException(messages.get("validation.usernameRequired"));
+        }
+        if (username.length() < 3 || username.length() > 20) {
+            throw new AuthException(messages.get("validation.usernameLength"));
         }
 
         if (request.getPassword() == null || request.getPassword().length() < 6) {

@@ -82,22 +82,24 @@ document.addEventListener("DOMContentLoaded", function () {
             return errors;
         }
 
-        const passwordToggle = form.querySelector(".create-password-toggle");
-        if (passwordToggle != null) {
+        form.querySelectorAll(".create-password-toggle").forEach(function (passwordToggle) {
             passwordToggle.addEventListener("click", function () {
-                const password = form.elements.password;
-                const showPassword = password.type === "password";
-                password.type = showPassword ? "text" : "password";
-                passwordToggle.querySelector("i").className = showPassword
-                    ? "bi bi-eye text-muted"
-                    : "bi bi-eye-slash text-muted";
-                const label = showPassword
-                    ? passwordToggle.dataset.hideLabel
-                    : passwordToggle.dataset.showLabel;
-                passwordToggle.setAttribute("aria-label", label);
-                passwordToggle.setAttribute("title", label);
+                const inputGroup = passwordToggle.closest(".position-relative");
+                const passwordInput = inputGroup ? inputGroup.querySelector("input[name='password'], input[name='confirmPassword']") : null;
+                if (passwordInput != null) {
+                    const showPassword = passwordInput.type === "password";
+                    passwordInput.type = showPassword ? "text" : "password";
+                    passwordToggle.querySelector("i").className = showPassword
+                        ? "bi bi-eye text-muted"
+                        : "bi bi-eye-slash text-muted";
+                    const label = showPassword
+                        ? passwordToggle.dataset.hideLabel
+                        : passwordToggle.dataset.showLabel;
+                    passwordToggle.setAttribute("aria-label", label);
+                    passwordToggle.setAttribute("title", label);
+                }
             });
-        }
+        });
 
         form.addEventListener("submit", async function (event) {
             const localErrors = validateLocalFields();
@@ -156,12 +158,14 @@ document.addEventListener("DOMContentLoaded", function () {
             modal.addEventListener("hidden.bs.modal", function () {
                 form.reset();
                 clearValidation();
-                if (form.elements.password != null) form.elements.password.type = "password";
-                if (passwordToggle != null) {
+                form.querySelectorAll("input[name='password'], input[name='confirmPassword']").forEach(function(inp) {
+                    inp.type = "password";
+                });
+                form.querySelectorAll(".create-password-toggle").forEach(function(passwordToggle) {
                     passwordToggle.querySelector("i").className = "bi bi-eye-slash text-muted";
                     passwordToggle.setAttribute("aria-label", passwordToggle.dataset.showLabel);
                     passwordToggle.setAttribute("title", passwordToggle.dataset.showLabel);
-                }
+                });
             });
         }
     });

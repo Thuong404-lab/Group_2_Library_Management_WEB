@@ -69,9 +69,10 @@ public class AccountController extends LocalizedControllerSupport {
             @RequestParam(required = false, defaultValue = "") String email,
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam(required = false, defaultValue = "") String username,
-            @RequestParam(required = false, defaultValue = "") String password) {
+            @RequestParam(required = false, defaultValue = "") String password,
+            @RequestParam(required = false, defaultValue = "") String confirmPassword) {
         AdminMemberAccountCreateRequest request = new AdminMemberAccountCreateRequest(
-                fullName, email, phone, username, password);
+                fullName, email, phone, username, password, confirmPassword);
         return accountService.validateMemberAccountCreate(request);
     }
 
@@ -81,10 +82,11 @@ public class AccountController extends LocalizedControllerSupport {
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam String username,
             @RequestParam String password,
+            @RequestParam(required = false, defaultValue = "") String confirmPassword,
             RedirectAttributes redirectAttributes) {
 
         AdminMemberAccountCreateRequest request = new AdminMemberAccountCreateRequest(
-                fullName, email, phone, username, password);
+                fullName, email, phone, username, password, confirmPassword);
         try {
             accountService.createMemberAccount(request);
             redirectAttributes.addFlashAttribute("success", message("backend.account.created"));

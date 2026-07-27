@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * SystemService - Xử lý Logic Quản lý Hệ thống (Backup/Restore/Settings)
+ * SystemService - Xử lý Logic Quản lý Hệ thống
  * Người phụ trách: Trần Ngọc Linh Đang (CE191088)
  */
 public interface SystemService {

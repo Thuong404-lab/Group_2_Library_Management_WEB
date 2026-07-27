@@ -57,34 +57,25 @@
         <div class="member-notification-management-actions">
           <label class="member-notification-select-all" th:if="${notifications != null && !notifications.isEmpty()}">
             <input type="checkbox" id="selectAllNotifications">
-            <span th:text="#{member.notifications.selectPage}">Select this page</span>
+            <span th:text="#{member.notifications.selectAll}">Select all</span>
           </label>
           <form id="deleteSelectedNotificationsForm" method="post"
                 th:action="@{/member/interaction/notifications/delete-selected}"
                 class="app-confirm-form"
                 th:data-confirm-title="#{member.notifications.deleteSelectedTitle}"
                 th:data-confirm-message="#{member.notifications.deleteSelectedConfirm}"
-                th:data-confirm-action="#{member.notifications.deleteSelected}"
+                th:data-confirm-action="#{member.notifications.delete}"
+                th:data-confirm-selected-title="#{member.notifications.deleteSelectedTitle}"
+                th:data-confirm-selected-message="#{member.notifications.deleteSelectedConfirm}"
+                th:data-confirm-all-title="#{member.notifications.deleteAllTitle}"
+                th:data-confirm-all-message="#{member.notifications.deleteAllConfirm}"
                 data-confirm-tone="danger">
             <input type="hidden" name="source" th:value="${selectedNotificationSource}">
             <input type="hidden" name="type" th:value="${selectedNotificationType}">
+            <input type="hidden" id="deleteAllNotificationsSelection" name="deleteAll" value="false">
             <button type="submit" id="deleteSelectedNotifications"
-                    class="member-ui-button member-ui-button--danger member-ui-button--compact" disabled>
-              <i class="bi bi-trash" aria-hidden="true"></i>
-              <span th:text="#{member.notifications.deleteSelected}">Delete selected</span>
-            </button>
-          </form>
-          <form method="post" th:action="@{/member/interaction/notifications/delete-all}"
-                class="app-confirm-form"
-                th:data-confirm-title="#{member.notifications.deleteAllTitle}"
-                th:data-confirm-message="#{member.notifications.deleteAllConfirm}"
-                th:data-confirm-action="#{member.notifications.deleteAll}"
-                data-confirm-tone="danger">
-            <button type="submit"
-                    class="member-ui-button member-ui-button--danger member-ui-button--compact"
-                    th:disabled="${totalNotificationCount == null || totalNotificationCount == 0}">
-              <i class="bi bi-trash3" aria-hidden="true"></i>
-              <span th:text="#{member.notifications.deleteAll}">Delete all</span>
+                    class="member-notification-delete-action member-ui-button member-ui-button--danger-outline" disabled>
+              <span th:text="#{member.notifications.delete}">Delete notifications</span>
             </button>
           </form>
         </div>
@@ -255,34 +246,48 @@
       var selectAllNotifications = document.getElementById("selectAllNotifications");
       var deleteSelectedButton = document.getElementById("deleteSelectedNotifications");
       var deleteSelectedForm = document.getElementById("deleteSelectedNotificationsForm");
+      var deleteAllSelection = document.getElementById("deleteAllNotificationsSelection");
 
       function updateNotificationSelection() {
         var selectedCount = notificationCheckboxes.filter(function (checkbox) {
           return checkbox.checked;
         }).length;
-        if (deleteSelectedButton) deleteSelectedButton.disabled = selectedCount === 0;
+        var allSelected = deleteAllSelection && deleteAllSelection.value === "true";
+        if (deleteSelectedButton) deleteSelectedButton.disabled = !allSelected && selectedCount === 0;
         if (selectAllNotifications) {
-          selectAllNotifications.checked = notificationCheckboxes.length > 0
-            && selectedCount === notificationCheckboxes.length;
-          selectAllNotifications.indeterminate = selectedCount > 0
-            && selectedCount < notificationCheckboxes.length;
+          selectAllNotifications.checked = Boolean(allSelected);
+          selectAllNotifications.indeterminate = !allSelected && selectedCount > 0;
+        }
+        if (deleteSelectedForm) {
+          deleteSelectedForm.dataset.confirmTitle = allSelected
+            ? deleteSelectedForm.dataset.confirmAllTitle
+            : deleteSelectedForm.dataset.confirmSelectedTitle;
+          deleteSelectedForm.dataset.confirmMessage = allSelected
+            ? deleteSelectedForm.dataset.confirmAllMessage
+            : deleteSelectedForm.dataset.confirmSelectedMessage;
         }
       }
 
       notificationCheckboxes.forEach(function (checkbox) {
-        checkbox.addEventListener("change", updateNotificationSelection);
+        checkbox.addEventListener("change", function () {
+          if (deleteAllSelection) deleteAllSelection.value = "false";
+          updateNotificationSelection();
+        });
       });
       if (selectAllNotifications) {
         selectAllNotifications.addEventListener("change", function () {
+          var selectAll = selectAllNotifications.checked;
+          if (deleteAllSelection) deleteAllSelection.value = String(selectAll);
           notificationCheckboxes.forEach(function (checkbox) {
-            checkbox.checked = selectAllNotifications.checked;
+            checkbox.checked = selectAll;
           });
           updateNotificationSelection();
         });
       }
       if (deleteSelectedForm) {
         deleteSelectedForm.addEventListener("submit", function (event) {
-          if (!notificationCheckboxes.some(function (checkbox) { return checkbox.checked; })) {
+          var allSelected = deleteAllSelection && deleteAllSelection.value === "true";
+          if (!allSelected && !notificationCheckboxes.some(function (checkbox) { return checkbox.checked; })) {
             event.preventDefault();
             window.AppFeedback.error(pageNotificationSelectToDelete);
           }
