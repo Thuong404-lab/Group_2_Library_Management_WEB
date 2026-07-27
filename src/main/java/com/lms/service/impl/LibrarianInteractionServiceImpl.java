@@ -283,20 +283,22 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional(readOnly = true)
-    public List<LibrarianNotificationHistoryResponse> getRecentManualNotifications(NotificationType notificationType) {
-        List<Notification> notifications = notificationType == null
-                ? notificationRepository.findTop10ByEventTypeOrderByCreatedDateDesc(NotificationEventType.MANUAL)
-                : notificationRepository.findTop10ByEventTypeAndNotificationTypeOrderByCreatedDateDesc(
-                        NotificationEventType.MANUAL, notificationType);
+    public Page<LibrarianNotificationHistoryResponse> getRecentManualNotifications(
+            NotificationType notificationType, Pageable pageable) {
+        Page<Notification> notifications = notificationType == null
+                ? notificationRepository.findByEventTypeOrderByCreatedDateDesc(
+                        NotificationEventType.MANUAL, pageable)
+                : notificationRepository.findByEventTypeAndNotificationTypeOrderByCreatedDateDesc(
+                        NotificationEventType.MANUAL, notificationType, pageable);
         return notifications
-                .stream().map(notification -> new LibrarianNotificationHistoryResponse(
+                .map(notification -> new LibrarianNotificationHistoryResponse(
                         notification.getNotificationId(), notification.getTitle(), notification.getNotificationType(),
                         notification.getStaff() != null && notification.getStaff().getUser() != null
                                 ? notification.getStaff().getUser().getFullName() : "",
                         notification.getCreatedDate(),
                         memberNotificationRepository.countByNotification_NotificationId(notification.getNotificationId()),
                         memberNotificationRepository.countByNotification_NotificationIdAndIsReadTrue(notification.getNotificationId())
-                )).toList();
+                ));
     }
 
     @Override

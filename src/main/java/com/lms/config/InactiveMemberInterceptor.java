@@ -31,6 +31,8 @@ public class InactiveMemberInterceptor implements HandlerInterceptor {
             "/member/payments/payos/top-up",
             "/member/payments/payos/fine/all",
             "/member/interaction/notifications/mark-read",
+            "/member/interaction/notifications/delete-selected",
+            "/member/interaction/notifications/delete-all",
             "/member/financial/topup-notifications/mark-all-read");
 
     private static final List<Pattern> RESTRICTED_MEMBER_ALLOWED_POST_PATTERNS = List.of(

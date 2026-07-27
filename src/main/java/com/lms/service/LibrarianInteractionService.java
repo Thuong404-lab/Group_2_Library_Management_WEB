@@ -34,7 +34,8 @@ public interface LibrarianInteractionService {
 
     List<NotificationRecipientSearchResponse> getNotificationRecipients(List<Integer> memberIds);
 
-    List<LibrarianNotificationHistoryResponse> getRecentManualNotifications(NotificationType notificationType);
+    Page<LibrarianNotificationHistoryResponse> getRecentManualNotifications(
+            NotificationType notificationType, Pageable pageable);
 
     List<Member> getAllMembers();
 

@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{member.acquisition.title}">Book Acquisition Request</title>
-    <link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css(v='20260728-favorites-pagination-v1')}" />
 </head>
 <body>
 <div layout:fragment="content" class="container acquisition-page member-palette-page">
@@ -74,10 +74,45 @@
             </article>
         </div>
         <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}" th:text="#{member.acquisition.empty}">You have not submitted any requests.</div>
-        <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}" th:aria-label="#{member.acquisition.pagination}">
-            <a class="member-page-control" th:classappend="${myAcquisitionRequests.first} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
-            <span th:text="${(myAcquisitionRequests.number + 1) + ' / ' + myAcquisitionRequests.totalPages}">1 / 1</span>
-            <a class="member-page-control" th:classappend="${myAcquisitionRequests.last} ? ' is-disabled'" th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+        <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}"
+             th:aria-label="#{member.acquisition.pagination}"
+             th:with="startPage=${myAcquisitionRequests.totalPages <= 10 ? 0 : (myAcquisitionRequests.number < 9 ? 0 : (myAcquisitionRequests.number - 8 > myAcquisitionRequests.totalPages - 10 ? myAcquisitionRequests.totalPages - 10 : myAcquisitionRequests.number - 8))},
+                      endPage=${startPage + 9 < myAcquisitionRequests.totalPages ? startPage + 9 : myAcquisitionRequests.totalPages - 1}">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item" th:classappend="${myAcquisitionRequests.first} ? 'disabled'">
+                    <a class="page-link page-link-classic member-page-control"
+                       th:href="@{/member/interaction/acquisition-requests/new(page=0)}"
+                       th:text="#{pagination.first}">First</a>
+                </li>
+                <li class="page-item" th:classappend="${myAcquisitionRequests.first} ? 'disabled'">
+                    <a class="page-link page-link-classic member-page-control"
+                       th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}"
+                       th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+                </li>
+                <li class="page-item disabled" th:if="${startPage > 0}">
+                    <span class="page-link page-link-classic">&hellip;</span>
+                </li>
+                <li class="page-item" th:each="pageIndex : ${#numbers.sequence(startPage, endPage)}"
+                    th:classappend="${pageIndex == myAcquisitionRequests.number ? 'active' : ''}">
+                    <a class="page-link page-link-classic member-page-control"
+                       th:href="@{/member/interaction/acquisition-requests/new(page=${pageIndex})}"
+                       th:text="${pageIndex + 1}"
+                       th:aria-current="${pageIndex == myAcquisitionRequests.number} ? 'page'">1</a>
+                </li>
+                <li class="page-item disabled" th:if="${endPage < myAcquisitionRequests.totalPages - 1}">
+                    <span class="page-link page-link-classic">&hellip;</span>
+                </li>
+                <li class="page-item" th:classappend="${myAcquisitionRequests.last} ? 'disabled'">
+                    <a class="page-link page-link-classic member-page-control"
+                       th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}"
+                       th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                </li>
+                <li class="page-item" th:classappend="${myAcquisitionRequests.last} ? 'disabled'">
+                    <a class="page-link page-link-classic member-page-control"
+                       th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.totalPages - 1})}"
+                       th:text="#{pagination.last}">Last</a>
+                </li>
+            </ul>
         </nav>
     </section>
 

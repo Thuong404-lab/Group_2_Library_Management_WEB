@@ -394,8 +394,43 @@
         badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
       }
 
-      notificationToggle.addEventListener("click", function () {
+      var notificationMemberKey = notificationToggle.dataset.memberKey || "anonymous";
+      var latestNotificationId = Number(
+        notificationToggle.dataset.latestNotificationId || 0,
+      );
+      var notificationBadgeStorageKey =
+        "notification-bell-seen:" + notificationMemberKey;
+
+      function getLastSeenNotificationId() {
+        try {
+          return Number(localStorage.getItem(notificationBadgeStorageKey) || 0);
+        } catch (error) {
+          return 0;
+        }
+      }
+
+      function dismissNotificationBadge() {
         updateNotificationBadge(0);
+        if (latestNotificationId <= 0) return;
+        try {
+          localStorage.setItem(
+            notificationBadgeStorageKey,
+            String(latestNotificationId),
+          );
+        } catch (error) {
+          // The badge can still be hidden for the current page if storage is unavailable.
+        }
+      }
+
+      if (
+        latestNotificationId > 0 &&
+        getLastSeenNotificationId() >= latestNotificationId
+      ) {
+        updateNotificationBadge(0);
+      }
+
+      notificationToggle.addEventListener("click", function () {
+        dismissNotificationBadge();
       });
 
       function notificationRequestHeaders() {
@@ -423,7 +458,7 @@
             return response.json();
           }).then(function (data) {
             item.classList.remove("is-unread");
-            updateNotificationBadge(Number(data.unreadCount) || 0);
+            dismissNotificationBadge();
             window.location.href = targetUrl;
           }).catch(function (error) {
             console.error(error);

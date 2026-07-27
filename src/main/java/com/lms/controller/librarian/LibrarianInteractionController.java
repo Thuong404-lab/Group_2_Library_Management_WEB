@@ -6,6 +6,7 @@ import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
+import com.lms.dto.response.LibrarianNotificationHistoryResponse;
 import com.lms.enums.NotificationType;
 import com.lms.enums.FeedbackStatus;
 import com.lms.enums.AcquisitionRequestStatus;
@@ -43,6 +44,7 @@ import java.util.UUID;
 public class LibrarianInteractionController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
+    private static final int NOTIFICATION_HISTORY_PAGE_SIZE = 10;
 
     private final LibrarianInteractionService librarianInteractionService;
 
@@ -162,6 +164,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
     @GetMapping("/notifications/new")
     public String notificationForm(
             @RequestParam(required = false, defaultValue = "") String historyType,
+            @RequestParam(defaultValue = "0") int historyPage,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (!model.containsAttribute("notificationRequest")) {
@@ -176,8 +179,12 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         model.addAttribute("selectedMembers", librarianInteractionService.getNotificationRecipients(request.getMemberIds()));
         model.addAttribute("activeMemberCount", librarianInteractionService.countActiveMembers());
         NotificationType selectedHistoryType = parseManualNotificationType(historyType);
-        model.addAttribute("recentNotifications",
-                librarianInteractionService.getRecentManualNotifications(selectedHistoryType));
+        Page<LibrarianNotificationHistoryResponse> notificationHistoryPage =
+                librarianInteractionService.getRecentManualNotifications(
+                        selectedHistoryType,
+                        PageRequest.of(Math.max(0, historyPage), NOTIFICATION_HISTORY_PAGE_SIZE));
+        model.addAttribute("notificationHistoryPage", notificationHistoryPage);
+        model.addAttribute("recentNotifications", notificationHistoryPage.getContent());
         model.addAttribute("notificationHistoryTypes", NotificationType.manualSelectableValues());
         model.addAttribute("selectedHistoryType",
                 selectedHistoryType == null ? "" : selectedHistoryType.name());

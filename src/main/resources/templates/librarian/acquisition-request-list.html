@@ -5,7 +5,7 @@
 <head>
     <title th:text="#{librarian.acquisition.title}">Book Acquisition Requests</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/acquisition-request-list.css(v='20260727-action-label-fix')}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/acquisition-request-list.css(v='20260728-favorites-pagination-v1')}" />
 </head>
 <body>
 <main layout:fragment="content" th:with="activeMenu='suggestions'"
@@ -129,11 +129,11 @@
              th:with="startPage=${requests.totalPages <= 10 ? 0 : (requests.number < 9 ? 0 : (requests.number - 8 > requests.totalPages - 10 ? requests.totalPages - 10 : requests.number - 8))}, endPage=${startPage + 9 < requests.totalPages ? startPage + 9 : requests.totalPages - 1}">
             <ul class="pagination app-pagination">
                 <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=0,status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="#{pagination.first}">First</a></li>
-                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number - 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}"><i class="bi bi-chevron-left"></i></a></li>
-                <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link">…</span></li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == requests.number ? 'active' : ''}"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${i},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="${i + 1}">1</a></li>
-                <li class="page-item disabled" th:if="${endPage < requests.totalPages - 1}"><span class="page-link">…</span></li>
-                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number + 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}"><i class="bi bi-chevron-right"></i></a></li>
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number - 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a></li>
+                <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link" aria-hidden="true">&hellip;</span></li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == requests.number ? 'active' : ''}"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${i},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="${i + 1}" th:aria-current="${i == requests.number} ? 'page'">1</a></li>
+                <li class="page-item disabled" th:if="${endPage < requests.totalPages - 1}"><span class="page-link" aria-hidden="true">&hellip;</span></li>
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.number + 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a></li>
                 <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/acquisition-requests(page=${requests.totalPages - 1},status=${currentAcquisitionStatus},keyword=${acquisitionKeyword})}" th:text="#{pagination.last}">Last</a></li>
             </ul>
         </nav>

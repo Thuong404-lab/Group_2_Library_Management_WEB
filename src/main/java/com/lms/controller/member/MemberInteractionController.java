@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.security.Principal;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import com.lms.dto.request.MemberReviewSubmitRequest;
 import com.lms.dto.request.MemberReviewUpdateRequest;
@@ -97,6 +98,33 @@ public class MemberInteractionController extends LocalizedControllerSupport {
                                                      Principal principal) {
         return Map.of("unreadCount",
                 memberNotificationService.markNotificationAsRead(principal.getName(), notificationId));
+    }
+
+    @PostMapping("/notifications/delete-selected")
+    public String deleteSelectedNotifications(
+            @RequestParam(required = false) List<Integer> notificationIds,
+            @RequestParam(defaultValue = "all") String source,
+            @RequestParam(defaultValue = "ALL") String type,
+            Principal principal,
+            RedirectAttributes flash) {
+        int deletedCount = memberNotificationService.deleteSelectedNotifications(
+                principal.getName(), notificationIds);
+        flash.addFlashAttribute(
+                deletedCount > 0 ? "success" : "error",
+                message(deletedCount > 0
+                        ? "backend.notification.deletedSelected"
+                        : "backend.notification.selectToDelete", deletedCount));
+        return notificationRedirect(source, type);
+    }
+
+    @PostMapping("/notifications/delete-all")
+    public String deleteAllNotifications(
+            Principal principal,
+            RedirectAttributes flash) {
+        int deletedCount = memberNotificationService.deleteAllNotifications(principal.getName());
+        flash.addFlashAttribute("success",
+                message("backend.notification.deletedAll", deletedCount));
+        return "redirect:/member/interaction/notifications";
     }
 
     @GetMapping("/reviews")
@@ -431,6 +459,15 @@ public class MemberInteractionController extends LocalizedControllerSupport {
         } catch (IllegalArgumentException exception) {
             return null;
         }
+    }
+
+    private String notificationRedirect(String source, String type) {
+        NotificationSource sourceFilter = parseNotificationSource(source);
+        NotificationType typeFilter = parseNotificationType(type);
+        String safeSource = sourceFilter == null ? "all" : sourceFilter.name().toLowerCase();
+        String safeType = typeFilter == null ? "ALL" : typeFilter.name();
+        return "redirect:/member/interaction/notifications?source=" + safeSource
+                + "&type=" + safeType + "&page=0";
     }
 
     private NotificationType parseNotificationType(String value) {
