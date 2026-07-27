@@ -1,237 +1,229 @@
 <!DOCTYPE html>
 <html lang="en" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
-    xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
-
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/admin_base}">
 <head>
     <title th:text="#{admin.reports.title}">Reports &amp; Statistics</title>
-    <link rel="stylesheet" th:href="@{/css/pages/admin/report-console.css(v='20260727-kpi-center')}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/revenue-report.css(v='20260728-report-drilldown')}" />
+    <link rel="stylesheet" th:href="@{/css/pages/admin/report-console.css(v='20260728-tabbed-report')}" />
 </head>
-
 <body>
-    <div layout:fragment="content" th:with="activeMenu='reports'" class="admin-report-page">
-        <header class="admin-report-header">
-            <div>
-                <span class="admin-report-eyebrow" th:text="#{admin.reports.eyebrow}">SYSTEM OVERVIEW</span>
-                <h1 class="admin-report-title" th:text="#{admin.reports.heading}">Reports &amp; Statistics</h1>
-                <p class="admin-report-description" th:text="#{admin.reports.description}">Track library activity and
-                    export reports.</p>
-            </div>
-            <div class="admin-report-actions" th:aria-label="#{admin.reports.export}">
-                <a class="admin-report-action admin-report-action-secondary"
-                    th:href="@{/admin/reports/export(format='csv', fromDate=${fromDate}, toDate=${toDate})}"><span
-                        th:text="#{admin.reports.exportCsv}">Export CSV</span></a>
-                <a class="admin-report-action admin-report-action-primary"
-                    th:href="@{/admin/reports/export(format='pdf', fromDate=${fromDate}, toDate=${toDate})}"><span
-                        th:text="#{admin.reports.exportPdf}">Export PDF</span></a>
-            </div>
-        </header>
+<div layout:fragment="content" th:with="activeMenu='reports'" class="report-page admin-report-page">
+    <header class="report-page-header report-page-hero">
+        <div class="report-page-heading">
+            <span class="app-page-eyebrow" th:text="#{admin.reports.eyebrow}">SYSTEM OVERVIEW</span>
+            <h1 class="app-page-title" th:text="#{admin.reports.heading}">Reports &amp; Statistics</h1>
+            <p class="app-page-description" th:text="#{admin.reports.description}">Track library activity and export reports.</p>
+        </div>
+        <div class="report-export-actions" th:aria-label="#{admin.reports.export}">
+            <a class="report-action report-action-secondary"
+               th:href="@{/admin/reports/export(format='csv', fromDate=${report.fromDate}, toDate=${report.toDate})}"
+               th:text="#{admin.reports.exportCsv}">Export CSV</a>
+            <a class="report-action report-action-primary"
+               th:href="@{/admin/reports/export(format='pdf', fromDate=${report.fromDate}, toDate=${report.toDate})}"
+               th:text="#{admin.reports.exportPdf}">Export PDF</a>
+        </div>
+    </header>
 
-        <section class="app-card admin-report-filter" aria-labelledby="admin-report-filter-title">
-            <div class="admin-report-section-heading">
-                <h2 id="admin-report-filter-title" th:text="#{admin.reports.period}">Report Period</h2>
-                <p th:text="#{admin.reports.periodHint}">Select a start and end date to update all statistics.</p>
+    <section class="report-filter-card app-card" aria-labelledby="admin-report-filter-title">
+        <div class="report-filter-heading">
+            <h2 id="admin-report-filter-title" class="app-section-title" th:text="#{admin.reports.period}">Report Period</h2>
+            <p class="app-section-description" th:text="#{admin.reports.periodHint}">Select start and end dates.</p>
+        </div>
+        <form class="report-filter-form" method="get" th:action="@{/admin/reports}"
+              data-report-date-filter th:data-max-date="${maxDate}" th:data-max-range-days="${maxReportRangeDays}">
+            <div class="report-filter-field">
+                <label for="adminReportFromDate" th:text="#{common.fromDate}">From Date</label>
+                <input id="adminReportFromDate" type="date" name="fromDate" th:value="${fromDate}"
+                       th:max="${maxDate}" th:classappend="${reportDateError != null} ? ' is-invalid'" required>
             </div>
-            <form class="admin-report-filter-form" method="get" th:action="@{/admin/reports}" data-report-date-filter>
-                <div class="admin-report-field"><label for="adminReportFromDate" th:text="#{common.fromDate}">From
-                        Date</label><input id="adminReportFromDate" type="date" name="fromDate" th:value="${fromDate}"
-                        th:max="${maxDate}"><small class="admin-report-field-error" data-date-error hidden
-                        th:text="#{common.dateRangeInvalid}">Start date must not be later than end date.</small></div>
-                <div class="admin-report-field"><label for="adminReportToDate" th:text="#{common.toDate}">To
-                        Date</label><input id="adminReportToDate" type="date" name="toDate" th:value="${toDate}"
-                        th:max="${maxDate}"></div>
-                <button class="admin-report-action admin-report-action-primary" type="submit"
+            <div class="report-filter-field">
+                <label for="adminReportToDate" th:text="#{common.toDate}">To Date</label>
+                <input id="adminReportToDate" type="date" name="toDate" th:value="${toDate}"
+                       th:max="${maxDate}" th:classappend="${reportDateError != null} ? ' is-invalid'" required>
+                <small class="report-filter-field-error" data-date-error
+                       th:hidden="${reportDateError == null}"
+                       th:text="${reportDateError != null ? reportDateError : #messages.msg('common.dateRangeInvalid')}"
+                       th:data-required-message="#{backend.report.dateRangeRequired}"
+                       th:data-invalid-range-message="#{backend.report.invalidRange}"
+                       th:data-future-message="#{backend.report.futureDate}"
+                       th:data-range-too-large-message="#{backend.report.rangeTooLarge(${maxReportRangeDays})}">
+                    Invalid report period.
+                </small>
+            </div>
+            <button class="report-action report-action-primary report-filter-submit" type="submit"
                     th:text="#{admin.reports.view}">View Report</button>
-            </form>
-        </section>
+        </form>
+    </section>
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
-                    const from = form.querySelector('[name="fromDate"]');
-                    const to = form.querySelector('[name="toDate"]');
-                    const error = form.querySelector('[data-date-error]');
-                    function sync() {
-                        to.min = from.value || '';
-                        if (from.value && to.value && from.value <= to.value) {
-                            error.hidden = true;
-                            from.classList.remove('is-invalid');
-                            to.classList.remove('is-invalid');
-                        }
+    <nav class="admin-report-tabs" role="tablist" th:aria-label="#{admin.reports.sections}">
+        <button type="button" class="admin-report-tab is-active" role="tab" aria-selected="true"
+                aria-controls="admin-report-finance" data-report-tab="finance" th:text="#{admin.reports.financeGroup}">Finance and revenue</button>
+        <button type="button" class="admin-report-tab" role="tab" aria-selected="false"
+                aria-controls="admin-report-circulation" data-report-tab="circulation" th:text="#{admin.reports.circulationGroup}">Loans and reservations</button>
+        <button type="button" class="admin-report-tab" role="tab" aria-selected="false"
+                aria-controls="admin-report-books" data-report-tab="books" th:text="#{admin.reports.booksGroup}">Books and inventory</button>
+        <button type="button" class="admin-report-tab" role="tab" aria-selected="false"
+                aria-controls="admin-report-members" data-report-tab="members" th:text="#{admin.reports.membersGroup}">Members</button>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-report-date-filter]').forEach(function (form) {
+                const from = form.querySelector('[name="fromDate"]');
+                const to = form.querySelector('[name="toDate"]');
+                const error = form.querySelector('[data-date-error]');
+                const maxDate = form.dataset.maxDate;
+                const maxRangeDays = Number(form.dataset.maxRangeDays);
+                const millisecondsPerDay = 24 * 60 * 60 * 1000;
+                function addDays(value, days) {
+                    const date = new Date(value + 'T00:00:00Z');
+                    date.setUTCDate(date.getUTCDate() + days);
+                    return date.toISOString().slice(0, 10);
+                }
+                function setError(message) {
+                    error.textContent = message || '';
+                    error.hidden = !message;
+                    from.classList.toggle('is-invalid', Boolean(message));
+                    to.classList.toggle('is-invalid', Boolean(message));
+                }
+                function syncLimits() {
+                    from.max = to.value && to.value < maxDate ? to.value : maxDate;
+                    to.min = from.value || '';
+                    to.max = from.value ? [maxDate, addDays(from.value, maxRangeDays)].sort()[0] : maxDate;
+                    from.min = to.value ? addDays(to.value, -maxRangeDays) : '';
+                }
+                function validateRange() {
+                    if (!from.value || !to.value) {
+                        setError(error.dataset.requiredMessage);
+                        return false;
                     }
-                    from.addEventListener('change', sync);
-                    to.addEventListener('change', sync);
-                    form.addEventListener('submit', function (event) {
-                        if (from.value && to.value && from.value > to.value) {
-                            event.preventDefault();
-                            error.hidden = false;
-                            from.classList.add('is-invalid');
-                            to.classList.add('is-invalid');
-                        }
-                    });
-                    sync();
+                    if (from.value > maxDate || to.value > maxDate) {
+                        setError(error.dataset.futureMessage);
+                        return false;
+                    }
+                    if (from.value > to.value) {
+                        setError(error.dataset.invalidRangeMessage);
+                        return false;
+                    }
+                    if ((Date.parse(to.value) - Date.parse(from.value)) / millisecondsPerDay > maxRangeDays) {
+                        setError(error.dataset.rangeTooLargeMessage);
+                        return false;
+                    }
+                    setError('');
+                    return true;
+                }
+                from.addEventListener('change', function () { syncLimits(); validateRange(); });
+                to.addEventListener('change', function () { syncLimits(); validateRange(); });
+                form.addEventListener('submit', function (event) {
+                    syncLimits();
+                    if (!validateRange()) event.preventDefault();
                 });
+                syncLimits();
+                if (!error.hidden) validateRange();
             });
-        </script>
 
-        <section class="admin-report-kpi-grid" th:aria-label="#{admin.reports.mainMetrics}">
-            <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i
-                        class="bi bi-journal-text"></i></span>
-                <div>
-                    <p th:text="#{admin.reports.loans}">Loans</p><strong class="app-stat-number"
-                        th:text="${@displayNumber.count(report.totalBorrows)}">0</strong><small
-                        th:text="#{admin.reports.loansHint}">Loans in the report period</small>
-                </div>
-            </article>
-            <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i
-                        class="bi bi-bookshelf"></i></span>
-                <div>
-                    <p th:text="#{admin.reports.borrowedCopies}">Borrowed Copies</p><strong class="app-stat-number"
-                        th:text="${@displayNumber.count(report.totalBorrowedItems)}">0</strong><small
-                        th:text="#{admin.reports.borrowedCopiesHint}">Total copies borrowed</small>
-                </div>
-            </article>
-            <article class="app-card admin-report-kpi admin-report-kpi-danger"><span class="admin-report-kpi-icon"><i
-                        class="bi bi-exclamation-circle"></i></span>
-                <div>
-                    <p th:text="#{admin.reports.overdue}">Overdue</p><strong class="app-stat-number"
-                        th:text="${@displayNumber.count(report.overdueItems)}">0</strong><small
-                        th:text="#{admin.reports.overdueHint}">Records currently overdue</small>
-                </div>
-            </article>
-            <article class="app-card admin-report-kpi"><span class="admin-report-kpi-icon"><i
-                        class="bi bi-cash-coin"></i></span>
-                <div>
-                    <p th:text="#{admin.reports.revenue}">Revenue</p><strong class="app-stat-number app-money"><span
-                            class="app-money-value"
-                            th:text="${@displayNumber.moneyOrZero(report.totalRevenue)}">0</span><span
-                            class="app-money-currency" th:text="#{currency.vnd}">VND</span></strong><small
-                        th:text="#{admin.reports.revenueHint}">Completed transactions</small>
-                </div>
-            </article>
-        </section>
+            const tabs = document.querySelectorAll('[data-report-tab]');
+            const panels = document.querySelectorAll('[data-report-panel]');
+            function showPanel(name) {
+                tabs.forEach(function (tab) {
+                    const selected = tab.dataset.reportTab === name;
+                    tab.classList.toggle('is-active', selected);
+                    tab.setAttribute('aria-selected', String(selected));
+                });
+                panels.forEach(function (panel) {
+                    panel.hidden = panel.dataset.reportPanel !== name;
+                });
+            }
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () { showPanel(tab.dataset.reportTab); });
+            });
+        });
+    </script>
 
-        <section class="admin-report-secondary-grid" th:aria-label="#{admin.reports.additionalMetrics}">
-            <article class="app-card">
-                <p th:text="#{admin.reports.onTime}">On-time Returns</p><strong class="app-stat-number"
-                    th:text="${@displayNumber.count(report.onTimeReturns)}">0</strong>
+    <section id="admin-report-finance" class="report-overview-panel app-card admin-report-group" data-report-panel="finance" role="tabpanel" aria-labelledby="admin-finance-title">
+        <div class="report-section-heading">
+            <h2 id="admin-finance-title" class="app-section-title" th:text="#{admin.reports.financeGroup}">Finance and revenue</h2>
+            <p class="app-section-description" th:text="#{admin.reports.financeGroupHint}">Revenue and completed financial transactions in the selected period.</p>
+        </div>
+        <div class="report-finance-grid" th:aria-label="#{librarian.report.revenueMetrics}">
+            <a class="report-finance-card report-finance-card--revenue report-drilldown-card app-card" th:href="@{/librarian/members/transactions(status='Completed',fromDate=${report.fromDate},toDate=${report.toDate})}"><div class="report-finance-heading"><span class="report-finance-icon"><i class="bi bi-cash-stack"></i></span><p class="report-stat-label" th:text="#{librarian.report.totalRevenue}">Revenue</p></div><strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong></a>
+            <a class="report-finance-card report-finance-card--refund report-drilldown-card app-card" th:href="@{/librarian/members/transactions(type='REFUND',status='Completed',fromDate=${report.fromDate},toDate=${report.toDate})}"><div class="report-finance-heading"><span class="report-finance-icon"><i class="bi bi-arrow-counterclockwise"></i></span><p class="report-stat-label" th:text="#{librarian.report.totalRefunds}">Refunds</p></div><strong class="report-finance-value report-finance-value--money report-refund-value"><span th:text="${#numbers.formatDecimal(report.totalRefunds, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong><small class="report-metric-hint" th:text="#{librarian.report.refundHint}">Separate from revenue.</small></a>
+            <a class="report-finance-card report-finance-card--transactions report-drilldown-card app-card" th:href="@{/librarian/members/transactions(status='Completed',fromDate=${report.fromDate},toDate=${report.toDate})}"><div class="report-finance-heading"><span class="report-finance-icon"><i class="bi bi-receipt"></i></span><p class="report-stat-label" th:text="#{librarian.report.transactionCount}">Transactions</p></div><strong class="report-finance-value" th:text="${report.totalTransactions}">0</strong></a>
+            <a class="report-finance-card report-finance-card--average report-drilldown-card app-card" th:href="@{/librarian/members/transactions(status='Completed',fromDate=${report.fromDate},toDate=${report.toDate})}"><div class="report-finance-heading"><span class="report-finance-icon"><i class="bi bi-calculator"></i></span><p class="report-stat-label" th:text="#{librarian.report.averageTransaction}">Average</p></div><strong class="report-finance-value report-finance-value--money"><span th:text="${#numbers.formatDecimal(report.averageTransaction, 0, 'COMMA', 0, 'POINT')}">0</span><span class="report-currency-unit" th:text="#{currency.vnd}">VND</span></strong></a>
+        </div>
+        <div class="report-table-grid admin-report-nested-grid">
+            <article class="app-card report-table-card">
+                <header class="report-card-header"><div><h3 class="app-section-title" th:text="#{librarian.report.byType}">Revenue by type</h3><p class="app-section-description" th:text="#{librarian.report.byTypeDescription}">Completed fees only.</p></div></header>
+                <div class="app-table-wrap report-responsive-table-wrap"><table class="app-table report-table"><thead><tr><th th:text="#{transaction.type}">Type</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{transaction.amount}">Amount</th></tr></thead><tbody>
+                <tr th:each="item : ${report.transactionBreakdown}"><td class="report-primary-cell" th:data-label="#{transaction.type}" th:text="${item.label}">Fee</td><td class="report-number-column" th:data-label="#{librarian.report.transactionCount}" th:text="${item.count}">0</td><td class="report-number-column" th:data-label="#{transaction.amount}"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td></tr>
+                <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}"><td colspan="3"><div class="app-empty-state"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div></td></tr>
+                </tbody></table></div>
             </article>
-            <article class="app-card admin-report-value-danger">
-                <p th:text="#{admin.reports.late}">Late Returns</p><strong class="app-stat-number"
-                    th:text="${@displayNumber.count(report.lateReturns)}">0</strong>
+            <article class="app-card report-table-card">
+                <header class="report-card-header"><div><h3 class="app-section-title" th:text="#{librarian.report.monthly}">Monthly revenue</h3><p class="app-section-description" th:text="#{librarian.report.monthlyDescription}">Revenue by month.</p></div></header>
+                <div class="app-table-wrap report-responsive-table-wrap"><table class="app-table report-table"><thead><tr><th th:text="#{librarian.report.month}">Month</th><th class="report-number-column" th:text="#{librarian.report.transactionCount}">Transactions</th><th class="report-number-column" th:text="#{admin.dashboard.revenue}">Revenue</th></tr></thead><tbody>
+                <tr th:each="item : ${report.monthlyRevenueStats}"><td class="report-primary-cell" th:data-label="#{librarian.report.month}" th:text="${item.label}">07/2026</td><td class="report-number-column" th:data-label="#{librarian.report.transactionCount}" th:text="${item.count}">0</td><td class="report-number-column" th:data-label="#{admin.dashboard.revenue}"><span th:text="${#numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT')}">0</span> <span th:text="#{currency.vnd}">VND</span></td></tr>
+                </tbody></table></div>
             </article>
-            <article class="app-card">
-                <p th:text="#{common.member}">Members</p><strong class="app-stat-number"
-                    th:text="${@displayNumber.count(report.totalMembers)}">0</strong>
-            </article>
-            <article class="app-card">
-                <p th:text="#{admin.reports.activeAvailable}">Active Titles / Available Copies</p><strong
-                    class="app-stat-number"><span th:text="${@displayNumber.count(report.activeBooks)}">0</span><span
-                        class="admin-report-divider">/</span><span
-                        th:text="${@displayNumber.count(report.availableItems)}">0</span></strong>
-            </article>
-        </section>
+        </div>
+        <p class="report-generated-at"><span th:text="#{librarian.report.generatedAt}">Generated at</span>: <time th:datetime="${report.generatedAt}" th:text="${#temporals.format(report.generatedAt, 'dd/MM/yyyy HH:mm')}">--</time></p>
+    </section>
 
-        <section class="admin-report-content-grid">
-            <article class="app-card admin-report-panel">
-                <header class="admin-report-panel-header">
-                    <div>
-                        <h2 th:text="#{admin.reports.revenueByType}">Revenue by Transaction Type</h2>
-                        <p th:text="#{admin.reports.revenueByTypeHint}">Count and amount by revenue source.</p>
-                    </div><i class="bi bi-cash-coin"></i>
-                </header>
-                <div class="app-table-wrap">
-                    <table class="app-table">
-                        <thead>
-                            <tr>
-                                <th th:text="#{transaction.type}">Type</th>
-                                <th class="admin-report-number" th:text="#{admin.reports.transactionCount}">Transactions
-                                </th>
-                                <th class="admin-report-number" th:text="#{common.amount}">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="item : ${report.transactionBreakdown}">
-                                <td class="admin-report-primary-cell" th:text="${item.label}">Top Up</td>
-                                <td class="admin-report-number app-number-cell"
-                                    th:text="${@displayNumber.count(item.count)}">0</td>
-                                <td class="admin-report-number app-number-cell"><span class="app-money"><span
-                                            class="app-money-value"
-                                            th:text="${@displayNumber.moneyOrZero(item.amount)}">0</span><span
-                                            class="app-money-currency" th:text="#{currency.vnd}">VND</span></span></td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(report.transactionBreakdown)}">
-                                <td colspan="3">
-                                    <div class="admin-report-empty"><i class="bi bi-inbox"></i><span
-                                            th:text="#{admin.reports.noData}">No data.</span></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </article>
+    <section id="admin-report-circulation" class="report-overview-panel app-card admin-report-group" data-report-panel="circulation" role="tabpanel" aria-labelledby="admin-circulation-title" hidden>
+        <div class="report-section-heading">
+            <h2 id="admin-circulation-title" class="app-section-title" th:text="#{admin.reports.circulationGroup}">Loans and reservations</h2>
+            <p class="app-section-description" th:text="#{admin.reports.circulationGroupHint}">Current service workload and circulation activity.</p>
+        </div>
+        <div class="report-stat-grid">
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/librarian/borrow/list(status='Active')}"><span class="report-stat-icon"><i class="bi bi-journal-arrow-up"></i></span><div><p class="report-stat-label" th:text="#{admin.dashboard.activeLoans}">Active Loans</p><strong class="report-stat-value" th:text="${report.activeBorrows}">0</strong></div></a>
+            <a class="report-stat-card report-drilldown-card app-card report-stat-card-danger" th:href="@{/librarian/borrow/list(status='Overdue')}"><span class="report-stat-icon"><i class="bi bi-exclamation-circle"></i></span><div><p class="report-stat-label" th:text="#{loan.status.overdue}">Overdue</p><strong class="report-stat-value" th:text="${report.overdueItems}">0</strong></div></a>
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/librarian/borrow/create(tab='reservations',reservationStatus='PENDING')}"><span class="report-stat-icon"><i class="bi bi-hourglass-split"></i></span><div><p class="report-stat-label" th:text="#{librarian.report.pendingReservations}">Pending approval</p><strong class="report-stat-value" th:text="${report.pendingReservationRequests}">0</strong></div></a>
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/librarian/borrow/create(tab='reservations',reservationStatus='READY')}"><span class="report-stat-icon"><i class="bi bi-bag-check"></i></span><div><p class="report-stat-label" th:text="#{librarian.report.readyReservations}">Ready for pickup</p><strong class="report-stat-value" th:text="${report.readyReservations}">0</strong></div></a>
+        </div>
+        <div class="report-section-heading admin-report-subsection-heading">
+            <h3 class="app-section-title" th:text="#{admin.reports.periodActivity}">Activity in selected period</h3>
+            <p class="app-section-description" th:text="#{admin.reports.periodActivityHint}">Circulation indicators in the selected period.</p>
+        </div>
+        <div class="report-stat-grid admin-report-four-grid">
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/librarian/borrow/list}"><span class="report-stat-icon"><i class="bi bi-journal-text"></i></span><div><p class="report-stat-label" th:text="#{admin.reports.loans}">Loans</p><strong class="report-stat-value" th:text="${report.totalBorrows}">0</strong></div></a>
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/admin/books(subsection='inventory',tab='audit',bookItemStatus='Borrowed')}"><span class="report-stat-icon"><i class="bi bi-bookshelf"></i></span><div><p class="report-stat-label" th:text="#{admin.reports.borrowedCopies}">Borrowed copies</p><strong class="report-stat-value" th:text="${report.totalBorrowedItems}">0</strong></div></a>
+        </div>
+        <article class="app-card report-table-card admin-report-inline-panel">
+            <header class="report-card-header"><div><h3 class="app-section-title" th:text="#{admin.reports.monthlyLoans}">Loans by month</h3><p class="app-section-description" th:text="#{admin.reports.monthlyLoansHint}">Loan distribution.</p></div></header>
+            <div class="app-table-wrap report-responsive-table-wrap"><table class="app-table report-table"><thead><tr><th th:text="#{librarian.report.month}">Month</th><th class="report-number-column" th:text="#{admin.reports.loans}">Loans</th></tr></thead><tbody>
+            <tr th:each="item : ${report.monthlyBorrowStats}"><td class="report-primary-cell" th:data-label="#{librarian.report.month}" th:text="${item.label}">07/2026</td><td class="report-number-column" th:data-label="#{admin.reports.loans}" th:text="${item.count}">0</td></tr>
+            </tbody></table></div>
+        </article>
+    </section>
 
-            <article class="app-card admin-report-panel">
-                <header class="admin-report-panel-header">
-                    <div>
-                        <h2 th:text="#{admin.reports.monthlyLoans}">Loans by Month</h2>
-                        <p th:text="#{admin.reports.monthlyLoansHint}">Loan distribution during the report period.</p>
-                    </div><i class="bi bi-calendar3"></i>
-                </header>
-                <div class="admin-report-bars">
-                    <div th:each="item : ${report.monthlyBorrowStats}" class="admin-report-bar-row"><span
-                            class="admin-report-bar-label app-date-time" th:text="${item.label}">07/2026</span>
-                        <div class="admin-report-bar-track">
-                            <div class="report-console-borrow-bar"
-                                th:data-presentation-width="${item.count > 0 ? (item.count * 100 / (report.totalBorrows > 0 ? report.totalBorrows : 1)) : 2}">
-                            </div>
-                        </div><strong class="app-stat-number" th:text="${@displayNumber.count(item.count)}">0</strong>
-                    </div>
-                    <div class="admin-report-empty" th:if="${#lists.isEmpty(report.monthlyBorrowStats)}"><i
-                            class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
-                </div>
-            </article>
+    <section id="admin-report-books" class="report-overview-panel app-card admin-report-group" data-report-panel="books" role="tabpanel" aria-labelledby="admin-books-title" hidden>
+        <div class="report-section-heading">
+            <h2 id="admin-books-title" class="app-section-title" th:text="#{admin.reports.booksGroup}">Books and inventory</h2>
+            <p class="app-section-description" th:text="#{admin.reports.booksGroupHint}">Current collection availability and most borrowed titles.</p>
+        </div>
+        <div class="report-stat-grid admin-report-inventory-grid">
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/admin/books(subsection='inventory')}"><span class="report-stat-icon"><i class="bi bi-book"></i></span><div><p class="report-stat-label" th:text="#{admin.reports.activeTitles}">Active titles</p><strong class="report-stat-value" th:text="${report.activeBooks}">0</strong></div></a>
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/admin/books(subsection='inventory',tab='audit',bookItemStatus='Available')}"><span class="report-stat-icon"><i class="bi bi-box-seam"></i></span><div><p class="report-stat-label" th:text="#{admin.reports.availableCopies}">Available copies</p><strong class="report-stat-value" th:text="${report.availableItems}">0</strong></div></a>
+        </div>
+        <article class="app-card report-table-card admin-report-inline-panel">
+            <header class="report-card-header"><div><h3 class="app-section-title" th:text="#{admin.reports.topBooks}">Most borrowed books</h3><p class="app-section-description" th:text="#{admin.reports.topBooksHint}">Popular titles.</p></div></header>
+            <div class="admin-report-ranking"><div th:each="item, stat : ${report.topBooks}" class="admin-report-rank-row"><span class="admin-report-rank-number" th:text="${stat.index + 1}">1</span><span class="admin-report-rank-label" th:text="${item.label}">Book</span><span class="admin-report-rank-count" th:text="#{admin.reports.borrowCount(${item.count})}">0 borrows</span></div><div class="app-empty-state" th:if="${#lists.isEmpty(report.topBooks)}"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div></div>
+        </article>
+    </section>
 
-            <article class="app-card admin-report-panel">
-                <header class="admin-report-panel-header">
-                    <div>
-                        <h2 th:text="#{admin.reports.topBooks}">Most Borrowed Books</h2>
-                        <p th:text="#{admin.reports.topBooksHint}">The most popular titles.</p>
-                    </div><i class="bi bi-trophy"></i>
-                </header>
-                <div class="admin-report-ranking">
-                    <div th:each="item, stat : ${report.topBooks}" class="admin-report-rank-row"><span
-                            class="admin-report-rank-number app-number"
-                            th:text="${@displayNumber.count(stat.index + 1)}">1</span><span
-                            class="admin-report-rank-label" th:text="${item.label}">Book</span><span
-                            class="admin-report-rank-count app-number"
-                            th:text="#{admin.reports.borrowCount(${@displayNumber.count(item.count)})}">0 borrows</span>
-                    </div>
-                    <div class="admin-report-empty" th:if="${#lists.isEmpty(report.topBooks)}"><i
-                            class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
-                </div>
-            </article>
-
-            <article class="app-card admin-report-panel">
-                <header class="admin-report-panel-header">
-                    <div>
-                        <h2 th:text="#{admin.reports.topMembers}">Top Borrowing Members</h2>
-                        <p th:text="#{admin.reports.topMembersHint}">Members with notable borrowing activity.</p>
-                    </div><i class="bi bi-people"></i>
-                </header>
-                <div class="admin-report-ranking">
-                    <div th:each="item, stat : ${report.topMembers}" class="admin-report-rank-row"><span
-                            class="admin-report-rank-number app-number"
-                            th:text="${@displayNumber.count(stat.index + 1)}">1</span><span
-                            class="admin-report-rank-label" th:text="${item.label}">Member</span><span
-                            class="admin-report-rank-count app-number"
-                            th:text="#{admin.reports.bookCount(${@displayNumber.count(item.count)})}">0 books</span>
-                    </div>
-                    <div class="admin-report-empty" th:if="${#lists.isEmpty(report.topMembers)}"><i
-                            class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div>
-                </div>
-            </article>
-        </section>
-    </div>
+    <section id="admin-report-members" class="report-overview-panel app-card admin-report-group" data-report-panel="members" role="tabpanel" aria-labelledby="admin-members-title" hidden>
+        <div class="report-section-heading">
+            <h2 id="admin-members-title" class="app-section-title" th:text="#{admin.reports.membersGroup}">Members</h2>
+            <p class="app-section-description" th:text="#{admin.reports.membersGroupHint}">Registered members and notable borrowing activity.</p>
+        </div>
+        <div class="report-stat-grid admin-report-member-grid">
+            <a class="report-stat-card report-drilldown-card app-card" th:href="@{/admin/member-list}"><span class="report-stat-icon"><i class="bi bi-people"></i></span><div><p class="report-stat-label" th:text="#{librarian.report.registeredMembers}">Registered members</p><strong class="report-stat-value" th:text="${report.totalMembers}">0</strong></div></a>
+        </div>
+        <article class="app-card report-table-card admin-report-inline-panel">
+            <header class="report-card-header"><div><h3 class="app-section-title" th:text="#{admin.reports.topMembers}">Top borrowing members</h3><p class="app-section-description" th:text="#{admin.reports.topMembersHint}">Notable borrowing activity.</p></div></header>
+            <div class="admin-report-ranking"><div th:each="item, stat : ${report.topMembers}" class="admin-report-rank-row"><span class="admin-report-rank-number" th:text="${stat.index + 1}">1</span><span class="admin-report-rank-label" th:text="${item.label}">Member</span><span class="admin-report-rank-count" th:text="#{admin.reports.bookCount(${item.count})}">0 books</span></div><div class="app-empty-state" th:if="${#lists.isEmpty(report.topMembers)}"><i class="bi bi-inbox"></i><span th:text="#{admin.reports.noData}">No data.</span></div></div>
+        </article>
+    </section>
+</div>
 </body>
-
 </html>
