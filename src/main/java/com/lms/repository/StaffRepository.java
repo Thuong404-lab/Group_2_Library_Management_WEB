@@ -58,7 +58,6 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
                         "WHERE (:status IS NULL OR s.user.status = :status) " +
                         "AND (:staffType = '' OR LOWER(s.staffType) = LOWER(:staffType)) " +
                         "AND (:keyword = '' " +
-                        "OR LOWER(s.staffType) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(s.user.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(s.user.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                         "OR LOWER(s.user.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
