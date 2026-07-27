@@ -98,14 +98,14 @@
             </div>
 
             <div class="payos-receipt-actions">
-                <form th:if="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}"
-                      id="cancelBorrowPaymentForm"
+                <form th:if="${(payment.purpose == 'TOP_UP' or payment.purpose == 'BORROW_FEE' or payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') and payment.status == 'PENDING'}"
+                      id="cancelPaymentForm"
                       th:action="@{/librarian/payments/payos/{orderCode}/cancel(orderCode=${payment.orderCode})}"
                       method="post">
                     <button type="button" class="payos-btn-secondary" data-cancel-payment-open
                             th:text="#{librarian.payos.cancel}">Cancel payment</button>
                 </form>
-                <a th:unless="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}"
+                <a th:unless="${(payment.purpose == 'TOP_UP' or payment.purpose == 'BORROW_FEE' or payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') and payment.status == 'PENDING'}"
                    th:href="@{${payment.purpose == 'TOP_UP' ? '/librarian/members/topup' : ((payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') ? '/librarian/members/fines' : '/librarian/borrow/create')}}"
                    class="payos-btn-secondary"
                    th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.backTopup') : ((payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') ? #messages.msg('librarian.payos.backFines') : #messages.msg('librarian.payos.backBorrow'))}">Back</a>
@@ -118,7 +118,7 @@
              th:aria-label="#{librarian.payos.cancel}">
             <div class="payment-confirm-icon"><i class="bi bi-exclamation-triangle"></i></div>
             <h3 th:text="#{librarian.payos.cancel}">Cancel payment</h3>
-            <p th:text="#{librarian.payos.cancelConfirm}">Cancel this payment?</p>
+            <p th:text="${payment.purpose == 'TOP_UP' ? #messages.msg('librarian.payos.cancelTopUpConfirm') : (payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH' ? #messages.msg('librarian.payos.cancelFineConfirm') : #messages.msg('librarian.payos.cancelConfirm'))}">Cancel this payment?</p>
             <div class="payment-confirm-actions">
                 <button type="button" class="payos-btn-secondary" data-cancel-payment-close
                         th:text="#{common.cancel}">Keep payment</button>
@@ -145,10 +145,10 @@
             }, 5000);
         })();
     </script>
-    <script th:if="${payment.purpose == 'BORROW_FEE' and payment.status == 'PENDING'}">
+    <script th:if="${(payment.purpose == 'TOP_UP' or payment.purpose == 'BORROW_FEE' or payment.purpose == 'FINE' or payment.purpose == 'FINE_BATCH') and payment.status == 'PENDING'}">
         (() => {
             const modal = document.querySelector('[data-cancel-payment-modal]');
-            const form = document.getElementById('cancelBorrowPaymentForm');
+            const form = document.getElementById('cancelPaymentForm');
             const open = document.querySelector('[data-cancel-payment-open]');
             const close = document.querySelector('[data-cancel-payment-close]');
             const confirm = document.querySelector('[data-cancel-payment-confirm]');

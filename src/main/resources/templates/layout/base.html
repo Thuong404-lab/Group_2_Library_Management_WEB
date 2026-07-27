@@ -24,11 +24,11 @@
   <link rel="stylesheet" th:href="@{/css/layouts/base.css}" />
   <link rel="stylesheet" th:href="@{/css/components/footer.css}" />
   <link rel="stylesheet" th:href="@{/css/components/header.css}" />
-  <link rel="stylesheet" th:href="@{/css/components/language-switcher.css}" />
+  <link rel="stylesheet" th:href="@{/css/components/language-switcher.css(v='20260727-1')}" />
   <link rel="stylesheet" th:href="@{/css/components/confirmation-dialog.css}" />
   <link rel="stylesheet" th:href="@{/css/utilities.css}" />
   <th:block layout:fragment="styles"></th:block>
-  <link rel="stylesheet" th:href="@{/css/components/feedback-toast.css(v='20260724-1')}" />
+  <link rel="stylesheet" th:href="@{/css/components/feedback-toast.css(v='20260727-compact')}" />
 </head>
 
 <body class="bg-classic app-shell app-shell--public">
@@ -58,7 +58,6 @@
   <div id="publicFeedbackSources" hidden aria-hidden="true">
     <span th:if="${error != null}" data-app-feedback="error" th:text="${error}"></span>
     <span th:if="${errorMessage != null}" data-app-feedback="error" th:text="${errorMessage}"></span>
-    <span th:if="${passwordError != null}" data-app-feedback="error" th:text="${passwordError}"></span>
     <span th:if="${success != null}" data-app-feedback="success" th:text="${success}"></span>
     <span th:if="${successMessage != null}" data-app-feedback="success" th:text="${successMessage}"></span>
     <span th:if="${passwordSuccess != null}" data-app-feedback="success" th:text="${passwordSuccess}"></span>
@@ -154,7 +153,12 @@
           ".app-alert--success",
           ".app-alert--danger",
           ".finance-alert--success",
-          ".finance-alert--danger"
+          ".finance-alert--danger",
+          ".member-notifications-alert.is-success",
+          ".member-notifications-alert.is-error",
+          ".member-alert.is-success",
+          ".member-alert.is-error",
+          ".member-benefits-alert"
         ].join(","))).filter(function (element) {
           if (element.hasAttribute("data-app-feedback")) {
             return element.textContent.trim().length > 0;
@@ -169,12 +173,12 @@
         if (legacyFeedback.length > 0) {
           var selected = legacyFeedback.find(function (element) {
             return element.dataset.appFeedback === "error"
-              || element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger");
+              || element.matches(".alert-danger,.app-alert--danger,.finance-alert--danger,.member-notifications-alert.is-error,.member-alert.is-error,.member-benefits-alert");
           }) || legacyFeedback.find(function (element) {
             return element.dataset.appFeedback === "warning";
           }) || legacyFeedback[0];
           var tone = selected.dataset.appFeedback
-            || (selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger")
+            || (selected.matches(".alert-danger,.app-alert--danger,.finance-alert--danger,.member-notifications-alert.is-error,.member-alert.is-error,.member-benefits-alert")
               ? "error"
               : "success");
           var message = selected.textContent.trim();
@@ -390,41 +394,8 @@
         badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
       }
 
-      var latestNotificationId = Number(notificationToggle.dataset.latestNotificationId) || 0;
-      var notificationMemberKey = notificationToggle.dataset.memberKey || "member";
-      var notificationSeenStorageKey = "lms.notification.lastSeenId." + notificationMemberKey;
-
-      function getLastSeenNotificationId() {
-        try {
-          return Number(window.localStorage.getItem(notificationSeenStorageKey)) || 0;
-        } catch (error) {
-          return 0;
-        }
-      }
-
-      function rememberNotificationsAsSeen() {
-        try {
-          window.localStorage.setItem(notificationSeenStorageKey, String(latestNotificationId));
-        } catch (error) {
-          console.debug("Notification badge state could not be stored.", error);
-        }
-        updateNotificationBadge(0);
-      }
-
-      var lastSeenNotificationId = getLastSeenNotificationId();
-      if (latestNotificationId > 0 && lastSeenNotificationId >= latestNotificationId) {
-        updateNotificationBadge(0);
-      } else if (lastSeenNotificationId > 0) {
-        var unseenCount = Array.from(
-          notificationDropdown.querySelectorAll(".member-notification-item.is-unread[data-notification-id]")
-        ).filter(function (item) {
-          return Number(item.dataset.notificationId) > lastSeenNotificationId;
-        }).length;
-        updateNotificationBadge(unseenCount);
-      }
-
       notificationToggle.addEventListener("click", function () {
-        rememberNotificationsAsSeen();
+        updateNotificationBadge(0);
       });
 
       function notificationRequestHeaders() {

@@ -28,6 +28,8 @@ import java.util.Locale;
 @RequestMapping("/member/cart")
 public class CartController extends LocalizedControllerSupport {
 
+    private static final String CART_SUBMISSION_TOKEN = "memberCartSubmissionToken";
+
     private final CartService cartService;
     private final BorrowService borrowService;
     private final BookService bookService;
@@ -118,7 +120,7 @@ public class CartController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("error", errorMessage);
             return org.springframework.http.ResponseEntity
                     .status(org.springframework.http.HttpStatus.SEE_OTHER)
-                    .location(java.net.URI.create(referer != null && !referer.isBlank() ? referer : "/books/" + bookId))
+                    .location(java.net.URI.create(localRedirectTarget(referer, "/books/" + bookId)))
                     .build();
         }
 
@@ -134,7 +136,7 @@ public class CartController extends LocalizedControllerSupport {
         redirectAttributes.addFlashAttribute("success", successMessage);
         return org.springframework.http.ResponseEntity
                 .status(org.springframework.http.HttpStatus.SEE_OTHER)
-                .location(java.net.URI.create(referer != null && !referer.isBlank() ? referer : "/books/" + bookId))
+                .location(java.net.URI.create(localRedirectTarget(referer, "/books/" + bookId)))
                 .build();
     }
 
@@ -151,7 +153,7 @@ public class CartController extends LocalizedControllerSupport {
             return "redirect:/login";
 
         Member member = memberRepository.findByAccountUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException(message("backend.cart.memberNotFound")));
+                .orElseThrow(() -> new ResourceNotFoundException(message("backend.cart.memberNotFound")));
         int remainingBorrowLimit = getRemainingBorrowLimit(member);
         trimCartToBorrowLimit(session, remainingBorrowLimit);
 
@@ -242,8 +244,7 @@ public class CartController extends LocalizedControllerSupport {
                 .collect(java.util.stream.Collectors.groupingBy(
                         java.util.function.Function.identity(),
                         java.util.stream.Collectors.counting()));
-        boolean selectionMatchesCart = !requestedCounts.isEmpty() && requestedCounts.entrySet().stream()
-                .allMatch(entry -> cartBookIds.contains(entry.getKey()));
+        boolean selectionMatchesCart = selectionMatchesCart(requestedCounts, cartBookIds);
         if (!selectionMatchesCart) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
             return "redirect:/member/cart";
@@ -280,6 +281,9 @@ public class CartController extends LocalizedControllerSupport {
         model.addAttribute("totalFee", previewFee);
         model.addAttribute("walletBalance", walletBalance);
         model.addAttribute("afterBalance", walletBalance.subtract(previewFee));
+        String submissionToken = java.util.UUID.randomUUID().toString();
+        session.setAttribute(CART_SUBMISSION_TOKEN, submissionToken);
+        model.addAttribute("cartSubmissionToken", submissionToken);
         return "member/cart-checkout";
     }
 
@@ -287,6 +291,7 @@ public class CartController extends LocalizedControllerSupport {
     public String submitCartRequest(@RequestParam("numberOfDays") Integer numberOfDays,
             @RequestParam(value = "selectedBookIds", required = false) List<Integer> selectedBookIds,
             @RequestParam(value = "paymentMethod", defaultValue = "WALLET") String paymentMethod,
+            @RequestParam(value = "submissionToken", required = false) String submissionToken,
             HttpSession session, Principal principal, RedirectAttributes redirectAttributes) {
         if (principal == null)
             return "redirect:/login";
@@ -295,9 +300,24 @@ public class CartController extends LocalizedControllerSupport {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.missingSelection"));
             return "redirect:/member/cart";
         }
+        synchronized (session) {
+            Object expectedToken = session.getAttribute(CART_SUBMISSION_TOKEN);
+            if (submissionToken == null || !submissionToken.equals(expectedToken)) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.submissionExpired"));
+                return "redirect:/member/cart";
+            }
+            session.removeAttribute(CART_SUBMISSION_TOKEN);
+        }
+        List<Integer> normalizedSelectedBookIds = selectedBookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        if (normalizedSelectedBookIds.size() != selectedBookIds.size()) {
+            redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
+            return "redirect:/member/cart";
+        }
         Member member = memberRepository.findByAccountUsername(principal.getName())
                 .orElseThrow(() -> new ResourceNotFoundException(message("backend.cart.memberNotFound")));
-        if (selectedBookIds.stream().filter(java.util.Objects::nonNull).count() > getRemainingBorrowLimit(member)) {
+        if (normalizedSelectedBookIds.size() > getRemainingBorrowLimit(member)) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.borrow.tierLimitExceeded"));
             return "redirect:/member/cart";
         }
@@ -314,13 +334,11 @@ public class CartController extends LocalizedControllerSupport {
         List<Integer> cartBookIds = session.getAttribute("BOOK_CART") instanceof List<?>
                 ? (List<Integer>) session.getAttribute("BOOK_CART")
                 : List.of();
-        java.util.Map<Integer, Long> selectedCounts = selectedBookIds.stream()
-                .filter(java.util.Objects::nonNull)
+        java.util.Map<Integer, Long> selectedCounts = normalizedSelectedBookIds.stream()
                 .collect(java.util.stream.Collectors.groupingBy(
                         java.util.function.Function.identity(),
                         java.util.stream.Collectors.counting()));
-        boolean allInCart = !selectedCounts.isEmpty() && selectedCounts.entrySet().stream()
-                .allMatch(entry -> cartBookIds.contains(entry.getKey()));
+        boolean allInCart = selectionMatchesCart(selectedCounts, cartBookIds);
 
         if (!allInCart) {
             redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidSelection"));
@@ -331,7 +349,8 @@ public class CartController extends LocalizedControllerSupport {
         }
 
         try {
-            BigDecimal previewFee = borrowService.calculateBorrowFeePreview(principal.getName(), selectedBookIds, numberOfDays);
+            BigDecimal previewFee = borrowService.calculateBorrowFeePreview(
+                    principal.getName(), normalizedSelectedBookIds, numberOfDays);
             BigDecimal walletBalance = walletRepository.findByMemberMemberId(member.getMemberId())
                     .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
                     .orElse(BigDecimal.ZERO);
@@ -343,8 +362,9 @@ public class CartController extends LocalizedControllerSupport {
                     return "redirect:/member/cart";
                 }
 
-                borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
-                selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+                borrowService.memberSubmitMultiBookBorrowRequest(
+                        principal.getName(), normalizedSelectedBookIds, numberOfDays);
+                normalizedSelectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
 
                 redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.created"));
                 return "redirect:/member/borrow/management?tab=borrowing";
@@ -353,9 +373,10 @@ public class CartController extends LocalizedControllerSupport {
             if ("BANK".equals(normalizedPaymentMethod) && previewFee.compareTo(BigDecimal.ZERO) > 0) {
                 com.lms.entity.Borrow pendingBorrow = null;
                 try {
-                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
+                    pendingBorrow = borrowService.memberSubmitBankMultiBookBorrowRequest(
+                            principal.getName(), normalizedSelectedBookIds, numberOfDays);
                     com.lms.entity.PayOsPayment payment = payOsPaymentService.createBorrowFeePayment(member, pendingBorrow.getBorrowId());
-                    selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+                    normalizedSelectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
                     return "redirect:/member/payments/payos/" + payment.getOrderCode();
                 } catch (Exception paymentError) {
                     if (pendingBorrow != null && pendingBorrow.getBorrowId() != null) {
@@ -365,8 +386,9 @@ public class CartController extends LocalizedControllerSupport {
                 }
             }
 
-            borrowService.memberSubmitMultiBookBorrowRequest(principal.getName(), selectedBookIds, numberOfDays);
-            selectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
+            borrowService.memberSubmitMultiBookBorrowRequest(
+                    principal.getName(), normalizedSelectedBookIds, numberOfDays);
+            normalizedSelectedBookIds.forEach(bookId -> cartService.removeFromCart(session, bookId));
 
             redirectAttributes.addFlashAttribute("successMessage", message("backend.cart.created"));
             return "redirect:/member/borrow/management?tab=borrowing";
@@ -389,6 +411,42 @@ public class CartController extends LocalizedControllerSupport {
             }
         }
         return true;
+    }
+
+    static boolean selectionMatchesCart(java.util.Map<Integer, Long> requestedCounts, List<Integer> cartBookIds) {
+        if (requestedCounts.isEmpty() || cartBookIds == null || cartBookIds.isEmpty()) {
+            return false;
+        }
+        java.util.Map<Integer, Long> cartCounts = cartBookIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        java.util.function.Function.identity(),
+                        java.util.stream.Collectors.counting()));
+        return requestedCounts.entrySet().stream()
+                .allMatch(entry -> entry.getValue() <= cartCounts.getOrDefault(entry.getKey(), 0L));
+    }
+
+    static String localRedirectTarget(String referer, String fallback) {
+        if (referer == null || referer.isBlank()) {
+            return fallback;
+        }
+        try {
+            java.net.URI uri = java.net.URI.create(referer);
+            String path = uri.getPath();
+            if (path == null || !path.startsWith("/") || path.startsWith("//")) {
+                return fallback;
+            }
+            StringBuilder target = new StringBuilder(path);
+            if (uri.getQuery() != null) {
+                target.append('?').append(uri.getQuery());
+            }
+            if (uri.getFragment() != null) {
+                target.append('#').append(uri.getFragment());
+            }
+            return target.toString();
+        } catch (IllegalArgumentException exception) {
+            return fallback;
+        }
     }
 
     private int getRemainingBorrowLimit(Member member) {
@@ -440,7 +498,7 @@ public class CartController extends LocalizedControllerSupport {
         redirectAttributes.addFlashAttribute("error", errorMessage);
         return org.springframework.http.ResponseEntity
                 .status(org.springframework.http.HttpStatus.SEE_OTHER)
-                .location(java.net.URI.create(referer != null && !referer.isBlank() ? referer : "/books/" + bookId))
+                .location(java.net.URI.create(localRedirectTarget(referer, "/books/" + bookId)))
                 .build();
     }
 }

@@ -351,8 +351,7 @@
                         });
                         if (selectedQuantity > maxBorrowLimit) {
                             this.checked = false;
-                            if (window.showToast) window.showToast(borrowLimitMessage);
-                            else alert(borrowLimitMessage);
+                            if (window.AppFeedback) window.AppFeedback.error(borrowLimitMessage);
                         }
                     }
                     if (selectAll) {
@@ -410,19 +409,14 @@
                     const checkedCBs = document.querySelectorAll(".book-select-checkbox:checked");
                     if (checkedCBs.length === 0) {
                         e.preventDefault();
-                        if (window.showToast) {
-                            window.showToast(selectionRequiredMessage);
-                        } else {
-                            alert(selectionRequiredMessage);
-                        }
+                        if (window.AppFeedback) window.AppFeedback.error(selectionRequiredMessage);
                         return;
                     }
                     let selectedQuantity = 0;
                     checkedCBs.forEach(cb => selectedQuantity += parseInt(cb.dataset.qty) || 1);
                     if (selectedQuantity > maxBorrowLimit) {
                         e.preventDefault();
-                        if (window.showToast) window.showToast(borrowLimitMessage);
-                        else alert(borrowLimitMessage);
+                        if (window.AppFeedback) window.AppFeedback.error(borrowLimitMessage);
                         return;
                     }
 
