@@ -1,6 +1,5 @@
 package com.lms.entity;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 @Entity
 @Table(name = "Reservations")
@@ -16,8 +15,6 @@ public class Reservation {
     private LocalDateTime reservationDate;
     @Column(name = "number_of_days", nullable = false)
     private Integer numberOfDays = 14;
-    @Column(name = "deposit_amount", precision = 18, scale = 2)
-    private BigDecimal depositAmount;
     @Column(length = 50)
     private String status = "Pending";
     @Column(name = "rejection_code", length = 50)
@@ -46,8 +43,6 @@ public class Reservation {
     public void setReservationDate(LocalDateTime reservationDate) { this.reservationDate = reservationDate; }
     public Integer getNumberOfDays() { return numberOfDays; }
     public void setNumberOfDays(Integer numberOfDays) { this.numberOfDays = numberOfDays; }
-    public BigDecimal getDepositAmount() { return depositAmount; }
-    public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getRejectionCode() { return rejectionCode; }

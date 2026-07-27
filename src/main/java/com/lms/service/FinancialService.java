@@ -31,8 +31,6 @@ public interface FinancialService {
 
     BigDecimal getReservationDepositAmount();
 
-    BigDecimal getPaidReservationDepositAmount(Integer memberId, Integer reservationId);
-
     Page<Transaction> getTransactionHistory(Integer memberId, int page, String type);
 
     void issueOverdueFine(Integer borrowDetailId);
