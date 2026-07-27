@@ -321,6 +321,10 @@
                                 th:text="${#messages.msg(type.messageKey)}">General notification</option>
                     </select>
                     <button type="submit" th:text="#{common.filter}">Filter</button>
+                    <a th:if="${!#strings.isEmpty(selectedHistoryType)}"
+                       class="notification-history-filter-reset"
+                       th:href="@{/librarian/interaction/notifications/new}"
+                       th:text="#{common.clearFilter}">Clear filter</a>
                 </form>
             </div>
             <div class="table-responsive notification-history-table-wrap" th:if="${recentNotifications != null and !recentNotifications.isEmpty()}">
