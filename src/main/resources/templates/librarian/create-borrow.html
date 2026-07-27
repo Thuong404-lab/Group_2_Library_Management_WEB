@@ -23,12 +23,6 @@
                 </div>
             </header>
 
-            <div th:if="${successMessage}" class="app-alert app-alert--success mb-4" role="alert">
-                <span th:text="${successMessage}" th:remove="tag">Success message</span>
-            </div>
-            <div th:if="${errorMessage}" class="app-alert app-alert--danger mb-4" role="alert">
-                <span th:text="${errorMessage}" th:remove="tag">Error message</span>
-            </div>
 
             <div class="borrow-workspace">
 
@@ -836,18 +830,21 @@
                                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                     th:value="${_csrf.token}">
                                 <label for="rejectReasonCode" th:text="#{rejection.type}">Reason type</label>
-                                <select id="rejectReasonCode" name="reasonCode" required class="form-select mb-3">
+                                <select id="rejectReasonCode" name="reasonCode" required class="form-select"
+                                    aria-describedby="rejectReasonCodeError">
                                     <option value="" th:text="#{rejection.select}">Select a reason</option>
                                 </select>
+                                <div id="rejectReasonCodeError" class="acquisition-field-error mb-3" role="alert"
+                                    aria-live="assertive"></div>
                                 <label for="rejectReasonText" th:text="#{rejection.detail}">Details sent to
                                     member</label>
                                 <textarea id="rejectReasonText" name="reason" minlength="5" maxlength="500"
                                     th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}"
-                                    aria-describedby="rejectReasonCount rejectReasonError"></textarea>
+                                    aria-describedby="rejectReasonCount rejectReasonTextError"></textarea>
                                 <div class="acquisition-reason-support">
                                     <span id="rejectReasonCount" aria-live="polite">0/500</span>
                                 </div>
-                                <div id="rejectReasonError" class="acquisition-field-error" role="alert"
+                                <div id="rejectReasonTextError" class="acquisition-field-error" role="alert"
                                     aria-live="assertive"></div>
                             </div>
                             <div class="modal-footer">
@@ -930,9 +927,14 @@
                         reasonSelect.add(new Option(option[1], option[0]));
                     });
                     textarea.value = "";
+                    textarea.removeAttribute('required');
                     textarea.classList.remove('is-invalid');
+                    textarea.removeAttribute('aria-invalid');
+                    reasonSelect.classList.remove('is-invalid');
+                    reasonSelect.removeAttribute('aria-invalid');
                     document.getElementById('rejectReasonCount').textContent = "0/500";
-                    document.getElementById('rejectReasonError').textContent = "";
+                    document.getElementById('rejectReasonCodeError').textContent = "";
+                    document.getElementById('rejectReasonTextError').textContent = "";
 
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('rejectReasonModal')).show();
                 }
@@ -941,9 +943,10 @@
                     const form = document.getElementById("rejectReasonForm");
                     const reason = document.getElementById("rejectReasonText");
                     const reasonCode = document.getElementById("rejectReasonCode");
-                    const error = document.getElementById("rejectReasonError");
+                    const reasonCodeError = document.getElementById("rejectReasonCodeError");
+                    const reasonTextError = document.getElementById("rejectReasonTextError");
                     const counter = document.getElementById("rejectReasonCount");
-                    if (!form || !reason || !error || !counter) return;
+                    if (!form || !reason || !reasonCode || !reasonCodeError || !reasonTextError || !counter) return;
 
                     const messages = {
                         required: /*[[#{librarian.acquisition.validationRequired}]]*/ "A rejection reason is required.",
@@ -959,36 +962,54 @@
                         reason.value = value;
                         updateCounter();
 
-                        let message = "";
+                        let typeMessage = "";
+                        let detailMessage = "";
                         if (!reasonCode.value) {
-                            message = /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type.";
+                            typeMessage = /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type.";
                         } else if (reasonCode.value === "OTHER" && value === "") {
-                            message = messages.required;
+                            detailMessage = messages.required;
                         } else if (value !== "") {
                             if (value.length < 5) {
-                                message = messages.minimum;
+                                detailMessage = messages.minimum;
                             } else if (value.length > 500) {
-                                message = messages.maximum;
+                                detailMessage = messages.maximum;
                             } else if (!/\p{L}/u.test(value)) {
-                                message = messages.letters;
+                                detailMessage = messages.letters;
                             }
                         }
 
-                        if (message) {
+                        reasonCode.classList.toggle("is-invalid", typeMessage !== "");
+                        if (typeMessage) {
+                            reasonCode.setAttribute("aria-invalid", "true");
+                        } else {
+                            reasonCode.removeAttribute("aria-invalid");
+                        }
+                        reasonCodeError.textContent = typeMessage;
+                        reason.classList.toggle("is-invalid", detailMessage !== "");
+                        if (detailMessage) {
+                            reason.setAttribute("aria-invalid", "true");
+                        } else {
+                            reason.removeAttribute("aria-invalid");
+                        }
+                        reasonTextError.textContent = detailMessage;
+
+                        if (typeMessage || detailMessage) {
                             event.preventDefault();
-                            reason.classList.add("is-invalid");
-                            error.textContent = message;
-                            reason.focus();
+                            (typeMessage ? reasonCode : reason).focus();
                         }
                     });
 
                     reason.addEventListener("input", function () {
                         reason.classList.remove("is-invalid");
-                        error.textContent = "";
+                        reason.removeAttribute("aria-invalid");
+                        reasonTextError.textContent = "";
                         updateCounter();
                     });
 
                     reasonCode.addEventListener("change", function () {
+                        reasonCode.classList.remove("is-invalid");
+                        reasonCode.removeAttribute("aria-invalid");
+                        reasonCodeError.textContent = "";
                         if (reasonCode.value === "OTHER") {
                             reason.setAttribute("required", "required");
                         } else {
