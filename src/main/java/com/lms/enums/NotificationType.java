@@ -13,7 +13,7 @@ public enum NotificationType {
     RESERVATION("notification.type.reservation", false),
     FINANCE("notification.type.finance", false),
     REVIEW("notification.type.review", false),
-    ACQUISITION("notification.type.acquisition", false);
+    ACQUISITION("notification.type.bookRequest", false);
 
     private final String messageKey;
     private final boolean manualSelectable;

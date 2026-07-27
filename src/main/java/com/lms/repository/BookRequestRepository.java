@@ -1,11 +1,11 @@
 package com.lms.repository;
 
-import com.lms.entity.BookAcquisitionRequest;
+import com.lms.entity.BookRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.BookRequestStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,24 +13,24 @@ import java.util.Collection;
 import java.util.Optional;
 
 @Repository
-public interface BookAcquisitionRequestRepository extends JpaRepository<BookAcquisitionRequest, Integer> {
+public interface BookRequestRepository extends JpaRepository<BookRequest, Integer> {
 
     boolean existsByMember_MemberIdAndDedupKeyAndStatusIn(
-            Integer memberId, String dedupKey, Collection<AcquisitionRequestStatus> statuses);
+            Integer memberId, String dedupKey, Collection<BookRequestStatus> statuses);
 
     boolean existsByMember_MemberIdAndDedupKeyAndStatusInAndRequestIdNot(
-            Integer memberId, String dedupKey, Collection<AcquisitionRequestStatus> statuses, Integer requestId);
+            Integer memberId, String dedupKey, Collection<BookRequestStatus> statuses, Integer requestId);
 
-    long countByStatus(AcquisitionRequestStatus status);
+    long countByStatus(BookRequestStatus status);
 
     @EntityGraph(attributePaths = {"member", "member.user", "processedBy", "processedBy.user"})
-    Page<BookAcquisitionRequest> findByMember_MemberIdOrderByCreatedDateDesc(Integer memberId, Pageable pageable);
+    Page<BookRequest> findByMember_MemberIdOrderByCreatedDateDesc(Integer memberId, Pageable pageable);
 
-    Optional<BookAcquisitionRequest> findByRequestIdAndMember_MemberId(Integer requestId, Integer memberId);
+    Optional<BookRequest> findByRequestIdAndMember_MemberId(Integer requestId, Integer memberId);
 
     @EntityGraph(attributePaths = {"member", "member.user", "processedBy", "processedBy.user"})
     @Query("""
-            select request from BookAcquisitionRequest request
+            select request from BookRequest request
             where (:status is null or request.status = :status)
               and (:keyword is null or :keyword = ''
                    or lower(request.title) like lower(concat('%', :keyword, '%'))
@@ -39,8 +39,8 @@ public interface BookAcquisitionRequestRepository extends JpaRepository<BookAcqu
                    or lower(request.member.user.fullName) like lower(concat('%', :keyword, '%'))
                    or lower(request.requestReason) like lower(concat('%', :keyword, '%')))
             """)
-    Page<BookAcquisitionRequest> searchForModeration(
-            @Param("status") AcquisitionRequestStatus status,
+    Page<BookRequest> searchForModeration(
+            @Param("status") BookRequestStatus status,
             @Param("keyword") String keyword,
             Pageable pageable);
 }

@@ -23,9 +23,9 @@ import jakarta.validation.groups.Default;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.lms.dto.request.MemberBookAcquisitionRequest;
-import com.lms.service.MemberBookAcquisitionService;
-import com.lms.util.AcquisitionRequestPolicy;
+import com.lms.dto.request.MemberBookRequest;
+import com.lms.service.MemberBookRequestService;
+import com.lms.util.BookRequestPolicy;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
 
@@ -39,18 +39,18 @@ public class MemberInteractionController extends LocalizedControllerSupport {
     private final MemberNotificationService memberNotificationService;
     private final MemberReviewService memberReviewService;
     private final BookRepository bookRepository;
-    private final MemberBookAcquisitionService memberBookAcquisitionService;
+    private final MemberBookRequestService memberBookRequestService;
     private final MemberFavoriteService memberFavoriteService;
 
     public MemberInteractionController(MemberNotificationService memberNotificationService,
                                        MemberReviewService memberReviewService,
                                        BookRepository bookRepository,
-                                       MemberBookAcquisitionService memberBookAcquisitionService,
+                                       MemberBookRequestService memberBookRequestService,
                                        MemberFavoriteService memberFavoriteService) {
         this.memberNotificationService = memberNotificationService;
         this.memberReviewService = memberReviewService;
         this.bookRepository = bookRepository;
-        this.memberBookAcquisitionService = memberBookAcquisitionService;
+        this.memberBookRequestService = memberBookRequestService;
         this.memberFavoriteService = memberFavoriteService;
     }
 
@@ -257,91 +257,91 @@ public class MemberInteractionController extends LocalizedControllerSupport {
         return "redirect:/member/interaction/reviews";
     }
 
-    @GetMapping("/acquisition-requests/new")
-    public String showBookAcquisitionRequestForm(Model model,
+    @GetMapping({"/book-requests/new", "/acquisition-requests/new"})
+    public String showBookRequestForm(Model model,
                                                  Principal principal,
                                                  @RequestParam(defaultValue = "0") int page) {
-        if (!model.containsAttribute("acquisitionRequest")) {
-            model.addAttribute("acquisitionRequest", new MemberBookAcquisitionRequest());
+        if (!model.containsAttribute("bookRequest")) {
+            model.addAttribute("bookRequest", new MemberBookRequest());
         }
-        model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                principal.getName(), PageRequest.of(Math.max(0, page), AcquisitionRequestPolicy.PAGE_SIZE)));
+        model.addAttribute("myBookRequests", memberBookRequestService.getMyRequests(
+                principal.getName(), PageRequest.of(Math.max(0, page), BookRequestPolicy.PAGE_SIZE)));
 
-        return "member/book-acquisition-request";
+        return "member/book-request";
     }
 
-    @PostMapping("/acquisition-requests")
-    public String submitBookAcquisitionRequest(
-            @Valid @ModelAttribute("acquisitionRequest") MemberBookAcquisitionRequest request,
+    @PostMapping({"/book-requests", "/acquisition-requests"})
+    public String submitBookRequest(
+            @Valid @ModelAttribute("bookRequest") MemberBookRequest request,
             BindingResult bindingResult,
             Model model,
             Principal principal,
             RedirectAttributes flash) {
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("reopenAcquisitionModal", true);
-            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                    principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
-            return "member/book-acquisition-request";
+            model.addAttribute("reopenBookRequestModal", true);
+            model.addAttribute("myBookRequests", memberBookRequestService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, BookRequestPolicy.PAGE_SIZE)));
+            return "member/book-request";
         }
 
         try {
-            memberBookAcquisitionService.submitRequest(principal.getName(), request);
-            flash.addFlashAttribute("success", message("backend.acquisition.submitted"));
-            return "redirect:/member/interaction/acquisition-requests/new";
+            memberBookRequestService.submitRequest(principal.getName(), request);
+            flash.addFlashAttribute("success", message("backend.bookRequest.submitted"));
+            return "redirect:/member/interaction/book-requests/new";
 
         } catch (ApplicationException e) {
-            model.addAttribute("acquisitionError", e.getMessage());
-            model.addAttribute("reopenAcquisitionModal", true);
-            model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
-                    principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
-            return "member/book-acquisition-request";
+            model.addAttribute("bookRequestError", e.getMessage());
+            model.addAttribute("reopenBookRequestModal", true);
+            model.addAttribute("myBookRequests", memberBookRequestService.getMyRequests(
+                    principal.getName(), PageRequest.of(0, BookRequestPolicy.PAGE_SIZE)));
+            return "member/book-request";
         }
     }
 
-    @PostMapping("/acquisition-requests/{id}/edit")
-    public String updateBookAcquisitionRequest(
+    @PostMapping({"/book-requests/{id}/edit", "/acquisition-requests/{id}/edit"})
+    public String updateBookRequest(
             @PathVariable("id") Integer requestId,
-            @Valid @ModelAttribute("acquisitionRequest") MemberBookAcquisitionRequest request,
+            @Valid @ModelAttribute("bookRequest") MemberBookRequest request,
             BindingResult bindingResult,
             @RequestParam(defaultValue = "0") int page,
             Principal principal,
             RedirectAttributes flash) {
         if (bindingResult.hasErrors()) {
-            flash.addFlashAttribute("acquisitionRequest", request);
-            flash.addFlashAttribute("editAcquisitionRequestId", requestId);
-            flash.addFlashAttribute("reopenAcquisitionModal", true);
-            flash.addFlashAttribute("acquisitionError", bindingResult.getAllErrors().get(0).getDefaultMessage());
-            return acquisitionRequestRedirect(page);
+            flash.addFlashAttribute("bookRequest", request);
+            flash.addFlashAttribute("editBookRequestId", requestId);
+            flash.addFlashAttribute("reopenBookRequestModal", true);
+            flash.addFlashAttribute("bookRequestError", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return bookRequestRedirect(page);
         }
         try {
-            memberBookAcquisitionService.updatePendingRequest(principal.getName(), requestId, request);
-            flash.addFlashAttribute("success", message("backend.acquisition.updated"));
+            memberBookRequestService.updatePendingRequest(principal.getName(), requestId, request);
+            flash.addFlashAttribute("success", message("backend.bookRequest.updated"));
         } catch (ApplicationException exception) {
-            flash.addFlashAttribute("acquisitionRequest", request);
-            flash.addFlashAttribute("editAcquisitionRequestId", requestId);
-            flash.addFlashAttribute("reopenAcquisitionModal", true);
-            flash.addFlashAttribute("acquisitionError", exception.getMessage());
+            flash.addFlashAttribute("bookRequest", request);
+            flash.addFlashAttribute("editBookRequestId", requestId);
+            flash.addFlashAttribute("reopenBookRequestModal", true);
+            flash.addFlashAttribute("bookRequestError", exception.getMessage());
         }
-        return acquisitionRequestRedirect(page);
+        return bookRequestRedirect(page);
     }
 
-    @PostMapping("/acquisition-requests/{id}/cancel")
-    public String cancelBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+    @PostMapping({"/book-requests/{id}/cancel", "/acquisition-requests/{id}/cancel"})
+    public String cancelBookRequest(@PathVariable("id") Integer requestId,
                                                @RequestParam(defaultValue = "0") int page,
                                                Principal principal,
                                                RedirectAttributes flash) {
         try {
-            memberBookAcquisitionService.cancelPendingRequest(principal.getName(), requestId);
-            flash.addFlashAttribute("success", message("backend.acquisition.cancelled"));
+            memberBookRequestService.cancelPendingRequest(principal.getName(), requestId);
+            flash.addFlashAttribute("success", message("backend.bookRequest.cancelled"));
         } catch (ApplicationException exception) {
             flash.addFlashAttribute("error", exception.getMessage());
         }
-        return acquisitionRequestRedirect(page);
+        return bookRequestRedirect(page);
     }
 
-    private String acquisitionRequestRedirect(int page) {
-        return "redirect:/member/interaction/acquisition-requests/new?page=" + Math.max(0, page);
+    private String bookRequestRedirect(int page) {
+        return "redirect:/member/interaction/book-requests/new?page=" + Math.max(0, page);
     }
 
     @GetMapping("/favorites")

@@ -1,32 +1,32 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
 <head>
-    <title th:text="#{member.acquisition.title}">Book Acquisition Request</title>
-    <link rel="stylesheet" th:href="@{/css/pages/member/book-acquisition-request.css(v='20260728-favorites-pagination-v1')}" />
+    <title th:text="#{member.bookRequest.title}">Book Request</title>
+    <link rel="stylesheet" th:href="@{/css/pages/member/book-request.css(v='20260728-favorites-pagination-v1')}" />
 </head>
 <body>
-<div layout:fragment="content" class="container acquisition-page member-palette-page">
-    <header class="member-page-header member-dashboard-hero acquisition-hero">
-        <div class="acquisition-hero-copy">
-            <span class="member-page-eyebrow" th:text="#{member.acquisition.eyebrow}">COLLECTION DEVELOPMENT</span>
-            <h1 th:text="#{member.acquisition.heading}">Request a Book</h1>
-            <p th:text="#{member.acquisition.description}">Suggest a book for the library collection.</p>
+<div layout:fragment="content" class="container book-request-page member-palette-page">
+    <header class="member-page-header member-dashboard-hero book-request-hero">
+        <div class="book-request-hero-copy">
+            <span class="member-page-eyebrow" th:text="#{member.bookRequest.eyebrow}">COLLECTION DEVELOPMENT</span>
+            <h1 th:text="#{member.bookRequest.heading}">Request a Book</h1>
+            <p th:text="#{member.bookRequest.description}">Suggest a book for the library collection.</p>
         </div>
-        <button type="button" class="member-primary-action acquisition-hero-action acquisition-modal-trigger member-ui-button member-ui-button--inverse" 
-                data-toggle="modal" data-target="#acquisitionRequestModal" th:disabled="${isInactiveMember}">
-            <span class="acquisition-hero-action-mark" aria-hidden="true">+</span>
-            <span th:text="#{member.acquisition.submit}">Submit Request</span>
+        <button type="button" class="member-primary-action book-request-hero-action book-request-modal-trigger member-ui-button member-ui-button--inverse" 
+                data-toggle="modal" data-target="#bookRequestModal" th:disabled="${isInactiveMember}">
+            <span class="book-request-hero-action-mark" aria-hidden="true">+</span>
+            <span th:text="#{member.bookRequest.submit}">Submit Request</span>
         </button>
     </header>
 
     <!-- My Requests History Section -->
     <section class="member-request-history member-reference-list" aria-labelledby="request-history-title">
         <div class="member-request-history-heading member-reference-list__header">
-            <h2 id="request-history-title" th:text="#{member.acquisition.mine}">My Requests</h2>
-            <span class="member-reference-pill" th:text="#{member.acquisition.count(${myAcquisitionRequests.totalElements})}">0 requests</span>
+            <h2 id="request-history-title" th:text="#{member.bookRequest.mine}">My Requests</h2>
+            <span class="member-reference-pill" th:text="#{member.bookRequest.count(${myBookRequests.totalElements})}">0 requests</span>
         </div>
-        <div class="member-request-list member-reference-list__body" th:if="${myAcquisitionRequests.totalElements > 0}">
-            <article class="member-request-item member-reference-list__item" th:each="request : ${myAcquisitionRequests.content}">
+        <div class="member-request-list member-reference-list__body" th:if="${myBookRequests.totalElements > 0}">
+            <article class="member-request-item member-reference-list__item" th:each="request : ${myBookRequests.content}">
                 <div class="member-request-copy">
                     <h3 th:text="${request.title}">Book Title</h3>
                     <p class="member-request-details">
@@ -43,12 +43,12 @@
                 </div>
                 <p class="member-request-decision"
                    th:if="${request.decisionNote != null and (request.status.name() == 'REJECTED' or request.status.name() == 'APPROVED')}">
-                    <strong th:text="${request.status.name() == 'REJECTED' ? #messages.msg('member.acquisition.rejectionReason') : #messages.msg('member.acquisition.approvalNote')}">Decision:</strong>
+                    <strong th:text="${request.status.name() == 'REJECTED' ? #messages.msg('member.bookRequest.rejectionReason') : #messages.msg('member.bookRequest.approvalNote')}">Decision:</strong>
                     <span th:text="${request.decisionNote}"></span>
                 </p>
                 <div class="member-request-actions" th:if="${request.status.name() == 'PENDING'}">
-                    <button type="button" class="member-ui-button member-ui-button--secondary acquisition-modal-trigger acquisition-edit-trigger"
-                            data-toggle="modal" data-target="#acquisitionRequestModal"
+                    <button type="button" class="member-ui-button member-ui-button--secondary book-request-modal-trigger book-request-edit-trigger"
+                            data-toggle="modal" data-target="#bookRequestModal"
                             th:data-request-id="${request.requestId}"
                             th:data-title="${request.title}" th:data-author="${request.author}"
                             th:data-isbn="${request.isbn}" th:data-publisher="${request.publisher}"
@@ -57,89 +57,89 @@
                             th:data-reference-url="${request.referenceUrl}"
                             th:text="#{common.edit}">Edit</button>
                     <form class="app-confirm-form"
-                          th:action="@{/member/interaction/acquisition-requests/{id}/cancel(id=${request.requestId})}"
+                          th:action="@{/member/interaction/book-requests/{id}/cancel(id=${request.requestId})}"
                           method="post"
-                          th:data-confirm-title="#{member.acquisition.cancel}"
+                          th:data-confirm-title="#{member.bookRequest.cancel}"
                           th:data-confirm-subject-label="#{book.title}"
                           th:data-confirm-subject="${request.title}"
-                          th:data-confirm-message="#{member.acquisition.cancelConfirm}"
-                          th:data-confirm-action="#{member.acquisition.cancel}"
+                          th:data-confirm-message="#{member.bookRequest.cancelConfirm}"
+                          th:data-confirm-action="#{member.bookRequest.cancel}"
                           data-confirm-tone="danger">
-                        <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
+                        <input type="hidden" name="page" th:value="${myBookRequests.number}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                         <button type="submit" class="member-ui-button member-ui-button--danger-outline"
-                                th:text="#{member.acquisition.cancel}">Cancel request</button>
+                                th:text="#{member.bookRequest.cancel}">Cancel request</button>
                     </form>
                 </div>
             </article>
         </div>
-        <div class="member-request-empty" th:if="${myAcquisitionRequests.totalElements == 0}" th:text="#{member.acquisition.empty}">You have not submitted any requests.</div>
-        <nav class="member-request-pagination" th:if="${myAcquisitionRequests.totalPages > 1}"
-             th:aria-label="#{member.acquisition.pagination}"
-             th:with="startPage=${myAcquisitionRequests.totalPages <= 10 ? 0 : (myAcquisitionRequests.number < 9 ? 0 : (myAcquisitionRequests.number - 8 > myAcquisitionRequests.totalPages - 10 ? myAcquisitionRequests.totalPages - 10 : myAcquisitionRequests.number - 8))},
-                      endPage=${startPage + 9 < myAcquisitionRequests.totalPages ? startPage + 9 : myAcquisitionRequests.totalPages - 1}">
+        <div class="member-request-empty" th:if="${myBookRequests.totalElements == 0}" th:text="#{member.bookRequest.empty}">You have not submitted any requests.</div>
+        <nav class="member-request-pagination" th:if="${myBookRequests.totalPages > 1}"
+             th:aria-label="#{member.bookRequest.pagination}"
+             th:with="startPage=${myBookRequests.totalPages <= 10 ? 0 : (myBookRequests.number < 9 ? 0 : (myBookRequests.number - 8 > myBookRequests.totalPages - 10 ? myBookRequests.totalPages - 10 : myBookRequests.number - 8))},
+                      endPage=${startPage + 9 < myBookRequests.totalPages ? startPage + 9 : myBookRequests.totalPages - 1}">
             <ul class="pagination justify-content-center mb-0">
-                <li class="page-item" th:classappend="${myAcquisitionRequests.first} ? 'disabled'">
+                <li class="page-item" th:classappend="${myBookRequests.first} ? 'disabled'">
                     <a class="page-link page-link-classic member-page-control"
-                       th:href="@{/member/interaction/acquisition-requests/new(page=0)}"
+                       th:href="@{/member/interaction/book-requests/new(page=0)}"
                        th:text="#{pagination.first}">First</a>
                 </li>
-                <li class="page-item" th:classappend="${myAcquisitionRequests.first} ? 'disabled'">
+                <li class="page-item" th:classappend="${myBookRequests.first} ? 'disabled'">
                     <a class="page-link page-link-classic member-page-control"
-                       th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number - 1})}"
+                       th:href="@{/member/interaction/book-requests/new(page=${myBookRequests.number - 1})}"
                        th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
                 </li>
                 <li class="page-item disabled" th:if="${startPage > 0}">
                     <span class="page-link page-link-classic">&hellip;</span>
                 </li>
                 <li class="page-item" th:each="pageIndex : ${#numbers.sequence(startPage, endPage)}"
-                    th:classappend="${pageIndex == myAcquisitionRequests.number ? 'active' : ''}">
+                    th:classappend="${pageIndex == myBookRequests.number ? 'active' : ''}">
                     <a class="page-link page-link-classic member-page-control"
-                       th:href="@{/member/interaction/acquisition-requests/new(page=${pageIndex})}"
+                       th:href="@{/member/interaction/book-requests/new(page=${pageIndex})}"
                        th:text="${pageIndex + 1}"
-                       th:aria-current="${pageIndex == myAcquisitionRequests.number} ? 'page'">1</a>
+                       th:aria-current="${pageIndex == myBookRequests.number} ? 'page'">1</a>
                 </li>
-                <li class="page-item disabled" th:if="${endPage < myAcquisitionRequests.totalPages - 1}">
+                <li class="page-item disabled" th:if="${endPage < myBookRequests.totalPages - 1}">
                     <span class="page-link page-link-classic">&hellip;</span>
                 </li>
-                <li class="page-item" th:classappend="${myAcquisitionRequests.last} ? 'disabled'">
+                <li class="page-item" th:classappend="${myBookRequests.last} ? 'disabled'">
                     <a class="page-link page-link-classic member-page-control"
-                       th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.number + 1})}"
+                       th:href="@{/member/interaction/book-requests/new(page=${myBookRequests.number + 1})}"
                        th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
                 </li>
-                <li class="page-item" th:classappend="${myAcquisitionRequests.last} ? 'disabled'">
+                <li class="page-item" th:classappend="${myBookRequests.last} ? 'disabled'">
                     <a class="page-link page-link-classic member-page-control"
-                       th:href="@{/member/interaction/acquisition-requests/new(page=${myAcquisitionRequests.totalPages - 1})}"
+                       th:href="@{/member/interaction/book-requests/new(page=${myBookRequests.totalPages - 1})}"
                        th:text="#{pagination.last}">Last</a>
                 </li>
             </ul>
         </nav>
     </section>
 
-    <!-- Modal Form Gửi Đề Xuất Bổ Sung Sách -->
-    <div class="modal fade acquisition-request-modal member-standard-dialog"
-         id="acquisitionRequestModal"
+    <!-- Biểu mẫu gửi đề xuất sách -->
+    <div class="modal fade book-request-modal member-standard-dialog"
+         id="bookRequestModal"
          tabindex="-1"
          role="dialog"
-         aria-labelledby="acquisitionRequestModalLabel"
+         aria-labelledby="bookRequestModalLabel"
          aria-hidden="true"
-         th:attr="data-reopen=${reopenAcquisitionModal == true}">
+         th:attr="data-reopen=${reopenBookRequestModal == true}">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div class="acquisition-modal-header-copy">
-                        <h2 class="modal-title" id="acquisitionRequestModalLabel" th:text="#{member.acquisition.newRequest}">Submit a New Request</h2>
-                        <p th:text="#{member.acquisition.formHint}">Clear information helps us find the correct book.</p>
+                    <div class="book-request-modal-header-copy">
+                        <h2 class="modal-title" id="bookRequestModalLabel" th:text="#{member.bookRequest.newRequest}">Submit a New Request</h2>
+                        <p th:text="#{member.bookRequest.formHint}">Clear information helps us find the correct book.</p>
                     </div>
                 </div>
-                <form id="acquisitionRequestForm" th:action="@{/member/interaction/acquisition-requests}"
-                      th:data-create-url="@{/member/interaction/acquisition-requests}"
-                      th:data-edit-request-id="${editAcquisitionRequestId}"
-                      th:object="${acquisitionRequest}" method="post" novalidate>
-                    <input type="hidden" name="page" th:value="${myAcquisitionRequests.number}">
+                <form id="bookRequestForm" th:action="@{/member/interaction/book-requests}"
+                      th:data-create-url="@{/member/interaction/book-requests}"
+                      th:data-edit-request-id="${editBookRequestId}"
+                      th:object="${bookRequest}" method="post" novalidate>
+                    <input type="hidden" name="page" th:value="${myBookRequests.number}">
                     <div class="modal-body">
-                        <div th:if="${acquisitionError}" class="member-alert acquisition-inline-alert is-error"
-                             role="alert" th:text="${acquisitionError}"></div>
+                        <div th:if="${bookRequestError}" class="member-alert book-request-inline-alert is-error"
+                             role="alert" th:text="${bookRequestError}"></div>
                         
                         <div class="member-form-grid">
                             <!-- 1. Tên sách * -->
@@ -159,34 +159,34 @@
                             <!-- 3. ISBN -->
                             <div class="member-form-field">
                                 <label for="isbn">ISBN</label>
-                                <input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" th:placeholder="#{member.acquisition.isbnPlaceholder}">
+                                <input type="text" id="isbn" th:classappend="${#fields.hasErrors('isbn')} ? 'is-invalid'" th:field="*{isbn}" maxlength="20" th:placeholder="#{member.bookRequest.isbnPlaceholder}">
                                 <div id="isbnFeedback" class="member-field-error" th:text="${#fields.hasErrors('isbn') ? #fields.errors('isbn')[0] : ''}"></div>
                             </div>
                             
                             <!-- 4. Nhà xuất bản -->
                             <div class="member-form-field">
                                 <label for="publisher" th:text="#{book.publisher}">Publisher</label>
-                                <input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" th:placeholder="#{member.acquisition.publisherPlaceholder}">
+                                <input type="text" id="publisher" th:classappend="${#fields.hasErrors('publisher')} ? 'is-invalid'" th:field="*{publisher}" maxlength="255" th:placeholder="#{member.bookRequest.publisherPlaceholder}">
                                 <div id="publisherFeedback" class="member-field-error" th:text="${#fields.hasErrors('publisher') ? #fields.errors('publisher')[0] : ''}"></div>
                             </div>
                             
                             <!-- 5. Năm xuất bản -->
                             <div class="member-form-field">
                                 <label for="publicationYear" th:text="#{book.publicationYear}">Publication Year</label>
-                                <input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.acquisition.yearPlaceholder}">
+                                <input type="number" id="publicationYear" th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'" th:field="*{publicationYear}" min="1000" th:max="${#dates.year(#dates.createNow())}" th:placeholder="#{member.bookRequest.yearPlaceholder}">
                                 <div id="publicationYearFeedback" class="member-field-error" th:text="${#fields.hasErrors('publicationYear') ? #fields.errors('publicationYear')[0] : ''}"></div>
                             </div>
 
                             <!-- 6. Liên kết tham khảo -->
                             <div class="member-form-field member-form-field--reference">
-                                <label for="referenceUrl" th:text="#{member.acquisition.referenceUrl}">Reference Link</label>
+                                <label for="referenceUrl" th:text="#{member.bookRequest.referenceUrl}">Reference Link</label>
                                 <input type="url" id="referenceUrl" th:classappend="${#fields.hasErrors('referenceUrl')} ? 'is-invalid'" th:field="*{referenceUrl}" maxlength="500" placeholder="https://...">
                                 <div id="referenceUrlFeedback" class="member-field-error" th:text="${#fields.hasErrors('referenceUrl') ? #fields.errors('referenceUrl')[0] : ''}"></div>
                             </div>
                             
                             <!-- 7. Lý do đề xuất * -->
                             <div class="member-form-field member-form-field--full">
-                                <label for="requestReason"><span th:text="#{member.acquisition.reason}">Request Reason</span> <span class="required-star">*</span></label>
+                                <label for="requestReason"><span th:text="#{member.bookRequest.reason}">Request Reason</span> <span class="required-star">*</span></label>
                                 <textarea id="requestReason" th:classappend="${#fields.hasErrors('requestReason')} ? 'is-invalid'" th:field="*{requestReason}" required minlength="10" maxlength="1000" th:placeholder="#{validation.charactersRange(10,1000)}"></textarea>
                                 <div class="member-field-support">
                                     <span id="requestReasonCount" aria-live="polite">0/1000</span>
@@ -197,7 +197,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="member-ui-button member-ui-button--secondary" data-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
-                        <button type="submit" class="member-ui-button member-ui-button--primary" th:text="#{member.acquisition.submit}">Submit Request</button>
+                        <button type="submit" class="member-ui-button member-ui-button--primary" th:text="#{member.bookRequest.submit}">Submit Request</button>
                     </div>
                 </form>
             </div>
@@ -206,12 +206,12 @@
 
     <th:block layout:fragment="scripts">
         <script th:inline="javascript">
-            const acquisitionPageSuccess = /*[[${success}]]*/ null;
-            const acquisitionForm = document.getElementById('acquisitionRequestForm');
-            const acquisitionModal = document.getElementById('acquisitionRequestModal');
-            const acquisitionModalTitle = document.getElementById('acquisitionRequestModalLabel');
+            const bookRequestPageSuccess = /*[[${success}]]*/ null;
+            const bookRequestForm = document.getElementById('bookRequestForm');
+            const bookRequestModal = document.getElementById('bookRequestModal');
+            const bookRequestModalTitle = document.getElementById('bookRequestModalLabel');
             const currentYear = new Date().getFullYear();
-            const acquisitionI18n = {
+            const bookRequestI18n = {
                 required: /*[[#{validation.fieldRequired}]]*/'{0} is required.',
                 range: /*[[#{validation.fieldRange}]]*/'{0} must contain {1}-{2} characters.',
                 letters: /*[[#{validation.fieldLetters}]]*/'{0} must include letters.',
@@ -220,8 +220,8 @@
                 title: /*[[#{book.title}]]*/'Book Title',
                 author: /*[[#{book.author}]]*/'Author',
                 publisher: /*[[#{book.publisher}]]*/'Publisher',
-                reason: /*[[#{member.acquisition.reason}]]*/'Request Reason',
-                isbn: /*[[#{validation.acquisition.isbnInvalid}]]*/'ISBN is invalid.'
+                reason: /*[[#{member.bookRequest.reason}]]*/'Request Reason',
+                isbn: /*[[#{validation.bookRequest.isbnInvalid}]]*/'ISBN is invalid.'
             };
 
             function setFieldError(input, id, message) {
@@ -269,9 +269,9 @@
                     return true;
                 }
                 let message = '';
-                if (value === '') message = formatMessage(acquisitionI18n.required, label);
-                else if (value.length < min || value.length > max) message = formatMessage(acquisitionI18n.range, label, min, max);
-                else if (!hasLetter(value)) message = formatMessage(acquisitionI18n.letters, label);
+                if (value === '') message = formatMessage(bookRequestI18n.required, label);
+                else if (value.length < min || value.length > max) message = formatMessage(bookRequestI18n.range, label, min, max);
+                else if (!hasLetter(value)) message = formatMessage(bookRequestI18n.letters, label);
                 if (message) {
                     setFieldError(input, id, message);
                     return false;
@@ -299,8 +299,8 @@
                 }
             });
 
-            if (acquisitionForm) {
-                acquisitionForm.addEventListener('submit', function(event) {
+            if (bookRequestForm) {
+                bookRequestForm.addEventListener('submit', function(event) {
                     let firstInvalid = null;
                     function check(valid, input) {
                         if (!valid) firstInvalid = firstInvalid || input;
@@ -313,18 +313,18 @@
                     const reason = document.getElementById('requestReason');
                     const url = document.getElementById('referenceUrl');
 
-                    check(validateText(title, 'titleFeedback', acquisitionI18n.title, 2, 255, false), title);
-                    check(validateText(author, 'authorFeedback', acquisitionI18n.author, 2, 255, false), author);
-                    check(validateText(publisher, 'publisherFeedback', acquisitionI18n.publisher, 1, 255, true), publisher);
-                    check(validateText(reason, 'requestReasonFeedback', acquisitionI18n.reason, 10, 1000, false), reason);
+                    check(validateText(title, 'titleFeedback', bookRequestI18n.title, 2, 255, false), title);
+                    check(validateText(author, 'authorFeedback', bookRequestI18n.author, 2, 255, false), author);
+                    check(validateText(publisher, 'publisherFeedback', bookRequestI18n.publisher, 1, 255, true), publisher);
+                    check(validateText(reason, 'requestReasonFeedback', bookRequestI18n.reason, 10, 1000, false), reason);
 
                     if (isbn && !isValidIsbn(isbn.value)) {
-                        setFieldError(isbn, 'isbnFeedback', acquisitionI18n.isbn);
+                        setFieldError(isbn, 'isbnFeedback', bookRequestI18n.isbn);
                         firstInvalid = firstInvalid || isbn;
                     }
 
                     if (year && year.value !== '' && (Number(year.value) < 1000 || Number(year.value) > currentYear)) {
-                        setFieldError(year, 'publicationYearFeedback', formatMessage(acquisitionI18n.year, currentYear));
+                        setFieldError(year, 'publicationYearFeedback', formatMessage(bookRequestI18n.year, currentYear));
                         firstInvalid = firstInvalid || year;
                     }
 
@@ -333,7 +333,7 @@
                             const parsed = new URL(url.value.trim());
                             if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
                         } catch (e) {
-                            setFieldError(url, 'referenceUrlFeedback', acquisitionI18n.url);
+                            setFieldError(url, 'referenceUrlFeedback', bookRequestI18n.url);
                             firstInvalid = firstInvalid || url;
                         }
                     }
@@ -349,16 +349,16 @@
             updateReasonCount();
 
             document.addEventListener('DOMContentLoaded', function() {
-                if (acquisitionPageSuccess && window.AppFeedback) {
-                    window.AppFeedback.success(acquisitionPageSuccess);
+                if (bookRequestPageSuccess && window.AppFeedback) {
+                    window.AppFeedback.success(bookRequestPageSuccess);
                 }
 
                 // Handle Modal triggers
-                document.querySelectorAll('.acquisition-modal-trigger').forEach(function(btn) {
+                document.querySelectorAll('.book-request-modal-trigger').forEach(function(btn) {
                     btn.addEventListener('click', function(e) {
                         e.preventDefault();
-                        if (btn.classList.contains('acquisition-edit-trigger')) {
-                            acquisitionForm.action = acquisitionForm.dataset.createUrl + '/' + btn.dataset.requestId + '/edit';
+                        if (btn.classList.contains('book-request-edit-trigger')) {
+                            bookRequestForm.action = bookRequestForm.dataset.createUrl + '/' + btn.dataset.requestId + '/edit';
                             document.getElementById('title').value = btn.dataset.title || '';
                             document.getElementById('author').value = btn.dataset.author || '';
                             document.getElementById('isbn').value = btn.dataset.isbn || '';
@@ -366,27 +366,27 @@
                             document.getElementById('publicationYear').value = btn.dataset.publicationYear || '';
                             document.getElementById('requestReason').value = btn.dataset.requestReason || '';
                             document.getElementById('referenceUrl').value = btn.dataset.referenceUrl || '';
-                            if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.editRequest}]]*/ 'Edit request';
+                            if (bookRequestModalTitle) bookRequestModalTitle.textContent = /*[[#{member.bookRequest.editRequest}]]*/ 'Edit request';
                             updateReasonCount();
                         } else {
-                            acquisitionForm.reset();
-                            acquisitionForm.action = acquisitionForm.dataset.createUrl;
-                            if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.newRequest}]]*/ 'Submit a new request';
+                            bookRequestForm.reset();
+                            bookRequestForm.action = bookRequestForm.dataset.createUrl;
+                            if (bookRequestModalTitle) bookRequestModalTitle.textContent = /*[[#{member.bookRequest.newRequest}]]*/ 'Submit a new request';
                             updateReasonCount();
                         }
-                        if (window.jQuery && acquisitionModal) {
-                            window.jQuery(acquisitionModal).modal('show');
+                        if (window.jQuery && bookRequestModal) {
+                            window.jQuery(bookRequestModal).modal('show');
                         }
                     });
                 });
 
-                if (acquisitionModal && acquisitionModal.dataset.reopen === 'true') {
-                    if (acquisitionForm.dataset.editRequestId) {
-                        acquisitionForm.action = acquisitionForm.dataset.createUrl + '/' + acquisitionForm.dataset.editRequestId + '/edit';
-                        if (acquisitionModalTitle) acquisitionModalTitle.textContent = /*[[#{member.acquisition.editRequest}]]*/ 'Edit request';
+                if (bookRequestModal && bookRequestModal.dataset.reopen === 'true') {
+                    if (bookRequestForm.dataset.editRequestId) {
+                        bookRequestForm.action = bookRequestForm.dataset.createUrl + '/' + bookRequestForm.dataset.editRequestId + '/edit';
+                        if (bookRequestModalTitle) bookRequestModalTitle.textContent = /*[[#{member.bookRequest.editRequest}]]*/ 'Edit request';
                     }
                     if (window.jQuery) {
-                        window.jQuery(acquisitionModal).modal('show');
+                        window.jQuery(bookRequestModal).modal('show');
                     }
                 }
             });

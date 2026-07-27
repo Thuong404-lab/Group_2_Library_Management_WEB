@@ -1,6 +1,6 @@
 package com.lms.enums;
 
-public enum AcquisitionRequestStatus {
+public enum BookRequestStatus {
     PENDING,
     APPROVED,
     REJECTED,

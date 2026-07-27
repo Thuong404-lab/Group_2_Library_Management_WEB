@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/librarian_base}">
+<head>
+    <title th:text="#{librarian.bookRequest.title}">Book Requests</title>
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/book-request-list.css(v='20260728-favorites-pagination-v1')}" />
+</head>
+<body>
+<main layout:fragment="content" th:with="activeMenu='suggestions'"
+      class="canonical-management-page member-palette-page member-management-page book-requests-page">
+    <header class="app-page-header book-request-page-hero">
+        <div class="book-request-hero-copy">
+            <div class="app-page-eyebrow" th:text="#{librarian.bookRequest.eyebrow}">COLLECTION DEVELOPMENT</div>
+            <h1 class="app-page-title" th:text="#{librarian.bookRequest.heading}">Book Requests</h1>
+            <p class="app-page-description" th:text="#{librarian.bookRequest.description}">Review reader requests and respond to each suggestion.</p>
+        </div>
+        <div class="book-request-hero-decoration" aria-hidden="true">
+            <i class="bi bi-bookmark-plus"></i>
+        </div>
+    </header>
+
+    <div th:if="${success}" class="app-alert app-alert--success" th:text="${success}"></div>
+    <div th:if="${error}" class="app-alert app-alert--danger" th:text="${error}"></div>
+
+    <section class="app-card book-requests-card">
+        <div class="book-requests-header">
+            <div>
+                <h2 class="app-section-title" th:text="#{librarian.bookRequest.listHeading}">Book Request List</h2>
+                <p class="app-section-description" th:text="#{librarian.bookRequest.listDescription}">Review book details, reader needs, and each decision.</p>
+            </div>
+            <span class="book-request-count" th:if="${requests != null}"
+                  th:text="#{librarian.bookRequest.count(${requests.totalElements})}">0 requests</span>
+        </div>
+        <form method="get" th:action="@{/librarian/interaction/book-requests}"
+              class="book-request-filter-toolbar" role="search">
+            <div class="book-request-filter-field book-request-filter-field--search">
+                <label for="bookRequestKeyword" th:text="#{librarian.bookRequest.search}">Search</label>
+                <div class="book-request-search-control">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="bookRequestKeyword" name="keyword" type="search" maxlength="100"
+                           autocomplete="off" th:value="${bookRequestKeyword}"
+                           th:placeholder="#{librarian.bookRequest.searchPlaceholder}">
+                </div>
+            </div>
+            <div class="book-request-filter-field book-request-filter-field--status">
+                <label for="bookRequestStatus" th:text="#{common.status}">Status</label>
+                <select id="bookRequestStatus" name="status">
+                    <option value="" th:selected="${currentBookRequestStatus == ''}" th:text="#{librarian.bookRequest.allStatuses}">All</option>
+                    <option th:each="itemStatus : ${bookRequestStatuses}" th:value="${itemStatus.name()}"
+                            th:selected="${currentBookRequestStatus == itemStatus.name()}"
+                            th:text="${#messages.msg('request.status.' + #strings.toLowerCase(itemStatus.name()))}"></option>
+                </select>
+            </div>
+            <button type="submit" class="book-request-filter-submit">
+                <span th:text="#{common.filter}">Filter</span>
+            </button>
+            <a th:if="${!#strings.isEmpty(bookRequestKeyword) || !#strings.isEmpty(currentBookRequestStatus)}"
+               class="book-request-filter-reset"
+               th:href="@{/librarian/interaction/book-requests}">
+                <span th:text="#{common.clearFilter}">Clear filter</span>
+            </a>
+        </form>
+
+        <div class="app-table-wrap book-request-table-wrap">
+            <table class="app-table book-requests-table">
+                <colgroup>
+                    <col class="book-request-book-col"><col class="book-requester-col">
+                    <col class="book-request-reason-col"><col class="book-request-status-col"><col class="book-request-actions-col">
+                </colgroup>
+                <thead><tr>
+                    <th th:text="#{librarian.bookRequest.bookInformation}">Book Information</th>
+                    <th th:text="#{librarian.bookRequest.requester}">Requested By</th>
+                    <th th:text="#{librarian.bookRequest.reason}">Request Reason</th>
+                    <th th:text="#{common.status}">Status</th>
+                    <th th:text="#{common.actions}">Actions</th>
+                </tr></thead>
+                <tbody th:if="${requests != null && requests.totalElements > 0}">
+                <tr th:each="request : ${requests.content}">
+                    <td class="book-request-book-info" th:data-label="#{librarian.bookRequest.bookInformation}">
+                        <strong th:text="${request.title}">Book title</strong>
+                        <span class="book-request-book-author" th:text="${request.author != null ? request.author : #messages.msg('book.unknownAuthor')}">Author</span>
+                        <span class="book-request-book-edition" th:if="${request.isbn != null}" th:text="${'ISBN: ' + request.isbn}"></span>
+                        <span class="book-request-book-edition" th:if="${request.publisher != null || request.publicationYear != null}">
+                            <span th:if="${request.publisher != null}" th:text="${request.publisher}"></span>
+                            <span th:if="${request.publisher != null && request.publicationYear != null}"> · </span>
+                            <span th:if="${request.publicationYear != null}" th:text="${request.publicationYear}"></span>
+                        </span>
+                        <a th:if="${request.referenceUrl != null}" th:href="${request.referenceUrl}" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span th:text="#{librarian.bookRequest.referenceLink}">Reference link</span>
+                        </a>
+                    </td>
+                    <td class="book-requester" th:data-label="#{librarian.bookRequest.requester}">
+                        <strong th:text="${request.member != null && request.member.user != null ? request.member.user.fullName : #messages.msg('librarian.bookRequest.unknownRequester')}">Requester</strong>
+                        <time th:text="${request.createdDate != null ? #temporals.format(request.createdDate, 'dd/MM/yyyy · HH:mm') : 'N/A'}">Request date</time>
+                    </td>
+                    <td class="book-request-reason" th:data-label="#{librarian.bookRequest.reason}" th:text="${request.requestReason != null ? request.requestReason : #messages.msg('librarian.bookRequest.legacyReason')}">Request reason</td>
+                    <td th:data-label="#{common.status}">
+                        <span class="status-badge" th:classappend="${' status-' + #strings.toLowerCase(request.status.name())}"
+                              th:text="${#messages.msg('request.status.' + #strings.toLowerCase(request.status.name()))}">Pending</span>
+                        <small class="book-request-decision-note" th:if="${request.decisionNote != null}"
+                               th:classappend="${' decision-' + #strings.toLowerCase(request.status.name())}"
+                               th:text="${request.decisionNote}"></small>
+                    </td>
+                    <td class="book-request-actions" th:data-label="#{common.actions}">
+                        <div th:if="${request.status.name() == 'PENDING'}" class="book-request-action-group">
+                            <button type="button" class="book-request-approve-action" data-bs-toggle="modal" data-bs-target="#approveBookRequestModal"
+                                    th:data-approve-url="@{/librarian/interaction/book-requests/{id}/approve(id=${request.requestId})}"
+                                    th:data-book-title="${request.title}" th:text="#{librarian.bookRequest.approve}">Approve</button>
+                            <button type="button" class="book-request-reject-action" data-bs-toggle="modal" data-bs-target="#rejectBookRequestModal"
+                                    th:data-reject-url="@{/librarian/interaction/book-requests/{id}/reject(id=${request.requestId})}"
+                                    th:data-book-title="${request.title}" th:text="#{librarian.bookRequest.reject}">Reject</button>
+                        </div>
+                        <span th:if="${request.status.name() != 'PENDING'}" class="book-request-processed-date"
+                               th:text="${request.processedDate != null ? #temporals.format(request.processedDate, 'dd/MM/yyyy HH:mm') : ''}"></span>
+                        <small th:if="${request.processedBy != null and request.processedBy.user != null}"
+                               class="d-block text-muted" th:text="${request.processedBy.user.fullName}"></small>
+                    </td>
+                </tr>
+                </tbody>
+                <tbody th:if="${requests == null || requests.totalElements == 0}"><tr class="book-request-empty-row"><td colspan="5" class="book-request-empty-cell">
+                    <div class="app-empty-state"><i class="bi bi-inbox" aria-hidden="true"></i><span th:text="#{librarian.bookRequest.empty}">No requests.</span></div>
+                </td></tr></tbody>
+            </table>
+        </div>
+
+        <nav th:if="${requests != null && requests.totalPages > 1}" class="app-pagination-nav"
+             th:with="startPage=${requests.totalPages <= 10 ? 0 : (requests.number < 9 ? 0 : (requests.number - 8 > requests.totalPages - 10 ? requests.totalPages - 10 : requests.number - 8))}, endPage=${startPage + 9 < requests.totalPages ? startPage + 9 : requests.totalPages - 1}">
+            <ul class="pagination app-pagination">
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/book-requests(page=0,status=${currentBookRequestStatus},keyword=${bookRequestKeyword})}" th:text="#{pagination.first}">First</a></li>
+                <li class="page-item" th:classappend="${requests.first} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/book-requests(page=${requests.number - 1},status=${currentBookRequestStatus},keyword=${bookRequestKeyword})}" th:aria-label="#{pagination.previous}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a></li>
+                <li class="page-item disabled" th:if="${startPage > 0}"><span class="page-link" aria-hidden="true">&hellip;</span></li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}" th:classappend="${i == requests.number ? 'active' : ''}"><a class="page-link" th:href="@{/librarian/interaction/book-requests(page=${i},status=${currentBookRequestStatus},keyword=${bookRequestKeyword})}" th:text="${i + 1}" th:aria-current="${i == requests.number} ? 'page'">1</a></li>
+                <li class="page-item disabled" th:if="${endPage < requests.totalPages - 1}"><span class="page-link" aria-hidden="true">&hellip;</span></li>
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/book-requests(page=${requests.number + 1},status=${currentBookRequestStatus},keyword=${bookRequestKeyword})}" th:aria-label="#{pagination.next}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a></li>
+                <li class="page-item" th:classappend="${requests.last} ? 'disabled'"><a class="page-link" th:href="@{/librarian/interaction/book-requests(page=${requests.totalPages - 1},status=${currentBookRequestStatus},keyword=${bookRequestKeyword})}" th:text="#{pagination.last}">Last</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <div class="modal fade book-request-reject-modal" id="approveBookRequestModal" tabindex="-1"
+         aria-labelledby="approveBookRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+            <div class="modal-header"><div>
+                <h2 class="modal-title" id="approveBookRequestModalLabel" th:text="#{librarian.bookRequest.approveTitle}">Approve request</h2>
+                <p id="approveBookRequestBookTitle"></p>
+            </div></div>
+            <form id="approveBookRequestForm" method="post" novalidate><div class="modal-body">
+                <input type="hidden" name="page" th:value="${requests.number}">
+                <input type="hidden" name="status" th:value="${currentBookRequestStatus}">
+                <input type="hidden" name="keyword" th:value="${bookRequestKeyword}">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label for="approveBookRequestNote" th:text="#{librarian.bookRequest.approveNote}">Approval note</label>
+                <p class="form-text" th:text="#{librarian.bookRequest.approvalMeaning}">Approval accepts the suggestion for procurement follow-up; it does not create inventory automatically.</p>
+                <textarea id="approveBookRequestNote" name="note" required minlength="5" maxlength="500"
+                          th:placeholder="#{librarian.bookRequest.approvePlaceholder}"
+                          aria-describedby="approveBookRequestNoteCount approveBookRequestNoteError"></textarea>
+                <div class="book-request-reason-support"><span id="approveBookRequestNoteCount" aria-live="polite">0/500</span></div>
+                <div id="approveBookRequestNoteError" class="book-request-field-error" role="alert" aria-live="assertive"></div>
+            </div><div class="modal-footer">
+                <button type="button" class="book-request-modal-cancel" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
+                <button type="submit" class="book-request-approve-action" th:text="#{librarian.bookRequest.approve}">Approve</button>
+            </div></form>
+        </div></div>
+    </div>
+
+    <div class="modal fade book-request-reject-modal" id="rejectBookRequestModal" tabindex="-1" aria-labelledby="rejectBookRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+            <div class="modal-header"><div><h2 class="modal-title" id="rejectBookRequestModalLabel" th:text="#{librarian.bookRequest.rejectTitle}">Reject Request</h2><p id="rejectBookRequestBookTitle"></p></div></div>
+            <form id="rejectBookRequestForm" method="post" novalidate><div class="modal-body">
+                <input type="hidden" name="page" th:value="${requests.number}">
+                <input type="hidden" name="status" th:value="${currentBookRequestStatus}">
+                <input type="hidden" name="keyword" th:value="${bookRequestKeyword}">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label for="rejectBookRequestReason" th:text="#{librarian.bookRequest.rejectReason}">Rejection Reason</label>
+                <textarea id="rejectBookRequestReason" name="reason" required minlength="5" maxlength="500" th:placeholder="#{librarian.bookRequest.rejectPlaceholder}" aria-describedby="rejectBookRequestReasonCount rejectBookRequestReasonError"></textarea>
+                <div class="book-request-reason-support"><span id="rejectBookRequestReasonCount" aria-live="polite">0/500</span></div>
+                <div id="rejectBookRequestReasonError" class="book-request-field-error" role="alert" aria-live="assertive"></div>
+            </div><div class="modal-footer"><button type="button" class="book-request-modal-cancel" data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button><button type="submit" class="book-request-modal-reject" th:text="#{librarian.bookRequest.rejectAction}">Reject Request</button></div></form>
+        </div></div>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function () {
+            const approveForm = document.getElementById("approveBookRequestForm");
+            const approveTitle = document.getElementById("approveBookRequestBookTitle");
+            const approveNote = document.getElementById("approveBookRequestNote");
+            const approveError = document.getElementById("approveBookRequestNoteError");
+            const approveCounter = document.getElementById("approveBookRequestNoteCount");
+            const form = document.getElementById("rejectBookRequestForm");
+            const title = document.getElementById("rejectBookRequestBookTitle");
+            const reason = document.getElementById("rejectBookRequestReason");
+            const error = document.getElementById("rejectBookRequestReasonError");
+            const counter = document.getElementById("rejectBookRequestReasonCount");
+            if (!form || !title || !reason || !error || !counter) return;
+            const messages = {
+                required: /*[[#{librarian.bookRequest.validationRequired}]]*/ "A rejection reason is required.",
+                minimum: /*[[#{librarian.bookRequest.validationMinimum}]]*/ "The reason must contain at least 5 characters.",
+                maximum: /*[[#{librarian.bookRequest.validationMaximum}]]*/ "The reason cannot exceed 500 characters.",
+                letters: /*[[#{librarian.bookRequest.validationLetters}]]*/ "The reason must contain letters."
+            };
+            const validateDecision = (value) => value === "" ? messages.required
+                : value.length < 5 ? messages.minimum
+                : value.length > 500 ? messages.maximum
+                : !/\p{L}/u.test(value) ? messages.letters : "";
+            if (approveForm && approveTitle && approveNote && approveError && approveCounter) {
+                const updateApproveCounter = () => { approveCounter.textContent = approveNote.value.length + "/500"; };
+                document.querySelectorAll(".book-request-approve-action[data-approve-url]").forEach(trigger =>
+                    trigger.addEventListener("click", function () {
+                        approveForm.action = trigger.dataset.approveUrl;
+                        approveTitle.textContent = trigger.dataset.bookTitle || "";
+                        approveNote.value = "";
+                        approveNote.classList.remove("is-invalid");
+                        approveError.textContent = "";
+                        updateApproveCounter();
+                    }));
+                approveForm.addEventListener("submit", function (event) {
+                    const value = approveNote.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n");
+                    approveNote.value = value;
+                    updateApproveCounter();
+                    const message = validateDecision(value);
+                    if (message) {
+                        event.preventDefault(); approveNote.classList.add("is-invalid");
+                        approveError.textContent = message; approveNote.focus();
+                    }
+                });
+                approveNote.addEventListener("input", function () {
+                    approveNote.classList.remove("is-invalid"); approveError.textContent = ""; updateApproveCounter();
+                });
+                updateApproveCounter();
+            }
+            const updateCounter = () => { counter.textContent = reason.value.length + "/500"; };
+            document.querySelectorAll(".book-request-reject-action").forEach(trigger => trigger.addEventListener("click", function () {
+                form.action = trigger.dataset.rejectUrl; title.textContent = trigger.dataset.bookTitle || "";
+                reason.value = ""; reason.classList.remove("is-invalid"); error.textContent = ""; updateCounter();
+            }));
+            form.addEventListener("submit", function (event) {
+                const value = reason.value.trim().replace(/(?:\r?\n\s*){3,}/g, "\n\n"); reason.value = value; updateCounter();
+                const message = validateDecision(value);
+                if (message) { event.preventDefault(); reason.classList.add("is-invalid"); error.textContent = message; reason.focus(); }
+            });
+            reason.addEventListener("input", function () { reason.classList.remove("is-invalid"); error.textContent = ""; updateCounter(); });
+        });
+    </script>
+</main>
+</body>
+</html>
