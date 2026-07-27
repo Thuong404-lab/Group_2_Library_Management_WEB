@@ -2,8 +2,10 @@ package com.lms.controller.librarian;
 
 import com.lms.dto.response.LibrarianRevenueReportData;
 import com.lms.dto.response.ReportExport;
+import com.lms.exception.ValidationException;
 import com.lms.service.ReportService;
 import com.lms.service.LibrarianDashboardService;
+import com.lms.util.ReportPeriodPolicy;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -35,11 +37,22 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Model model) {
-        LibrarianRevenueReportData report = reportService.getLibrarianRevenueReport(fromDate, toDate);
+        LibrarianRevenueReportData report;
+        LocalDate formFromDate = fromDate;
+        LocalDate formToDate = toDate;
+        try {
+            report = reportService.getLibrarianRevenueReport(fromDate, toDate);
+            formFromDate = report.getFromDate();
+            formToDate = report.getToDate();
+        } catch (ValidationException exception) {
+            report = reportService.getLibrarianRevenueReport(null, null);
+            model.addAttribute("reportDateError", exception.getMessage());
+        }
         model.addAttribute("report", report);
-        model.addAttribute("fromDate", report.getFromDate());
-        model.addAttribute("toDate", report.getToDate());
-        model.addAttribute("maxDate", LocalDate.now());
+        model.addAttribute("fromDate", formFromDate);
+        model.addAttribute("toDate", formToDate);
+        model.addAttribute("maxDate", LocalDate.now(ReportPeriodPolicy.LIBRARY_ZONE));
+        model.addAttribute("maxReportRangeDays", ReportPeriodPolicy.MAX_RANGE_DAYS);
         model.addAllAttributes(dashboardService.getStatisticsData());
         return "librarian/revenue-report";
     }
