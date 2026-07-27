@@ -15,6 +15,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Objects;
+
 /**
  * AuthController - Xử lý Đăng nhập / Đăng xuất / Đăng ký
  * Người phụ trách: Nguyễn Tiến Thương (CE191329)
@@ -51,8 +53,21 @@ public class AuthController extends LocalizedControllerSupport {
 
     // UC-2: Register - Xử lý đăng ký thành viên mới
     @PostMapping("/register")
-    public String processRegister(@ModelAttribute("registerRequest") RegisterRequest registerRequest,
+    public String processRegister(@Valid @ModelAttribute("registerRequest") RegisterRequest registerRequest,
+            BindingResult result,
             RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            return "register";
+        }
+
+        if (!Objects.equals(registerRequest.getPassword(), registerRequest.getConfirmPassword())) {
+            result.rejectValue(
+                    "confirmPassword",
+                    "password.mismatch",
+                    message("backend.password.mismatch"));
+            return "register";
+        }
+
         try {
             authService.register(registerRequest);
             redirectAttributes.addFlashAttribute("successMsg", message("backend.auth.registered"));

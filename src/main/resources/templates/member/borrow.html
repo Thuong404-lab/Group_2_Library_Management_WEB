@@ -94,7 +94,7 @@
                         <thead>
                             <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
-                                <th class="border-0" th:text="#{book.isbn}">ISBN</th>
+                                <th class="border-0" th:text="#{member.loan.borrowCode}">Borrow code</th>
                                 <th class="border-0" th:text="#{loan.borrowDate}">Borrow Date</th>
                                 <th class="border-0" th:text="#{loan.dueDate}">Due Date</th>
                                 <th class="border-0" th:text="#{common.status}">Status</th>
@@ -119,15 +119,9 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="fw-medium"
-                                    th:classappend="${item.barcodeAssigned or item.status == 'Pending'} ? 'text-muted' : 'text-danger'">
-                                    <span th:if="${item.barcodeAssigned}" th:text="${item.bookIdStr}">BC016-092</span>
-                                    <span th:if="${!item.barcodeAssigned and item.status == 'Pending'}"
-                                        th:text="#{member.loan.barcodePending}">Awaiting librarian assignment</span>
-                                    <span th:if="${!item.barcodeAssigned and item.status != 'Pending'}"
-                                        th:text="#{member.loan.barcodeMissing(${item.borrowIdStr})}">Barcode not
-                                        assigned</span>
-                                </td>
+                                <td class="text-muted fw-medium"
+                                    th:text="${item.borrowIdStr != null and !#strings.isEmpty(#strings.trim(item.borrowIdStr)) ? item.borrowIdStr : '-'}">
+                                    BOR-29</td>
                                 <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">
                                     10/11/2026</td>
                                 <td>
@@ -300,7 +294,7 @@
                         <thead>
                             <tr>
                                 <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
-                                <th class="border-0" th:text="#{book.barcode}">Barcode</th>
+                                <th class="border-0" th:text="#{book.isbn}">ISBN</th>
                                 <th class="border-0" th:text="#{loan.borrowDate}">Borrow Date</th>
                                 <th class="border-0" th:text="#{loan.actualReturnDate}">Actual Return Date</th>
                                 <th class="border-0" th:text="#{common.status}">Status</th>
@@ -327,7 +321,7 @@
                                     </div>
                                 </td>
                                 <td class="text-muted fw-medium"
-                                    th:text="${item.isbn != null and !#strings.isEmpty(item.isbn) ? item.isbn : #messages.msg('book.isbn.missing')}">
+                                    th:text="${item.isbn != null and !#strings.isEmpty(#strings.trim(item.isbn)) ? item.isbn : #messages.msg('book.isbn.missing')}">
                                     9786040000001</td>
                                 <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">
                                     01/10/2026</td>
