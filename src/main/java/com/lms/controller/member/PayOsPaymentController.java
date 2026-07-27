@@ -87,6 +87,12 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
             RedirectAttributes redirectAttributes) {
         try {
             Member member = currentMember(principal);
+            PayOsPayment pendingPayment = payOsPaymentService.getForMember(orderCode, member.getMemberId());
+            if (PayOsPaymentService.TOP_UP.equalsIgnoreCase(pendingPayment.getPurpose())) {
+                payOsPaymentService.cancelTopUpForMember(orderCode, member.getMemberId());
+                redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelTopUpSuccess"));
+                return "redirect:/member/financial/transactions";
+            }
             payOsPaymentService.cancelBorrowFeeForMember(orderCode, member.getMemberId());
             redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelSuccess"));
             return "redirect:/member/financial/fees";

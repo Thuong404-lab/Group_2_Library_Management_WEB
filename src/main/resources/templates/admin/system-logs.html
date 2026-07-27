@@ -87,10 +87,22 @@
                                 th:text="#{admin.logs.action.google}">Google Login</option>
                         </th:block>
                         <th:block th:if="${currentSection == 'operations'}">
+                            <option value="CREATE_BOOK" th:selected="${actionType == 'CREATE_BOOK'}"
+                                th:text="#{admin.logs.action.create_book}">Add Book</option>
+                            <option value="UPDATE_BOOK" th:selected="${actionType == 'UPDATE_BOOK'}"
+                                th:text="#{admin.logs.action.update_book}">Update Book</option>
+                            <option value="DELETE_BOOK" th:selected="${actionType == 'DELETE_BOOK'}"
+                                th:text="#{admin.logs.action.delete_book}">Delete Book</option>
                             <option value="CREATE_ACCOUNT" th:selected="${actionType == 'CREATE_ACCOUNT'}"
                                 th:text="#{admin.logs.action.create_account}">Create Account</option>
                             <option value="UPDATE_ACCOUNT" th:selected="${actionType == 'UPDATE_ACCOUNT'}"
                                 th:text="#{admin.logs.action.update_account}">Update Account</option>
+                            <option value="DEACTIVATE_ACCOUNT" th:selected="${actionType == 'DEACTIVATE_ACCOUNT'}"
+                                th:text="#{admin.logs.action.deactivate_account}">Deactivate Account</option>
+                            <option value="DELETE_ACCOUNT" th:selected="${actionType == 'DELETE_ACCOUNT'}"
+                                th:text="#{admin.logs.action.delete_account}">Delete Account</option>
+                            <option value="UPDATE_MEMBERSHIP_TIER" th:selected="${actionType == 'UPDATE_MEMBERSHIP_TIER'}"
+                                th:text="#{admin.logs.action.update_membership_tier}">Update Membership Tier</option>
                             <option value="UPDATE_SETTINGS" th:selected="${actionType == 'UPDATE_SETTINGS'}"
                                 th:text="#{admin.logs.action.update_settings}">Update Settings</option>
                         </th:block>
@@ -99,6 +111,10 @@
                                 th:text="#{admin.logs.action.request_borrow}">Loan Request</option>
                             <option value="REQUEST_RETURN" th:selected="${actionType == 'REQUEST_RETURN'}"
                                 th:text="#{admin.logs.action.request_return}">Return Request</option>
+                            <option value="REQUEST_RENEWAL" th:selected="${actionType == 'REQUEST_RENEWAL'}"
+                                th:text="#{admin.logs.action.request_renewal}">Renewal Request</option>
+                            <option value="CANCEL_RENEWAL" th:selected="${actionType == 'CANCEL_RENEWAL'}"
+                                th:text="#{admin.logs.action.cancel_renewal}">Cancel Renewal Request</option>
                             <option value="RESERVE_BOOK" th:selected="${actionType == 'RESERVE_BOOK'}"
                                 th:text="#{admin.logs.action.reserve_book}">Reserve Book</option>
                         </th:block>
@@ -161,28 +177,16 @@
                                 <td>
                                     <span class="log-action-badge" th:classappend="${
                                             log.actionType == 'LOGIN' ? 'log-action-success' :
-                                            (log.actionType == 'LOGOUT' or log.actionType == 'DEACTIVATE_ACCOUNT' or log.actionType == 'DELETE_BOOK') ? 'log-action-danger' :
+                                            (log.actionType == 'LOGOUT' or log.actionType == 'DEACTIVATE_ACCOUNT' or log.actionType == 'DELETE_BOOK' or log.actionType == 'DELETE_ACCOUNT' or log.actionType == 'REJECT_RENEWAL' or log.actionType == 'CANCEL_RENEWAL') ? 'log-action-danger' :
                                             log.actionType == 'GOOGLE' ? 'log-action-primary' :
                                             (log.actionType == 'CREATE_ACCOUNT' or log.actionType == 'CREATE_BOOK') ? 'log-action-info' :
-                                            (log.actionType == 'UPDATE_ACCOUNT' or log.actionType == 'UPDATE_BOOK') ? 'log-action-warning' :
+                                            (log.actionType == 'UPDATE_ACCOUNT' or log.actionType == 'UPDATE_BOOK' or log.actionType == 'UPDATE_MEMBERSHIP_TIER') ? 'log-action-warning' :
                                             log.actionType == 'UPDATE_SETTINGS' ? 'log-action-purple' :
-                                            log.actionType == 'REQUEST_BORROW' ? 'log-action-indigo' :
-                                            log.actionType == 'REQUEST_RETURN' ? 'log-action-pink' :
+                                            (log.actionType == 'REQUEST_BORROW' or log.actionType == 'APPROVE_RENEWAL') ? 'log-action-indigo' :
+                                            (log.actionType == 'REQUEST_RETURN' or log.actionType == 'REQUEST_RENEWAL') ? 'log-action-pink' :
                                             log.actionType == 'RESERVE_BOOK' ? 'log-action-brown' :
                                             'log-action-secondary'}"
-                                        th:text="${log.actionType == 'LOGIN' ? #messages.msg('admin.logs.action.login') :
-                                            (log.actionType == 'LOGOUT' ? #messages.msg('admin.logs.action.logout') :
-                                            (log.actionType == 'CREATE_BOOK' ? #messages.msg('admin.logs.action.create_book') :
-                                            (log.actionType == 'UPDATE_BOOK' ? #messages.msg('admin.logs.action.update_book') :
-                                            (log.actionType == 'DELETE_BOOK' ? #messages.msg('admin.logs.action.delete_book') :
-                                            (log.actionType == 'CREATE_ACCOUNT' ? #messages.msg('admin.logs.action.create_account') :
-                                            (log.actionType == 'UPDATE_ACCOUNT' ? #messages.msg('admin.logs.action.update_account') :
-                                            (log.actionType == 'DEACTIVATE_ACCOUNT' ? #messages.msg('admin.logs.action.deactivate_account') :
-                                            (log.actionType == 'UPDATE_SETTINGS' ? #messages.msg('admin.logs.action.update_settings') :
-                                            (log.actionType == 'REQUEST_BORROW' ? #messages.msg('admin.logs.action.request_borrow') :
-                                            (log.actionType == 'REQUEST_RETURN' ? #messages.msg('admin.logs.action.request_return') :
-                                            (log.actionType == 'RESERVE_BOOK' ? #messages.msg('admin.logs.action.reserve_book') :
-                                            (log.actionType == 'GOOGLE' ? #messages.msg('admin.logs.action.google') : log.actionType))))))))))))}">
+                                        th:text="${#messages.msgOrNull('admin.logs.action.' + #strings.toLowerCase(log.actionType)) != null ? #messages.msg('admin.logs.action.' + #strings.toLowerCase(log.actionType)) : log.actionType}">
                                         Login
                                     </span>
                                 </td>
@@ -192,10 +196,21 @@
                                         <span th:case="'LOGIN'" th:text="#{backend.auth.audit.login}"></span>
                                         <span th:case="'LOGOUT'" th:text="#{backend.auth.audit.logout}"></span>
                                         <span th:case="'GOOGLE'" th:text="#{backend.auth.audit.google_login}"></span>
-                                        <span th:case="'UPDATE_SETTINGS'"
-                                            th:text="#{backend.settings.audit.updated}"></span>
+                                        <span th:case="'UPDATE_SETTINGS'" th:text="#{backend.settings.audit.updated}"></span>
+                                        <span th:case="'CREATE_BOOK'"
+                                              th:with="rawTitle=${#strings.replace(#strings.replace(#strings.replace(log.description, 'Added new book: ', ''), 'Thêm sách mới: ', ''), 'Tạo dữ liệu sách demo.', 'Demo')}, cleanTitle=${#strings.endsWith(rawTitle, '.') ? #strings.substring(rawTitle, 0, #strings.length(rawTitle) - 1) : rawTitle}"
+                                              th:text="#{backend.inventory.audit.createdBook(${cleanTitle})}">
+                                        </span>
+                                        <span th:case="'UPDATE_BOOK'"
+                                              th:with="rawTitle=${#strings.replace(#strings.replace(log.description, 'Updated book details: ', ''), 'Cập nhật thông tin sách: ', '')}, cleanTitle=${#strings.endsWith(rawTitle, '.') ? #strings.substring(rawTitle, 0, #strings.length(rawTitle) - 1) : rawTitle}"
+                                              th:text="#{backend.inventory.audit.updatedBook(${cleanTitle})}">
+                                        </span>
+                                        <span th:case="'DELETE_BOOK'"
+                                              th:with="rawTitle=${#strings.replace(#strings.replace(log.description, 'Deleted book: ', ''), 'Xóa sách: ', '')}, cleanTitle=${#strings.endsWith(rawTitle, '.') ? #strings.substring(rawTitle, 0, #strings.length(rawTitle) - 1) : rawTitle}"
+                                              th:text="#{backend.inventory.audit.deletedBook(${cleanTitle})}">
+                                        </span>
                                         <span th:case="*"
-                                            th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
+                                              th:text="${log.description != null ? log.description : #messages.msg('admin.logs.noDescription')}">
                                             No description
                                         </span>
                                     </th:block>
