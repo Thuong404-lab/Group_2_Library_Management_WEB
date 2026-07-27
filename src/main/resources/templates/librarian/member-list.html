@@ -200,7 +200,7 @@
                                             <div class="member-readonly-field" role="textbox" aria-readonly="true"
                                                 aria-labelledby="createMemberTierLabel">
                                                 <span th:if="${defaultTier != null}"
-                                                    th:text="${defaultTier.tierName == 'Member' or defaultTier.tierName == 'Regular' ? #messages.msg('tier.regular') : defaultTier.tierName}">Member</span>
+                                                    th:text="${defaultTier.tierName == 'Regular' ? #messages.msg('tier.regular') : defaultTier.tierName}">Regular</span>
                                                 <span th:if="${defaultTier == null}"
                                                     th:text="#{librarian.members.unranked}">Unranked</span>
                                             </div>
@@ -288,8 +288,8 @@
                                     th:text="#{librarian.members.allTiers}">All Tiers</option>
                                 <option th:each="membershipTier : ${tiers}" th:value="${membershipTier.tierName}"
                                     th:selected="${selectedTier == membershipTier.tierName}"
-                                    th:text="${membershipTier.tierName == 'Member' or membershipTier.tierName == 'Regular' ? #messages.msg('tier.regular') : membershipTier.tierName}">
-                                    Member</option>
+                                    th:text="${membershipTier.tierName == 'Regular' ? #messages.msg('tier.regular') : (membershipTier.tierName == 'Silver' ? #messages.msg('tier.silver') : (membershipTier.tierName == 'Gold' ? #messages.msg('tier.gold') : (membershipTier.tierName == 'Diamond' ? #messages.msg('tier.diamond') : membershipTier.tierName)))}">
+                                    Regular</option>
                             </select>
 
                             <select class="form-select member-filter-select" name="status" data-auto-submit
