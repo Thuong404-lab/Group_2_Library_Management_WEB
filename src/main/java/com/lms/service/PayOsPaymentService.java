@@ -323,11 +323,14 @@ public class PayOsPaymentService {
         if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
             throw new ConflictException(messages.get("backend.financial.borrowFeeAlreadyPaid"));
         }
+        BigDecimal amount = requireWholeVnd(financialService.calculateBorrowingFeeAmount(borrowId));
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), BORROW_FEE, borrowId);
         if (activePayment != null) {
-            return activePayment;
+            if (activePayment.getAmount() != null && amount.compareTo(activePayment.getAmount()) == 0) {
+                return activePayment;
+            }
+            cancelStaleBorrowFeePayment(activePayment);
         }
-        BigDecimal amount = requireWholeVnd(financialService.calculateBorrowingFeeAmount(borrowId));
         return createPayment(member, BORROW_FEE, borrowId, amount,
                 descriptionWithId("LMW NOP PHI MUON ID", "LMW MUON ID", borrowId),
                 "/member/payments/payos/return");
@@ -348,14 +351,35 @@ public class PayOsPaymentService {
         if (financialService.hasPaidBorrowingFee(member.getMemberId(), borrowId)) {
             throw new ConflictException(messages.get("backend.financial.borrowFeeAlreadyPaid"));
         }
+        BigDecimal amount = requireWholeVnd(financialService.calculateBorrowingFeeAmount(borrowId));
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), BORROW_FEE, borrowId);
         if (activePayment != null) {
-            return activePayment;
+            if (activePayment.getAmount() != null && amount.compareTo(activePayment.getAmount()) == 0) {
+                return activePayment;
+            }
+            cancelStaleBorrowFeePayment(activePayment);
         }
-        BigDecimal amount = requireWholeVnd(financialService.calculateBorrowingFeeAmount(borrowId));
         return createPayment(member, BORROW_FEE, borrowId, amount,
                 descriptionWithId("LMW NOP PHI MUON ID", "LMW MUON ID", borrowId),
                 "/librarian/payments/payos/return");
+    }
+
+    /**
+     * A membership tier can change while a QR is still waiting to be paid.
+     * Never reuse that old QR when its amount no longer matches the current
+     * discounted borrowing fee; cancel it at KQPay before issuing a new order.
+     */
+    private void cancelStaleBorrowFeePayment(PayOsPayment payment) {
+        try {
+            client().paymentRequests().cancel(payment.getOrderCode(), "Borrow fee was recalculated");
+        } catch (Exception exception) {
+            throw new ExternalServiceException(messages.get("backend.payment.linkCreateFailed"), exception);
+        }
+        String oldStatus = payment.getStatus();
+        payment.setStatus("CANCELLED");
+        PayOsPayment cancelled = paymentRepository.save(payment);
+        auditService.record(cancelled, "PAYMENT_CANCELLED", "APPLICATION", oldStatus, cancelled.getStatus(), true,
+                "Borrowing fee recalculated; a new KQPay order is required.");
     }
 
     @Transactional(readOnly = true)
@@ -413,6 +437,86 @@ public class PayOsPaymentService {
         }
         return cancelPendingBorrowFee(orderCode, null, "STAFF",
                 messages.get("backend.payment.audit.cancelledByStaff", staff.getStaffId()));
+    }
+
+    /**
+     * Cancels a pending fine QR created at the librarian counter. Fine records
+     * are intentionally left pending so the librarian can generate a fresh QR
+     * or collect payment using cash/wallet afterwards.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelFinePaymentForStaff(Long orderCode, Staff staff) {
+        if (staff == null || staff.getStaffId() == null) {
+            throw new ValidationException(messages.get("backend.financial.staffRequired"));
+        }
+        PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
+        if (!FINE.equalsIgnoreCase(payment.getPurpose()) && !FINE_BATCH.equalsIgnoreCase(payment.getPurpose())) {
+            throw new ValidationException(messages.get("backend.payment.onlyFineCanCancel"));
+        }
+        if (!PENDING.equalsIgnoreCase(payment.getStatus())) {
+            throw new ConflictException(messages.get("backend.payment.onlyPendingCanCancel"));
+        }
+
+        try {
+            client().paymentRequests().cancel(orderCode, "Librarian cancelled fine payment");
+        } catch (Exception exception) {
+            throw new ExternalServiceException(messages.get("backend.payment.cancelFailed"), exception);
+        }
+
+        String oldStatus = payment.getStatus();
+        payment.setStatus("CANCELLED");
+        PayOsPayment saved = paymentRepository.save(payment);
+        auditService.record(saved, "PAYMENT_CANCELLED", "STAFF", oldStatus, saved.getStatus(), true,
+                messages.get("backend.payment.audit.fineCancelledByStaff", staff.getStaffId()));
+        return saved;
+    }
+
+    /** Cancels an uncredited wallet top-up QR without changing the wallet balance. */
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelTopUpForStaff(Long orderCode, Staff staff) {
+        if (staff == null || staff.getStaffId() == null) {
+            throw new ValidationException(messages.get("backend.financial.staffRequired"));
+        }
+        return cancelPendingTopUp(orderCode, null, "STAFF",
+                messages.get("backend.payment.audit.topUpCancelledByStaff", staff.getStaffId()));
+    }
+
+    /** Lets a member cancel only their own pending self top-up QR. */
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelTopUpForMember(Long orderCode, Integer memberId) {
+        if (memberId == null) {
+            throw new ValidationException(messages.get("backend.payment.loginRequired"));
+        }
+        return cancelPendingTopUp(orderCode, memberId, "MEMBER",
+                messages.get("backend.payment.audit.topUpCancelledByMember", memberId));
+    }
+
+    private PayOsPayment cancelPendingTopUp(Long orderCode, Integer expectedMemberId,
+                                             String source, String auditMessage) {
+        PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
+        if (expectedMemberId != null && (payment.getMember() == null
+                || !expectedMemberId.equals(payment.getMember().getMemberId()))) {
+            throw new ForbiddenException(messages.get("backend.payment.notFound"));
+        }
+        if (!TOP_UP.equalsIgnoreCase(payment.getPurpose())) {
+            throw new ValidationException(messages.get("backend.payment.onlyTopUpCanCancel"));
+        }
+        if (!PENDING.equalsIgnoreCase(payment.getStatus())) {
+            throw new ConflictException(messages.get("backend.payment.onlyPendingCanCancel"));
+        }
+        try {
+            client().paymentRequests().cancel(orderCode, "Top-up payment cancelled");
+        } catch (Exception exception) {
+            throw new ExternalServiceException(messages.get("backend.payment.cancelFailed"), exception);
+        }
+
+        String oldStatus = payment.getStatus();
+        payment.setStatus("CANCELLED");
+        PayOsPayment saved = paymentRepository.save(payment);
+        auditService.record(saved, "PAYMENT_CANCELLED", source, oldStatus, saved.getStatus(), true, auditMessage);
+        return saved;
     }
 
     @Transactional(rollbackFor = Exception.class)
