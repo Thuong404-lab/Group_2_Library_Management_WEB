@@ -28,11 +28,8 @@ public interface SystemService {
             Integer renewalRejectionCooldownHours,
             Integer renewalApprovalTimeoutHours,
             BigDecimal borrowFeePerBook,
-            BigDecimal minorDamageBorrowFee,
-            BigDecimal severeDamageBorrowFee,
-            BigDecimal finePerDay,
+            BigDecimal renewalFeePerDay,
             BigDecimal damageCompensationAmount,
-            Integer damageCompensationThreshold,
             Integer overdueViolationLockLimit,
             BigDecimal depositAmount);
 }

@@ -4,7 +4,7 @@
       layout:decorate="~{layout/base}">
 <head>
     <title th:text="#{catalog.title}">Book Catalog - Library Management System</title>
-    <link rel="stylesheet" th:href="@{/css/pages/guest/books.css}" />
+    <link rel="stylesheet" th:href="@{/css/pages/guest/books.css(v='20260727-filter-heading-6')}" />
 </head>
 <body>
 <main layout:fragment="content" class="guest-catalog-page member-palette-page">
@@ -15,8 +15,6 @@
                 <h1 th:text="#{catalog.heading}">Explore the catalog</h1>
                 <p th:text="#{catalog.description}">Find books by title, author, ISBN, genre, and availability.</p>
             </div>
-            <span class="catalog-result-pill"
-                  th:text="#{catalog.resultCount(${bookPage != null ? bookPage.totalElements : 0})}">Showing 0 results</span>
         </header>
 
         <div class="catalog-layout">
@@ -31,7 +29,10 @@
                     </div>
 
                     <fieldset class="catalog-filter-group">
-                        <legend th:text="#{catalog.genre}">Genre</legend>
+                        <legend class="catalog-filter-legend">
+                            <i class="bi bi-tags" aria-hidden="true"></i>
+                            <span th:text="#{catalog.genre}">Genres</span>
+                        </legend>
                         <label class="catalog-filter-option" for="genreAll">
                             <input type="radio" name="genreId" value="" id="genreAll"
                                    th:checked="${selectedGenreId == null}" onchange="this.form.submit()">
@@ -104,7 +105,7 @@
                     <article class="catalog-book-card member-reference-list__item" th:each="book : ${bookPage.content}">
                         <a class="catalog-book-link" th:href="@{'/books/' + ${book.bookId}}">
                             <span class="catalog-cover-wrap">
-                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : 'https://picsum.photos/seed/' + book.bookId + '/600/800'}"
+                                <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                                      class="catalog-cover" th:alt="${book.title}"
                                      onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                             </span>
@@ -120,8 +121,8 @@
                                 </span>
                                 <span class="catalog-book-footer">
                                     <span class="catalog-status member-reference-pill"
-                                          th:classappend="${book.status == 'Active'} ? ' is-available' : ' is-unavailable'"
-                                          th:text="${book.status == 'Active' ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
+                                          th:classappend="${book.status == 'Active' and availableCopiesByBookId[book.bookId] > 0} ? ' is-available' : ' is-unavailable'"
+                                          th:text="${book.status == 'Active' and availableCopiesByBookId[book.bookId] > 0 ? #messages.msg('book.status.available') : #messages.msg('book.status.unavailable')}">Available</span>
                                     <span class="catalog-isbn" th:text="#{catalog.isbn(${book.isbn != null ? book.isbn : #messages.msg('common.none')})}">ISBN</span>
                                 </span>
                             </span>

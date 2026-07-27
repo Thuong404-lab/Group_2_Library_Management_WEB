@@ -334,12 +334,14 @@
                                             <colgroup>
                                                 <col class="borrow-barcode-column">
                                                 <col>
+                                                <col>
                                                 <col class="borrow-action-col">
                                             </colgroup>
                                             <thead>
                                                 <tr>
                                                     <th th:text="#{book.barcode}">Barcode</th>
                                                     <th th:text="#{book.title}">Book Title</th>
+                                                    <th th:text="#{librarian.inventory.condition}">Book condition</th>
                                                     <th class="borrow-action-column" th:text="#{common.actions}">Actions
                                                     </th>
                                                 </tr>
@@ -448,7 +450,7 @@
                                         <tr>
                                             <th th:text="#{book.title}">Book Title</th>
                                             <th th:text="#{book.barcode}">Barcode</th>
-                                            <th th:text="#{common.status}">Status</th>
+                                            <th th:text="#{librarian.inventory.condition}">Book condition</th>
                                             <th class="text-center" th:text="#{common.actions}">Actions</th>
                                         </tr>
                                     </thead>
@@ -466,8 +468,7 @@
                                                 Chưa quét mã vạch
                                             </td>
                                             <td class="request-status-cell">
-                                                <span class="status-badge status-pending"
-                                                    th:text="#{status.pendingApproval}">Chờ quét</span>
+                                                <span class="text-muted">—</span>
                                             </td>
                                             <td class="request-action-cell text-center">
                                                 —
@@ -1265,7 +1266,7 @@
                                 .then(data => {
                                     data.forEach(book => {
                                         if (book.found && book.rawStatus === 'Available') {
-                                            addBookToList(book.barcode, book.title, book.coverImageUrl);
+                                            addBookToList(book.barcode, book.title, book.coverImageUrl, book.condition);
                                         }
                                     });
                                 });
@@ -1391,7 +1392,7 @@
                                         const book = data[0];
                                         if (book.found) {
                                             if (book.rawStatus === 'Available') {
-                                                addBookToList(book.barcode, book.title, book.coverImageUrl);
+                                                addBookToList(book.barcode, book.title, book.coverImageUrl, book.condition);
                                                 scannerInput.value = "";
                                             } else {
                                                 showError(`${borrowDeskI18n.unavailableBook} (${borrowDeskI18n.status}: ${book.status})`);
@@ -1446,7 +1447,7 @@
                         return placeholder;
                     }
 
-                    function addBookToList(barcode, title, coverImageUrl) {
+                    function addBookToList(barcode, title, coverImageUrl, condition) {
                         if (!scannedBarcodes.includes(barcode)) {
                             scannedBarcodes.push(barcode);
                             updateHiddenInput();
@@ -1472,6 +1473,12 @@
                             bookSummary.appendChild(bookTitle);
                             bookCell.appendChild(bookSummary);
 
+                            const conditionCell = document.createElement("td");
+                            const conditionBadge = document.createElement("span");
+                            conditionBadge.className = "status-badge status-active";
+                            conditionBadge.textContent = condition || "—";
+                            conditionCell.appendChild(conditionBadge);
+
                             const actionCell = document.createElement("td");
                             actionCell.className = "borrow-action-column";
                             const actionGroup = document.createElement("div");
@@ -1491,7 +1498,7 @@
                             actionGroup.appendChild(removeButton);
                             actionCell.appendChild(actionGroup);
 
-                            tr.append(barcodeCell, bookCell, actionCell);
+                            tr.append(barcodeCell, bookCell, conditionCell, actionCell);
                             if (tbody) tbody.appendChild(tr);
                             refreshFormState();
                             scannerInput.focus();
@@ -1660,7 +1667,7 @@
                                 barcodeCell.classList.add("text-muted", "fst-italic");
                             }
                             if (statusCell) {
-                                statusCell.innerHTML = '<span class="status-badge status-pending">Chờ quét</span>';
+                                statusCell.innerHTML = '<span class="text-muted">—</span>';
                             }
                             if (actionCell) {
                                 actionCell.innerHTML = "—";
@@ -1744,7 +1751,8 @@
                                         barcodeCell.classList.remove("text-muted", "fst-italic");
                                     }
                                     if (statusCell) {
-                                        statusCell.innerHTML = '<span class="status-badge status-active">Khả dụng</span>';
+                                        const conditionText = bookInfo.condition || "—";
+                                        statusCell.innerHTML = `<span class="status-badge status-active">${conditionText}</span>`;
                                     }
                                     if (actionCell) {
                                         actionCell.innerHTML = `<button type="button" class="btn btn-sm btn-link text-danger p-0 fw-bold" onclick="removeRequestBarcode(this)"><i class="bi bi-trash"></i></button>`;

@@ -110,7 +110,7 @@
                                     onclick="changeQty(-1)">−</button>
                             <input type="number" name="quantity" id="quantityInput"
                                    value="1" min="1" th:max="${maxRequestQuantity != null ? maxRequestQuantity : 1}"
-                                   readonly>
+                                   inputmode="numeric">
                             <button type="button" id="qtyIncrease"
                                     class="member-borrow-create-stepper-button"
                                     onclick="changeQty(1)">+</button>
@@ -412,6 +412,21 @@
             // Khởi tạo trạng thái nút +/-
             var qtyInput = document.getElementById('quantityInput');
             if (qtyInput) {
+                qtyInput.addEventListener("keydown", function (event) {
+                    if (["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Tab"].includes(event.key)) {
+                        return;
+                    }
+                    if (!/^[0-9]$/.test(event.key)) {
+                        event.preventDefault();
+                    }
+                });
+                qtyInput.addEventListener("input", function () {
+                    this.value = this.value.replace(/[^0-9]/g, "");
+                    changeQty(0);
+                });
+                qtyInput.addEventListener("blur", function () {
+                    changeQty(0);
+                });
                 document.getElementById('qtyDecrease').disabled = (parseInt(qtyInput.value) <= 1);
                 document.getElementById('qtyIncrease').disabled = (parseInt(qtyInput.value) >= maxQty);
             }

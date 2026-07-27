@@ -225,9 +225,11 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
             errors.put("status", messages.get("validation.status"));
         }
         User user = account.getMember().getUser();
-        if (!Objects.equals(account.getVersion(), request.getAccountVersion())
-                || !Objects.equals(user.getVersion(), request.getUserVersion())) {
-            errors.put("_global", messages.get("validation.concurrentUpdate"));
+        if (request.getAccountVersion() != null && request.getUserVersion() != null) {
+            if (!Objects.equals(account.getVersion(), request.getAccountVersion())
+                    || !Objects.equals(user.getVersion(), request.getUserVersion())) {
+                errors.put("_global", messages.get("validation.concurrentUpdate"));
+            }
         }
         return errors;
     }

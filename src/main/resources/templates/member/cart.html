@@ -66,22 +66,23 @@
                             <span th:if="${availableStocks.get(book.bookId) <= 0}" class="member-reference-pill is-unavailable" th:text="#{member.cart.outOfStock}">Out of stock</span>
                         </div>
 
-                        <div th:if="${availableStocks.get(book.bookId) > 0}" class="member-cart-quantity-control">
+                        <div th:if="${availableStocks.get(book.bookId) > 0}" class="member-cart-quantity-control"
+                             th:with="copyLimit=${availableStocks.get(book.bookId) < remainingBorrowLimit ? availableStocks.get(book.bookId) : remainingBorrowLimit}">
                             <span class="member-cart-quantity-label" th:text="#{member.cart.quantityLabel}">Quantity</span>
                             <div class="member-cart-stepper">
                                 <button type="button" data-quantity-action="decrease" th:aria-label="#{member.cart.decreaseQuantity}">
                                     <i class="bi bi-dash" aria-hidden="true"></i>
                                 </button>
                                 <input type="number" class="member-cart-quantity-input"
-                                       min="1" th:max="${availableStocks.get(book.bookId)}"
-                                       th:value="${quantities.get(book.bookId) <= availableStocks.get(book.bookId) ? quantities.get(book.bookId) : availableStocks.get(book.bookId)}"
+                                       min="1" th:max="${copyLimit}"
+                                       th:value="${quantities.get(book.bookId) <= copyLimit ? quantities.get(book.bookId) : copyLimit}"
                                        th:aria-label="#{member.cart.quantityFor(${book.title})}">
                                 <button type="button" data-quantity-action="increase" th:aria-label="#{member.cart.increaseQuantity}">
                                     <i class="bi bi-plus" aria-hidden="true"></i>
                                 </button>
                             </div>
                             <span class="member-cart-quantity-limit"
-                                  th:text="#{member.cart.quantityLimit(${availableStocks.get(book.bookId)})}">Maximum 2</span>
+                                  th:text="#{member.cart.quantityLimit(${copyLimit})}">Maximum 3</span>
                         </div>
 
                         <div th:if="${availableStocks.get(book.bookId) <= 0}" class="member-field-error small mt-1" th:text="#{member.cart.outOfStockNotice}">Out of stock notice</div>
@@ -131,7 +132,12 @@
                     </div>
                     <div>
                         <span th:text="#{member.cart.baseRate}">Base daily rate:</span>
-                        <strong th:text="#{member.cart.baseRateValue}">5,000 VND / day</strong>
+                        <strong>
+                            <span th:text="${#numbers.formatDecimal(borrowFeePerBook, 0, 'COMMA', 0, 'POINT')}">5,000</span>
+                            <span th:text="#{currency.vnd}">VND</span>
+                            <span>/</span>
+                            <span th:text="#{common.days}">day</span>
+                        </strong>
                     </div>
                     <div>
                         <span th:text="#{member.cart.tierDiscount}">Membership discount:</span>
@@ -173,33 +179,69 @@
 
             const discountPercent = /*[[${discountPercent}]]*/ 0.0;
             const walletBalance = /*[[${walletBalance}]]*/ 0.0;
-            const baseFeePerDay = 5000;
+            const baseFeePerDay = /*[[${borrowFeePerBook}]]*/ 5000;
             const numberLocale = /*[[${#locale.language == 'vi' ? 'vi-VN' : 'en-US'}]]*/ 'en-US';
             const currencyUnit = /*[[#{currency.vnd}]]*/ 'VND';
             const selectionRequiredMessage = /*[[#{member.cart.selectionRequired}]]*/ 'Please select at least one book to create a loan request.';
             const textInvalidDays = /*[[#{member.cart.validation.invalidDays}]]*/ "Please enter a valid number of borrowing days.";
             const textMaxExceeded = /*[[#{member.cart.validation.maxExceeded}]]*/ "Borrowing days exceed maximum limit ({0} days).";
+            const maxBorrowLimit = /*[[${remainingBorrowLimit}]]*/ 3;
+            const borrowLimitMessage = /*[[#{member.cart.borrowLimitExceeded}]]*/ "The selected quantity exceeds your remaining borrowing limit.";
 
             const selectAll = document.getElementById("selectAllBooks");
             const checkboxes = document.querySelectorAll(".book-select-checkbox");
             const quantityInputs = document.querySelectorAll(".member-cart-quantity-input");
 
+            function refreshQuantityButtons() {
+                quantityInputs.forEach(input => {
+                    const min = parseInt(input.min) || 1;
+                    const stockMax = parseInt(input.max) || min;
+                    const quantity = parseInt(input.value) || min;
+                    const item = input.closest(".member-cart-item");
+                    const checkbox = item?.querySelector(".book-select-checkbox");
+                    let otherSelectedQuantity = 0;
+
+                    document.querySelectorAll(".book-select-checkbox:checked").forEach(candidate => {
+                        if (candidate !== checkbox) {
+                            otherSelectedQuantity += parseInt(candidate.dataset.qty) || 1;
+                        }
+                    });
+
+                    const remainingForThisItem = checkbox?.checked
+                        ? Math.max(min, maxBorrowLimit - otherSelectedQuantity)
+                        : stockMax;
+                    const effectiveMax = Math.min(stockMax, remainingForThisItem);
+                    const decreaseButton = item?.querySelector('[data-quantity-action="decrease"]');
+                    const increaseButton = item?.querySelector('[data-quantity-action="increase"]');
+
+                    if (decreaseButton) decreaseButton.disabled = quantity <= min;
+                    if (increaseButton) increaseButton.disabled = quantity >= effectiveMax;
+                });
+            }
+
             function updateQuantity(input, requestedValue) {
                 const min = parseInt(input.min) || 1;
-                const max = parseInt(input.max) || min;
+                const stockMax = parseInt(input.max) || min;
+                const item = input.closest(".member-cart-item");
+                const checkbox = item?.querySelector(".book-select-checkbox");
+                let otherSelectedQuantity = 0;
+                document.querySelectorAll(".book-select-checkbox:checked").forEach(candidate => {
+                    if (candidate !== checkbox) {
+                        otherSelectedQuantity += parseInt(candidate.dataset.qty) || 1;
+                    }
+                });
+                const remainingForThisItem = checkbox?.checked
+                    ? Math.max(min, maxBorrowLimit - otherSelectedQuantity)
+                    : stockMax;
+                const max = Math.min(stockMax, remainingForThisItem);
                 const quantity = Math.min(max, Math.max(min, parseInt(requestedValue) || min));
                 input.value = quantity;
 
-                const item = input.closest(".member-cart-item");
-                const checkbox = item?.querySelector(".book-select-checkbox");
                 if (checkbox) {
                     checkbox.dataset.qty = quantity;
                 }
 
-                const decreaseButton = item?.querySelector('[data-quantity-action="decrease"]');
-                const increaseButton = item?.querySelector('[data-quantity-action="increase"]');
-                if (decreaseButton) decreaseButton.disabled = quantity <= min;
-                if (increaseButton) increaseButton.disabled = quantity >= max;
+                refreshQuantityButtons();
                 calculateRealtimeFee();
             }
 
@@ -287,22 +329,37 @@
 
             if (selectAll) {
                 selectAll.addEventListener("change", function() {
+                    let selectedQuantity = 0;
                     checkboxes.forEach(cb => {
                         if (!cb.disabled) {
-                            cb.checked = this.checked;
+                            const quantity = parseInt(cb.dataset.qty) || 1;
+                            cb.checked = this.checked && selectedQuantity + quantity <= maxBorrowLimit;
+                            if (cb.checked) selectedQuantity += quantity;
                         }
                     });
+                    refreshQuantityButtons();
                     calculateRealtimeFee();
                 });
             }
 
             checkboxes.forEach(cb => {
                 cb.addEventListener("change", function() {
+                    if (this.checked) {
+                        let selectedQuantity = 0;
+                        document.querySelectorAll(".book-select-checkbox:checked").forEach(candidate => {
+                            selectedQuantity += parseInt(candidate.dataset.qty) || 1;
+                        });
+                        if (selectedQuantity > maxBorrowLimit) {
+                            this.checked = false;
+                            if (window.AppFeedback) window.AppFeedback.error(borrowLimitMessage);
+                        }
+                    }
                     if (selectAll) {
                         const totalCBs = document.querySelectorAll(".book-select-checkbox:not(:disabled)").length;
                         const checkedCount = document.querySelectorAll(".book-select-checkbox:checked").length;
                         selectAll.checked = (checkedCount === totalCBs && totalCBs > 0);
                     }
+                    refreshQuantityButtons();
                     calculateRealtimeFee();
                 });
             });
@@ -352,11 +409,14 @@
                     const checkedCBs = document.querySelectorAll(".book-select-checkbox:checked");
                     if (checkedCBs.length === 0) {
                         e.preventDefault();
-                        if (window.showToast) {
-                            window.showToast(selectionRequiredMessage);
-                        } else {
-                            alert(selectionRequiredMessage);
-                        }
+                        if (window.AppFeedback) window.AppFeedback.error(selectionRequiredMessage);
+                        return;
+                    }
+                    let selectedQuantity = 0;
+                    checkedCBs.forEach(cb => selectedQuantity += parseInt(cb.dataset.qty) || 1);
+                    if (selectedQuantity > maxBorrowLimit) {
+                        e.preventDefault();
+                        if (window.AppFeedback) window.AppFeedback.error(borrowLimitMessage);
                         return;
                     }
 

@@ -96,7 +96,7 @@
                         <thead>
                         <tr>
                             <th class="ps-4 border-0" th:text="#{book.title}">Book Title</th>
-                            <th class="border-0" th:text="#{book.barcode}">Barcode</th>
+                            <th class="border-0" th:text="#{book.isbn}">ISBN</th>
                             <th class="border-0" th:text="#{loan.borrowDate}">Borrow Date</th>
                             <th class="border-0" th:text="#{loan.dueDate}">Due Date</th>
                             <th class="border-0" th:text="#{common.status}">Status</th>
@@ -110,7 +110,7 @@
                         <tr th:each="item : ${booksData}" class="member-loan-row member-reference-list__item">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : 'https://picsum.photos/seed/' + item.bookId + '/600/800'}"
+                                    <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
                                          class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="#{book.cover}"
                                          onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                     <div>
@@ -173,6 +173,16 @@
                                             <span th:text="${item.renewCount >= maxRenewals ? #messages.msg('loan.renew.limitLabel') : (item.renewalRequestBlocked ? #messages.msg('loan.renew.requestBlockedLabel') : #messages.msg('loan.renew'))}">Renew</span>
                                         </button>
                                     </form>
+                                    <form th:if="${item.status == 'Borrowed' or item.status == 'Overdue'}"
+                                          th:id="'returnForm_' + ${item.id}"
+                                          th:action="@{/member/borrow/return/{id}(id=${item.id})}"
+                                          method="post" class="d-inline">
+                                        <button type="button"
+                                                class="member-ui-button member-ui-button--primary member-ui-button--compact btn-return-action"
+                                                th:attr="data-form-id='returnForm_' + ${item.id}">
+                                            <span th:text="#{loan.return.confirm}">Confirm Return</span>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -197,7 +207,7 @@
                         <tr th:each="item : ${booksData}" class="member-loan-row member-reference-list__item">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : 'https://picsum.photos/seed/' + item.bookId + '/600/800'}"
+                                    <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
                                          class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="#{book.cover}"
                                          onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                     <div>
@@ -248,7 +258,7 @@
                         <tr th:each="item : ${booksData}" class="member-loan-row member-reference-list__item">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : 'https://picsum.photos/seed/' + item.bookId + '/600/800'}"
+                                    <img th:src="${item.bookImage != null and !#strings.isEmpty(item.bookImage) ? item.bookImage : '/images/book-cover-placeholder.svg'}"
                                          class="rounded me-3 border member-borrow-img-width-height-fit-06" th:alt="#{book.cover}"
                                          onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'">
                                     <div>
@@ -257,7 +267,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-muted fw-medium" th:text="${item.bookIdStr}">BK-10012</td>
+                            <td class="text-muted fw-medium" th:text="${item.isbn != null and !#strings.isEmpty(item.isbn) ? item.isbn : #messages.msg('book.isbn.missing')}">9786040000001</td>
                             <td class="text-muted" th:text="${#temporals.format(item.actionDate, 'dd/MM/yyyy')}">01/10/2026</td>
                             <td class="text-muted" th:text="${item.returnDate != null ? #temporals.format(item.returnDate, 'dd/MM/yyyy') : '-'}">10/10/2026</td>
                             <td>
@@ -266,7 +276,7 @@
                                 <span th:if="${item.status == 'Canceled'}" class="member-reference-pill" th:text="#{reservation.status.canceled}">Canceled</span>
                             </td>
                             <td class="text-end pe-4">
-                                <a th:href="@{/books}" class="member-ui-button member-ui-button--secondary member-ui-button--compact"><i class="bi bi-arrow-repeat me-1"></i><span th:text="#{loan.borrowAgain}">Borrow Again</span></a>
+                                <a th:href="@{/books/{id}(id=${item.bookId})}" class="member-ui-button member-ui-button--secondary member-ui-button--compact"><i class="bi bi-arrow-repeat me-1"></i><span th:text="#{loan.borrowAgain}">Borrow Again</span></a>
                             </td>
                         </tr>
                         </tbody>

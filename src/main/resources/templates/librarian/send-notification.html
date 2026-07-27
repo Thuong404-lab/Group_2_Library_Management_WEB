@@ -5,7 +5,7 @@
 <head>
     <title th:text="#{librarian.notification.title}">Send Notifications to Members</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css(v='20260724-2')}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css(v='20260727-compose-modal-history-filter-v2')}">
 </head>
 <body>
 <main layout:fragment="content"
@@ -20,16 +20,30 @@
                 Send a notification to all members or a selected group.
             </p>
         </div>
-        <div class="notification-hero-decoration" aria-hidden="true">
-            <i class="bi bi-send"></i>
-        </div>
+        <button type="button" class="notification-hero-action"
+                data-bs-toggle="modal" data-bs-target="#notificationComposeModal">
+            <span th:text="#{librarian.notification.submit}">Send Notification</span>
+        </button>
     </header>
 
     <div th:if="${success}" class="app-alert app-alert--success" th:text="${success}"></div>
     <div th:if="${error}" class="app-alert app-alert--danger" th:text="${error}"></div>
 
-    <section class="app-card notification-compose-card">
-        <div class="notification-compose-body">
+    <div class="modal fade notification-compose-modal" id="notificationComposeModal"
+         tabindex="-1" aria-labelledby="notificationComposeModalLabel" aria-hidden="true"
+         th:data-reopen="${openNotificationComposer == true or notificationFieldErrors != null}">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <div class="app-page-eyebrow" th:text="#{librarian.notification.eyebrow}">READER INTERACTION</div>
+                        <h2 class="modal-title" id="notificationComposeModalLabel"
+                            th:text="#{librarian.notification.title}">Send Notifications to Members</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            th:aria-label="#{common.close}"></button>
+                </div>
+                <div class="modal-body notification-compose-body">
             <form th:action="@{/librarian/interaction/notifications}"
                   th:object="${notificationRequest}"
                   method="post"
@@ -48,9 +62,21 @@
                   th:data-search-minimum="#{librarian.notification.searchMinimum}"
                   th:data-member-required="#{backend.librarian.notification.memberRequired}"
                   th:data-member-maximum="#{backend.librarian.notification.memberMaximum(${notificationMaxRecipients})}"
+                  th:data-recipient-required="#{backend.librarian.notification.recipientRequired}"
+                  th:data-type-required="#{backend.librarian.notification.typeRequired}"
+                  th:data-title-required="#{backend.librarian.notification.titleRequired}"
+                  th:data-title-minimum="#{backend.librarian.notification.titleMinimum}"
+                  th:data-title-maximum="#{backend.librarian.notification.titleMaximum}"
+                  th:data-title-letters="#{backend.librarian.notification.titleLetters}"
+                  th:data-content-required="#{backend.librarian.notification.contentRequired}"
+                  th:data-content-minimum="#{backend.librarian.notification.contentMinimum}"
+                  th:data-content-maximum="#{backend.librarian.notification.contentMaximum}"
+                  th:data-content-letters="#{backend.librarian.notification.contentLetters}"
+                  th:data-content-different="#{backend.librarian.notification.contentDifferent}"
                   novalidate>
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <input type="hidden" th:field="*{requestToken}">
+                <input type="hidden" name="historyType" th:value="${selectedHistoryType}">
                 <div th:if="${notificationFieldErrors != null and notificationFieldErrors['requestToken'] != null}"
                      class="app-alert app-alert--danger"
                      th:text="${notificationFieldErrors['requestToken']}"></div>
@@ -223,6 +249,8 @@
                         </div>
 
                         <div class="notification-form-actions">
+                            <button type="button" class="btn notification-compose-cancel"
+                                    data-bs-dismiss="modal" th:text="#{common.cancel}">Cancel</button>
                             <button type="submit" id="notificationSubmit" class="btn btn-classic notification-submit">
                                 <span class="submit-label" th:text="#{librarian.notification.submit}">Send Notification</span>
                             </button>
@@ -230,8 +258,10 @@
                     </div>
                 </div>
             </form>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 
     <dialog id="notificationConfirmDialog" class="notification-confirm-dialog"
             aria-labelledby="notificationConfirmTitle">
@@ -270,22 +300,40 @@
 
     <section class="app-card notification-history-card">
         <div class="notification-compose-body">
-            <h2 class="notification-history-title" th:text="#{librarian.notification.history}">Recent send history</h2>
-            <p class="notification-helper-text" th:text="#{librarian.notification.historyHint}">
-                Delivery and read information from real notification records.
-            </p>
+            <div class="notification-history-header">
+                <div>
+                    <h2 class="notification-history-title" th:text="#{librarian.notification.history}">Recent send history</h2>
+                    <p class="notification-helper-text" th:text="#{librarian.notification.historyHint}">
+                        Delivery and read information from real notification records.
+                    </p>
+                </div>
+                <form class="notification-history-filter" method="get"
+                      th:action="@{/librarian/interaction/notifications/new}"
+                      id="notificationHistoryFilter"
+                      th:data-server-filter="${notificationHistoryTypes != null}">
+                    <label for="historyType" th:text="#{librarian.notification.type}">Notification Type</label>
+                    <select id="historyType" name="historyType">
+                        <option value="" th:selected="${selectedHistoryType == ''}"
+                                th:text="#{common.all}">All</option>
+                        <option th:each="type : ${notificationTypes}"
+                                th:value="${type.name()}"
+                                th:selected="${selectedHistoryType == type.name()}"
+                                th:text="${#messages.msg(type.messageKey)}">General notification</option>
+                    </select>
+                    <button type="submit" th:text="#{common.filter}">Filter</button>
+                </form>
+            </div>
             <div class="table-responsive notification-history-table-wrap" th:if="${recentNotifications != null and !recentNotifications.isEmpty()}">
                 <table class="table notification-history-table">
                     <thead><tr>
-                        <th th:text="#{librarian.notification.historyId}">ID</th>
                         <th th:text="#{common.title}">Title</th>
                         <th th:text="#{librarian.notification.type}">Type</th>
                         <th th:text="#{librarian.notification.sender}">Sender</th>
                         <th th:text="#{librarian.notification.sentAt}">Sent at</th>
                         <th th:text="#{librarian.notification.delivery}">Read / recipients</th>
                     </tr></thead>
-                    <tbody><tr th:each="item : ${recentNotifications}">
-                        <td th:data-label="#{librarian.notification.historyId}" th:text="${'#' + item.notificationId}">#1</td>
+                    <tbody><tr th:each="item : ${recentNotifications}"
+                               th:data-notification-type="${item.notificationType.name()}">
                         <td th:data-label="#{common.title}" th:text="${item.title}">Title</td>
                         <td th:data-label="#{librarian.notification.type}" th:text="${#messages.msg(item.notificationType.messageKey)}">Type</td>
                         <td th:data-label="#{librarian.notification.sender}" th:text="${item.senderName}">Sender</td>
@@ -297,12 +345,20 @@
             <div class="notification-empty-state"
                  th:if="${recentNotifications == null or recentNotifications.isEmpty()}">
                 <i class="bi bi-bell" aria-hidden="true"></i>
-                <span th:text="#{librarian.notification.historyEmpty}">No manual notifications have been sent.</span>
+                <span th:text="#{librarian.notification.historyEmpty}">
+                    No manual notifications have been sent.
+                </span>
+            </div>
+            <div class="notification-empty-state" id="notificationHistoryFilterEmpty" hidden>
+                <i class="bi bi-funnel" aria-hidden="true"></i>
+                <span th:text="#{librarian.notification.historyEmpty}">
+                    No matching notifications.
+                </span>
             </div>
         </div>
     </section>
 
-    <script th:src="@{/js/pages/librarian/send-notification.js}"></script>
+    <script th:src="@{/js/pages/librarian/send-notification.js(v='20260727-compose-modal-history-filter-v3')}"></script>
 </main>
 </body>
 </html>

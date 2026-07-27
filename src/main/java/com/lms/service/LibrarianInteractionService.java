@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.lms.entity.BookAcquisitionRequest;
 import com.lms.entity.Member;
+import com.lms.enums.NotificationType;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public interface LibrarianInteractionService {
 
     List<NotificationRecipientSearchResponse> getNotificationRecipients(List<Integer> memberIds);
 
-    List<LibrarianNotificationHistoryResponse> getRecentManualNotifications();
+    List<LibrarianNotificationHistoryResponse> getRecentManualNotifications(NotificationType notificationType);
 
     List<Member> getAllMembers();
 

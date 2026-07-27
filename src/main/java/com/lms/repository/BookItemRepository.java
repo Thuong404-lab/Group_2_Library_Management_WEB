@@ -61,6 +61,9 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
             from BookItem item
             where item.book.bookId = :bookId
               and lower(item.status) = 'available'
+              and lower(coalesce(item.bookCondition, '')) not like '%severely%'
+              and lower(coalesce(item.bookCondition, '')) not like '%severe damage%'
+              and lower(coalesce(item.bookCondition, '')) not like '%lost%'
             order by item.bookItemId asc
             """)
     List<BookItem> findAvailableByBookIdForUpdate(@Param("bookId") Integer bookId);
@@ -73,6 +76,9 @@ public interface BookItemRepository extends JpaRepository<BookItem, Integer> {
             where favorite.member.memberId = :memberId
               and favorite.book.bookId = item.book.bookId
               and lower(item.status) = 'available'
+              and lower(coalesce(item.bookCondition, '')) not like '%severely%'
+              and lower(coalesce(item.bookCondition, '')) not like '%severe damage%'
+              and lower(coalesce(item.bookCondition, '')) not like '%lost%'
             """)
     Set<Integer> findAvailableFavoriteBookIds(@Param("memberId") Integer memberId);
 }

@@ -480,10 +480,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 ? ""
                 : item.getBookCondition().trim().toLowerCase(java.util.Locale.ROOT);
         if (condition.contains("severely")) {
-            return moneySetting("SEVERE_DAMAGE_BORROW_FEE", 3000);
-        }
-        if (condition.contains("minor")) {
-            return moneySetting("MINOR_DAMAGE_BORROW_FEE", 4000);
+            return BigDecimal.ZERO;
         }
         return moneySetting("BORROW_FEE_PER_BOOK", 5000);
     }
@@ -587,6 +584,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
                 data.put("bookId", item.getBook().getBookId());
                 data.put("title", item.getBook().getTitle());
                 data.put("coverImageUrl", item.getBook().getCoverImageUrl());
+                data.put("bookCondition", item.getBookCondition());
+                data.put("condition", localizeBookCondition(item.getBookCondition()));
                 String rawStatus = item.getStatus();
 
                 long availableCount = bookItemRepository
@@ -624,6 +623,19 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             results.add(data);
         }
         return results;
+    }
+
+    private String localizeBookCondition(String condition) {
+        if ("Minor damage".equalsIgnoreCase(condition)) {
+            return message("book.condition.minorDamage");
+        }
+        if ("Severely damaged".equalsIgnoreCase(condition)) {
+            return message("book.condition.severeDamage");
+        }
+        if ("Lost book".equalsIgnoreCase(condition)) {
+            return message("book.condition.lost");
+        }
+        return message("book.condition.good");
     }
 
     @GetMapping("/librarian/api/member-lookup")

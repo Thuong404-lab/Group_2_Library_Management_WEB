@@ -242,7 +242,7 @@ BEGIN TRY
 
     UPDATE dbo.BookItems SET status='Borrowed' WHERE book_item_id IN (1,4,7,10,25,28);
     UPDATE dbo.BookItems SET status='Waiting_Pickup' WHERE book_item_id=19;
-    UPDATE dbo.BookItems SET status='Available',book_condition=N'Severely damaged',damage_note=N'Gáy sách bong nhẹ.' WHERE book_item_id=89;
+    UPDATE dbo.BookItems SET status='Unavailable',book_condition=N'Severely damaged',damage_note=N'Gáy sách bong nhẹ.' WHERE book_item_id=89;
     UPDATE dbo.BookItems SET status='Available',book_condition=N'Minor damage' WHERE book_item_id=90;
 
     SET IDENTITY_INSERT dbo.Borrows ON;
@@ -328,7 +328,7 @@ BEGIN TRY
       ('MAX_RENEWALS',N'2',N'Maximum renewals allowed per borrowed copy.'),
       ('RENEW_DAYS',N'7',N'Days added after an approved renewal.'),
       ('Max_Renewal_Days',N'14',N'Maximum days in one renewal request.'),
-      ('RENEWAL_FEE_PER_DAY',N'1000',N'Renewal fee per additional day (VND).'),
+      ('RENEWAL_FEE_PER_DAY',N'5000',N'Daily renewal fee per book (VND).'),
       ('Damage_Compensation_Amount',N'120000',N'Default compensation for lost or severely damaged books.'),
       ('Damage_Compensation_Threshold',N'3',N'Condition threshold that triggers compensation.'),
       ('Overdue_Violation_Lock_Limit',N'3',N'Overdue violations before account restrictions apply.'),

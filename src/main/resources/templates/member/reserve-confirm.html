@@ -19,7 +19,7 @@
             <a th:href="@{/}" class="member-notifications-back notifications-hero-action member-ui-button member-ui-button--inverse"><i class="bi bi-arrow-left" aria-hidden="true"></i><span th:text="#{common.back}">Back</span></a>
         </header>
 
-        <div class="member-notifications-alert is-error" role="alert" th:if="${!canPayDeposit}">
+        <div class="member-notifications-alert is-error d-none" role="alert" id="depositBalanceAlert">
             <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             <span th:text="#{reservation.confirmPage.insufficientBalance}">Your wallet balance is insufficient.</span>
         </div>
@@ -33,8 +33,9 @@
                 </div>
                 <div class="member-notifications-list member-reference-list__body p-4">
                     <div class="reserve-book-summary">
-                        <img th:src="@{'https://picsum.photos/seed/' + ${book.bookId} + '/120/160'}"
+                        <img th:src="${book.coverImageUrl != null and !#strings.isEmpty(book.coverImageUrl) ? book.coverImageUrl : '/images/book-cover-placeholder.svg'}"
                              th:alt="${book.title}"
+                             onerror="this.onerror=null;this.src='/images/book-cover-placeholder.svg'"
                              class="reserve-book-img">
                         <div class="reserve-book-copy">
                             <h3 th:text="${book.title}">Book Title</h3>
@@ -72,17 +73,37 @@
                         </strong>
                     </div>
                     <div class="deposit-summary-row mt-3">
-                        <span class="member-notifications-eyebrow mb-0" th:text="#{reservation.confirmPage.depositDue}">Deposit Due</span>
+                        <div>
+                            <span class="member-notifications-eyebrow mb-0" th:text="#{reservation.confirmPage.depositDue}">Deposit Due</span>
+                            <small class="d-block text-muted" style="font-size: 0.8rem; font-weight: normal;">
+                                (<span th:text="${dailyDepositRate != null ? #numbers.formatDecimal(dailyDepositRate, 0, 'COMMA', 0, 'POINT') : '5,000'}">5,000</span> <span th:text="#{currency.vnd}">VND</span> / <span th:text="#{common.day}">day</span>)
+                            </small>
+                        </div>
                         <strong class="amount-negative">
-                            - <span th:text="${depositAmount != null ? #numbers.formatDecimal(depositAmount, 0, 'COMMA', 0, 'POINT') : '50,000'}">50,000</span>
+                            - <span id="depositDueDisplay" th:text="${depositAmount != null ? #numbers.formatDecimal(depositAmount, 0, 'COMMA', 0, 'POINT') : '50,000'}">50,000</span>
                             <span th:text="#{currency.vnd}">VND</span>
                         </strong>
+                    </div>
+                    <div class="mt-4">
+                        <label for="reservationDays" class="member-notifications-eyebrow mb-2 d-block"
+                               th:text="#{member.borrowCreate.preferredDays}">Preferred loan period</label>
+                        <input type="number" id="reservationDays" name="numberOfDays"
+                               class="form-control" min="1" th:max="${maxBorrowDays}"
+                               th:value="${defaultBorrowDays}" required form="reservationSubmitForm">
+                        <small class="text-muted d-block mt-1">
+                            <span th:text="#{member.cart.allowedLimitPrefix}">Maximum allowed </span>
+                            <strong th:text="${maxBorrowDays} + ' ' + #{common.days}">14 days</strong>
+                        </small>
+                        <div id="reservationDaysError" class="invalid-feedback d-none mt-1 fw-bold">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span id="reservationDaysErrorText"></span>
+                        </div>
                     </div>
                     <hr class="reserve-divider">
                     <div class="deposit-summary-row is-total">
                         <span class="member-notifications-eyebrow mb-0" style="color: var(--member-color-ink);" th:text="#{reservation.confirmPage.balanceAfter}">Balance After Payment</span>
-                        <strong th:classappend="${remainingBalance != null && remainingBalance.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
-                            <span th:text="${remainingBalance != null ? #numbers.formatDecimal(remainingBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                        <strong id="balanceAfterContainer" th:classappend="${remainingBalance != null && remainingBalance.signum() >= 0} ? ' amount-positive' : ' amount-negative'">
+                            <span id="balanceAfterDisplay" th:text="${remainingBalance != null ? #numbers.formatDecimal(remainingBalance, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
                             <span th:text="#{currency.vnd}">VND</span>
                         </strong>
                     </div>
@@ -91,7 +112,7 @@
 
             <div class="reserve-confirm-actions mt-4">
                 <a th:href="@{/}" class="member-ui-button member-ui-button--secondary" th:text="#{common.cancel}">Cancel</a>
-                <form method="post" class="app-confirm-form m-0"
+                <form method="post" class="app-confirm-form m-0" id="reservationSubmitForm"
                       th:action="@{/member/borrow/reserve/{id}(id=${book.bookId})}"
                       th:data-confirm-title="#{reservation.confirmPage.confirmTitle}"
                       th:data-confirm-subject-label="#{reservation.book}"
@@ -100,14 +121,104 @@
                       th:data-confirm-action="#{payment.confirm}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <button type="submit"
-                            class="member-ui-button member-ui-button--primary"
-                            th:disabled="${!canPayDeposit}">
+                            class="member-ui-button member-ui-button--primary">
                         <span th:text="#{reservation.confirmPage.submit}">Reserve and Pay Deposit</span>
                     </button>
                 </form>
             </div>
         </div>
     </div>
+
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function() {
+        const dailyDepositRate = /*[[${dailyDepositRate != null ? dailyDepositRate : 5000}]]*/ 5000;
+        const walletBalance = /*[[${walletBalance != null ? walletBalance : 0}]]*/ 0;
+        const maxBorrowDays = /*[[${maxBorrowDays != null ? maxBorrowDays : 14}]]*/ 14;
+
+        const daysInput = document.getElementById('reservationDays');
+        const errorBox = document.getElementById('reservationDaysError');
+        const errorText = document.getElementById('reservationDaysErrorText');
+        const depositDueDisplay = document.getElementById('depositDueDisplay');
+        const balanceAfterDisplay = document.getElementById('balanceAfterDisplay');
+        const balanceAfterContainer = document.getElementById('balanceAfterContainer');
+        const submitBtn = document.querySelector('#reservationSubmitForm button[type="submit"]');
+        const reservationForm = document.getElementById('reservationSubmitForm');
+        const balanceAlert = document.getElementById('depositBalanceAlert');
+
+        const msgInvalidDays = /*[[#{backend.borrow.invalidDays(${maxBorrowDays})}]]*/ 'Thời hạn mượn phải từ 1 đến 14 ngày.';
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('en-US').format(val);
+        }
+
+        function updateCalculations() {
+            if (!daysInput) return;
+            if (balanceAlert) balanceAlert.classList.add('d-none');
+            const days = parseInt(daysInput.value, 10);
+            let isValid = true;
+            let errorMsg = '';
+
+            if (isNaN(days) || days < 1 || days > maxBorrowDays) {
+                isValid = false;
+                errorMsg = msgInvalidDays;
+            }
+
+            if (!isValid) {
+                daysInput.classList.add('is-invalid');
+                if (errorText) errorText.textContent = errorMsg;
+                if (errorBox) errorBox.classList.remove('d-none');
+                if (submitBtn) submitBtn.disabled = true;
+                return;
+            } else {
+                daysInput.classList.remove('is-invalid');
+                if (errorBox) errorBox.classList.add('d-none');
+            }
+
+            const totalDeposit = dailyDepositRate * days;
+            const balanceAfter = walletBalance - totalDeposit;
+
+            if (depositDueDisplay) depositDueDisplay.textContent = formatCurrency(totalDeposit);
+            if (balanceAfterDisplay) balanceAfterDisplay.textContent = formatCurrency(balanceAfter);
+
+            if (balanceAfter < 0) {
+                if (balanceAfterContainer) balanceAfterContainer.className = 'amount-negative';
+            } else {
+                if (balanceAfterContainer) balanceAfterContainer.className = 'amount-positive';
+            }
+        }
+
+        if (reservationForm) {
+            reservationForm.addEventListener('submit', function(event) {
+                const days = parseInt(daysInput?.value, 10);
+                if (isNaN(days) || days < 1 || days > maxBorrowDays) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    updateCalculations();
+                    daysInput?.focus();
+                    return;
+                }
+
+                const totalDeposit = dailyDepositRate * days;
+                if (walletBalance < totalDeposit) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    if (balanceAlert) {
+                        balanceAlert.classList.remove('d-none');
+                        balanceAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }, true);
+        }
+
+        if (daysInput) {
+            daysInput.addEventListener('input', updateCalculations);
+            daysInput.addEventListener('change', updateCalculations);
+            updateCalculations();
+        }
+    });
+    /*]]>*/
+    </script>
 </main>
 </body>
 </html>

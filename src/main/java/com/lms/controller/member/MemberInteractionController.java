@@ -18,7 +18,9 @@ import java.util.Map;
 import com.lms.dto.request.MemberReviewSubmitRequest;
 import com.lms.dto.request.MemberReviewUpdateRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.lms.dto.request.MemberBookAcquisitionRequest;
 import com.lms.service.MemberBookAcquisitionService;
@@ -123,7 +125,9 @@ public class MemberInteractionController extends LocalizedControllerSupport {
     }
 
     @PostMapping("/reviews")
-    public String submitReview(@Valid @ModelAttribute("reviewRequest") MemberReviewSubmitRequest request,
+    public String submitReview(
+                               @Validated({Default.class, MemberReviewSubmitRequest.RequiresBookId.class})
+                               @ModelAttribute("reviewRequest") MemberReviewSubmitRequest request,
                                BindingResult bindingResult,
                                Model model,
                                Principal principal,
@@ -259,7 +263,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             return "redirect:/member/interaction/acquisition-requests/new";
 
         } catch (ApplicationException e) {
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("acquisitionError", e.getMessage());
             model.addAttribute("reopenAcquisitionModal", true);
             model.addAttribute("myAcquisitionRequests", memberBookAcquisitionService.getMyRequests(
                     principal.getName(), PageRequest.of(0, AcquisitionRequestPolicy.PAGE_SIZE)));
@@ -279,7 +283,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("acquisitionRequest", request);
             flash.addFlashAttribute("editAcquisitionRequestId", requestId);
             flash.addFlashAttribute("reopenAcquisitionModal", true);
-            flash.addFlashAttribute("error", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            flash.addFlashAttribute("acquisitionError", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return acquisitionRequestRedirect(page);
         }
         try {
@@ -289,7 +293,7 @@ public class MemberInteractionController extends LocalizedControllerSupport {
             flash.addFlashAttribute("acquisitionRequest", request);
             flash.addFlashAttribute("editAcquisitionRequestId", requestId);
             flash.addFlashAttribute("reopenAcquisitionModal", true);
-            flash.addFlashAttribute("error", exception.getMessage());
+            flash.addFlashAttribute("acquisitionError", exception.getMessage());
         }
         return acquisitionRequestRedirect(page);
     }

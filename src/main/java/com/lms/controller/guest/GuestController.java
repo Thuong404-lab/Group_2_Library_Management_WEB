@@ -123,6 +123,12 @@ public class GuestController extends LocalizedControllerSupport {
         model.addAttribute("selectedGenreId", genreId);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("sort", sort);
+        Map<Integer, Long> availableCopiesByBookId = bookPage.getContent().stream()
+                .collect(Collectors.toMap(
+                        Book::getBookId,
+                        book -> bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(
+                                book.getBookId(), "Available")));
+        model.addAttribute("availableCopiesByBookId", availableCopiesByBookId);
 
         addFavoriteBookIds(model, principal);
 
@@ -137,14 +143,13 @@ public class GuestController extends LocalizedControllerSupport {
         // Pass string values or default fallbacks
         model.addAttribute("maxBorrowDays", settings.getOrDefault("Max_Borrow_Days", "14"));
         model.addAttribute("maxRenewalDays", settings.getOrDefault("Max_Renewal_Days", "7"));
-        model.addAttribute("damageCompensationThreshold", settings.getOrDefault("Damage_Compensation_Threshold", "50"));
         model.addAttribute("overdueViolationLockLimit", settings.getOrDefault("Overdue_Violation_Lock_Limit", "3"));
 
         // Parse numeric currency values
         try {
-            model.addAttribute("finePerDay", Long.parseLong(settings.getOrDefault("Fine_Per_Day", "5000")));
+            model.addAttribute("finePerDay", Long.parseLong(settings.getOrDefault("New_Book_Overdue_Fine", "10000")));
         } catch (NumberFormatException e) {
-            model.addAttribute("finePerDay", 5000L);
+            model.addAttribute("finePerDay", 10000L);
         }
 
         try {
@@ -257,7 +262,7 @@ public class GuestController extends LocalizedControllerSupport {
             map.put("thumbnailUrl",
                     book.getCoverImageUrl() != null && !book.getCoverImageUrl().trim().isEmpty()
                             ? book.getCoverImageUrl()
-                            : "https://picsum.photos/seed/" + book.getBookId() + "/600/800");
+                            : "/images/book-cover-placeholder.svg");
             return map;
         }).toList();
 
