@@ -6,6 +6,7 @@ import com.lms.controller.LocalizedControllerSupport;
 import com.lms.dto.request.BorrowRequest;
 import com.lms.dto.response.ReservationRequestDTO;
 import com.lms.entity.Borrow;
+import com.lms.enums.BorrowListStatusFilter;
 import com.lms.entity.Transaction;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
@@ -111,12 +112,8 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
             return "librarian/borrow-list";
         }
 
-        java.util.Set<String> allowedStatuses = java.util.Set.of("Active", "Waiting_Pickup", "Returned",
-                "Overdue", "Pending", "Rejected", "Return_Pending", "Canceled", "Cancelled",
-                "Payment_Pending", "Payment_Expired");
-        if (status != null && !status.isBlank() && !allowedStatuses.contains(status.trim())) {
-            status = null;
-        }
+        BorrowListStatusFilter selectedStatus = BorrowListStatusFilter.fromRequestValue(status).orElse(null);
+        status = selectedStatus == null ? null : selectedStatus.getValue();
         Pageable pageable = PageRequest.of(page, size, Sort.by("borrowDate").descending());
         Page<Borrow> borrowPage;
 
@@ -141,6 +138,7 @@ public class LibrarianBorrowController extends LocalizedControllerSupport {
         model.addAttribute("totalItems", borrowPage.getTotalElements());
         model.addAttribute("keyword", keyword);
         model.addAttribute("status", status);
+        model.addAttribute("borrowStatusOptions", Arrays.asList(BorrowListStatusFilter.values()));
         model.addAttribute("activeTab", "all");
         model.addAttribute("activeMenu", "borrow-list");
 
