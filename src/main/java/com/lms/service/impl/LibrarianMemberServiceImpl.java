@@ -274,7 +274,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (member == null || user == null) {
             throw new DataProcessingException(messages.get("backend.account.incompleteMemberData"));
         }
-        if (memberAccountDeletionRepository.hasActiveBusiness(member.getMemberId())) {
+        if (memberAccountDeletionRepository.hasBusinessHistory(member.getMemberId())) {
             throw new ConflictException(messages.get("backend.member.deleteHasHistory"));
         }
 
@@ -329,7 +329,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (account == null || account.getMember() == null) {
             return false;
         }
-        return !memberAccountDeletionRepository.hasActiveBusiness(account.getMember().getMemberId());
+        return !memberAccountDeletionRepository.hasBusinessHistory(account.getMember().getMemberId());
     }
 
     private UserStatus requireStatus(String status) {
