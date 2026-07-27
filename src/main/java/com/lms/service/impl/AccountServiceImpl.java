@@ -358,7 +358,7 @@ public class AccountServiceImpl implements AccountService {
     public Map<String, String> validateMemberAccountCreate(AdminMemberAccountCreateRequest request) {
         Map<String, String> errors = validateCreateFields(
                 request.getFullName(), request.getEmail(), request.getPhone(),
-                request.getUsername(), request.getPassword());
+                request.getUsername(), request.getPassword(), request.getConfirmPassword());
         if (membershipTierRepository.findFirstByOrderByConditionAscTierIdAsc().isEmpty()) {
             errors.put("_global", messages.get("backend.account.regularTierNotFound"));
         }
@@ -369,7 +369,7 @@ public class AccountServiceImpl implements AccountService {
     public Map<String, String> validateStaffAccountCreate(AdminStaffAccountCreateRequest request) {
         Map<String, String> errors = validateCreateFields(
                 request.getFullName(), request.getEmail(), request.getPhone(),
-                request.getUsername(), request.getPassword());
+                request.getUsername(), request.getPassword(), request.getConfirmPassword());
         String staffType = normalizeRole(request.getStaffType());
         if (!"ADMIN".equals(staffType) && !"LIBRARIAN".equals(staffType)) {
             errors.put("staffType", messages.get("backend.account.invalidStaffType"));
@@ -381,19 +381,27 @@ public class AccountServiceImpl implements AccountService {
             String rawEmail,
             String rawPhone,
             String rawUsername,
-            String rawPassword) {
+            String rawPassword,
+            String rawConfirmPassword) {
         Map<String, String> errors = new LinkedHashMap<>();
         String fullName = trim(rawFullName);
         String email = trim(rawEmail);
         String phone = trim(rawPhone);
         String username = trim(rawUsername);
         String password = rawPassword == null ? "" : rawPassword;
+        String confirmPassword = rawConfirmPassword == null ? "" : rawConfirmPassword;
 
         validateFullName(fullName, errors);
         validateEmail(email, errors);
         validatePhone(phone, errors);
         validateUsername(username, errors);
         validatePassword(password, errors);
+
+        if (confirmPassword.isEmpty()) {
+            errors.put("confirmPassword", messages.get("validation.confirmPasswordRequired"));
+        } else if (!password.equals(confirmPassword)) {
+            errors.put("confirmPassword", messages.get("validation.passwordMismatch"));
+        }
 
         if (!errors.containsKey("username")
                 && (memberAccountRepository.existsByUsername(username)
@@ -544,8 +552,8 @@ public class AccountServiceImpl implements AccountService {
     private void validateUsername(String username, Map<String, String> errors) {
         if (username.isEmpty()) {
             errors.put("username", messages.get("validation.usernameRequired"));
-        } else if (!username.matches(USERNAME_PATTERN)) {
-            errors.put("username", messages.get("validation.username"));
+        } else if (username.length() < 3 || username.length() > 20) {
+            errors.put("username", messages.get("validation.usernameLength"));
         }
     }
 
