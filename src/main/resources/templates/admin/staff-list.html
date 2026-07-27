@@ -433,6 +433,7 @@
                                                                         th:data-label="#{member.profile.username}"
                                                                         minlength="3"
                                                                         maxlength="20"
+                                                                        pattern="^[\x21-\x7E]{3,20}$"
                                                                         th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                         onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -849,6 +850,8 @@
                             errors.username = /*[[#{validation.usernameRequired}]]*/ "Username is required.";
                         } else if (username.length < 3 || username.length > 20) {
                             errors.username = /*[[#{validation.usernameLength}]]*/ "Username must be between 3 and 20 characters.";
+                        } else if (!/^[\x21-\x7E]+$/.test(username)) {
+                            errors.username = /*[[#{validation.username}]]*/ "Username must be 3-20 characters, contain no spaces or accented characters, and may include special characters.";
                         }
                         if (email === "") {
                             errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
