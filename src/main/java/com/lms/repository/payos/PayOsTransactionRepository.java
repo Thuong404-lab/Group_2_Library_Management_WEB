@@ -24,4 +24,7 @@ public interface PayOsTransactionRepository extends JpaRepository<Transaction, I
             """)
     boolean hasCompletedBorrowFee(@Param("memberId") Integer memberId,
                                   @Param("borrowId") Integer borrowId);
+
+    Optional<Transaction> findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+            Integer borrowId, String transactionType, String status);
 }
