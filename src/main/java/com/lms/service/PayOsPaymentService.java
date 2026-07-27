@@ -472,6 +472,53 @@ public class PayOsPaymentService {
         return saved;
     }
 
+    /** Cancels an uncredited wallet top-up QR without changing the wallet balance. */
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelTopUpForStaff(Long orderCode, Staff staff) {
+        if (staff == null || staff.getStaffId() == null) {
+            throw new ValidationException(messages.get("backend.financial.staffRequired"));
+        }
+        return cancelPendingTopUp(orderCode, null, "STAFF",
+                messages.get("backend.payment.audit.topUpCancelledByStaff", staff.getStaffId()));
+    }
+
+    /** Lets a member cancel only their own pending self top-up QR. */
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelTopUpForMember(Long orderCode, Integer memberId) {
+        if (memberId == null) {
+            throw new ValidationException(messages.get("backend.payment.loginRequired"));
+        }
+        return cancelPendingTopUp(orderCode, memberId, "MEMBER",
+                messages.get("backend.payment.audit.topUpCancelledByMember", memberId));
+    }
+
+    private PayOsPayment cancelPendingTopUp(Long orderCode, Integer expectedMemberId,
+                                             String source, String auditMessage) {
+        PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
+                .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
+        if (expectedMemberId != null && (payment.getMember() == null
+                || !expectedMemberId.equals(payment.getMember().getMemberId()))) {
+            throw new ForbiddenException(messages.get("backend.payment.notFound"));
+        }
+        if (!TOP_UP.equalsIgnoreCase(payment.getPurpose())) {
+            throw new ValidationException(messages.get("backend.payment.onlyTopUpCanCancel"));
+        }
+        if (!PENDING.equalsIgnoreCase(payment.getStatus())) {
+            throw new ConflictException(messages.get("backend.payment.onlyPendingCanCancel"));
+        }
+        try {
+            client().paymentRequests().cancel(orderCode, "Top-up payment cancelled");
+        } catch (Exception exception) {
+            throw new ExternalServiceException(messages.get("backend.payment.cancelFailed"), exception);
+        }
+
+        String oldStatus = payment.getStatus();
+        payment.setStatus("CANCELLED");
+        PayOsPayment saved = paymentRepository.save(payment);
+        auditService.record(saved, "PAYMENT_CANCELLED", source, oldStatus, saved.getStatus(), true, auditMessage);
+        return saved;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public PayOsPayment cancelBorrowFeeForMember(Long orderCode, Integer memberId) {
         if (memberId == null) {

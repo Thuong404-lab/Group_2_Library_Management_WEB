@@ -111,6 +111,11 @@ public class LibrarianPayOsPaymentController extends LocalizedControllerSupport 
             RedirectAttributes redirectAttributes) {
         try {
             PayOsPayment pendingPayment = paymentService.getForStaff(orderCode);
+            if (PayOsPaymentService.TOP_UP.equalsIgnoreCase(pendingPayment.getPurpose())) {
+                paymentService.cancelTopUpForStaff(orderCode, requireStaff(userDetails));
+                redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelTopUpSuccess"));
+                return "redirect:/librarian/members/topup";
+            }
             boolean finePayment = PayOsPaymentService.FINE.equalsIgnoreCase(pendingPayment.getPurpose())
                     || PayOsPaymentService.FINE_BATCH.equalsIgnoreCase(pendingPayment.getPurpose());
             if (finePayment) {
