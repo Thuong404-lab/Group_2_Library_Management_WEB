@@ -30,6 +30,7 @@ import java.util.Set;
 public class LoanController extends LocalizedControllerSupport {
 
     private static final BigDecimal MAX_DAMAGE_FINE = new BigDecimal("500000000");
+    private static final BigDecimal MINOR_DAMAGE_FINE = new BigDecimal("1000");
 
     private final LoanService loanService;
     private final FinancialService financialService;
@@ -82,9 +83,7 @@ public class LoanController extends LocalizedControllerSupport {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
-        model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
-        model.addAttribute("defaultReturnDate", LocalDate.now());
-        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
+        addReturnDeskContext(model);
         return "librarian/return-desk";
     }
 
@@ -105,9 +104,7 @@ public class LoanController extends LocalizedControllerSupport {
         model.addAttribute("searchResults", searchResults);
         model.addAttribute("searchedBarcode", trimmedQuery);
         model.addAttribute("searchedQuery", trimmedQuery);
-        model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
-        model.addAttribute("defaultReturnDate", LocalDate.now());
-        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
+        addReturnDeskContext(model);
 
         if (searchResults.isEmpty()) {
             model.addAttribute("errorMessage", message("backend.return.activeQueryNotFound", trimmedQuery));
@@ -115,6 +112,20 @@ public class LoanController extends LocalizedControllerSupport {
             model.addAttribute("successMessage", message("backend.return.activeFound"));
         }
         return "librarian/return-desk";
+    }
+
+    private void addReturnDeskContext(Model model) {
+        model.addAttribute("todayReturned", loanService.getTodayReturnedBooks());
+        model.addAttribute("defaultReturnDate", LocalDate.now());
+        model.addAttribute("damageCompensationAmount", financialService.getDamageCompensationAmount());
+        model.addAttribute("pendingReturnPayments", transactionRepository
+                .findAllPendingFineTransactions(List.of("FINE", "DAMAGE_FEE"))
+                .stream()
+                // Include historical pending charges too. Older return records were
+                // already marked Returned before the hold-before-storage rule existed.
+                .filter(transaction -> transaction.getBorrow() != null
+                        && transaction.getBorrowDetail() != null)
+                .toList());
     }
 
     /**
@@ -206,6 +217,10 @@ public class LoanController extends LocalizedControllerSupport {
                     || damageFine.stripTrailingZeros().scale() > 0
                     || damageFine.compareTo(MAX_DAMAGE_FINE) > 0)) {
                 throw new ValidationException(message("librarian.returnDesk.fineInvalid"));
+            }
+            if (isMinorDamage(conditionNote)
+                    && (damageFine == null || damageFine.compareTo(MINOR_DAMAGE_FINE) < 0)) {
+                throw new ValidationException(message("librarian.returnDesk.fineRequired"));
             }
 
             // Minor damage uses the manually entered repair fine. Severe damage and

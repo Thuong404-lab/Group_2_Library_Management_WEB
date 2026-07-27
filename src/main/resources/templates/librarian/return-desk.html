@@ -47,6 +47,66 @@
         </div>
     </section>
 
+    <!-- Payment holds: the physical copy remains on the borrowing record until the charge is settled. -->
+    <section class="card borrow-card return-payment-hold-card mb-4"
+             th:if="${pendingReturnPayments != null and !#lists.isEmpty(pendingReturnPayments)}">
+        <div class="card-header d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <h5 class="card-title-custom mb-1">
+                    <i class="bi bi-hourglass-split me-2" aria-hidden="true"></i>
+                    <span th:text="#{librarian.returnDesk.pendingPayments}">Return records awaiting payment</span>
+                </h5>
+                <p class="return-payment-hold-description mb-0" th:text="#{librarian.returnDesk.pendingPaymentsHint}">
+                    These books have been inspected but will only be returned to storage after payment is completed.
+                </p>
+            </div>
+            <span class="return-payment-hold-count" th:text="${#lists.size(pendingReturnPayments)}">0</span>
+        </div>
+        <div class="table-responsive borrow-table-wrap">
+            <table class="table align-middle mb-0 borrow-table return-payment-hold-table">
+                <thead>
+                <tr>
+                    <th th:text="#{loan.id}">Loan ID</th>
+                    <th th:text="#{librarian.borrowDesk.memberInfo}">Member</th>
+                    <th th:text="#{librarian.returnDesk.bookTitle}">Book</th>
+                    <th th:text="#{transaction.type}">Charge</th>
+                    <th class="text-end" th:text="#{transaction.amount}">Amount</th>
+                    <th class="text-end" th:text="#{librarian.returnDesk.action}">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="payment : ${pendingReturnPayments}">
+                    <td th:data-label="#{loan.id}">
+                        <span class="font-monospace fw-bold u-color-8b5a2b-93ece783"
+                              th:text="${@borrowCodeFormatter.format(payment.borrow.borrowId)}">BOR-1</span>
+                    </td>
+                    <td th:data-label="#{librarian.borrowDesk.memberInfo}">
+                        <div class="fw-semibold" th:text="${payment.wallet?.member?.user?.fullName}">Member name</div>
+                        <small class="text-muted" th:text="${'MEM-' + payment.wallet.member.memberId}">MEM-1</small>
+                    </td>
+                    <td th:data-label="#{librarian.returnDesk.bookTitle}">
+                        <div class="fw-semibold" th:text="${payment.borrowDetail?.book?.title}">Book title</div>
+                        <small class="text-muted" th:text="${payment.borrowDetail?.bookItem?.barcode}">Barcode</small>
+                    </td>
+                    <td th:data-label="#{transaction.type}">
+                        <span class="return-payment-hold-type"
+                              th:text="${payment.transactionType == 'DAMAGE_FEE' ? #messages.msg('transaction.type.damageFee') : #messages.msg('transaction.type.fine')}">Fine</span>
+                    </td>
+                    <td th:data-label="#{transaction.amount}" class="text-end fw-bold text-danger">
+                        <span th:text="${#numbers.formatDecimal(payment.amount.abs(), 0, 'COMMA', 0, 'POINT')}">0</span>
+                        <span th:text="#{currency.vnd}">VND</span>
+                    </td>
+                    <td th:data-label="#{librarian.returnDesk.action}" class="text-end">
+                        <a class="btn btn-classic-primary btn-sm px-3"
+                           th:href="@{/librarian/members/fines/payment/{borrowId}(borrowId=${payment.borrow.borrowId})}"
+                           th:text="#{librarian.returnDesk.payNow}">Pay now</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- Search Results Card -->
     <div class="card borrow-card mb-4 d-none" id="searchResultsCard">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -198,14 +258,15 @@
                     <div class="mb-2 return-conditional-hidden" id="fineInputContainer">
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{librarian.returnDesk.damageFine}">Damage Fine (VND)</label>
-                            <input type="text" class="form-control scan-input" name="damageFine" id="damageFineInput"
-                                   inputmode="numeric" maxlength="9" value="0"
+                            <input type="text" class="form-control scan-input" id="damageFineInput"
+                                   inputmode="numeric" value="0"
                                    th:placeholder="#{librarian.returnDesk.damageFinePlaceholder}" placeholder="Enter fine amount..."/>
+                            <input type="hidden" name="damageFine" id="damageFineValue" value="0"/>
                             <div id="fineError" class="text-danger small mt-1 font-weight-bold return-conditional-hidden">
                                 <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{librarian.returnDesk.fineRequired}">Bắt buộc nhập số tiền phạt hợp lệ (lớn hơn 0) khi sách bị hư hỏng.</span>
                             </div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 return-conditional-hidden" id="paymentMethodContainer">
                             <label class="form-label small fw-bold text-uppercase mb-2 u-color-8b5a2b-letter-spacing-0-4px-b2cb018c" th:text="#{payment.method}">Payment Method</label>
                             <div class="payment-methods-stacked">
                                 <div class="payment-method-item p-3 mb-2 border rounded d-flex align-items-center">
@@ -252,7 +313,10 @@
             const conditionNoteSelect = document.getElementById('returnCondition');
             const fineInputContainer = document.getElementById('fineInputContainer');
             const damageFineInput = document.getElementById('damageFineInput');
+            const damageFineValue = document.getElementById('damageFineValue');
+            const paymentMethodContainer = document.getElementById('paymentMethodContainer');
             const conditionNoteAdditional = document.getElementById('conditionNoteAdditional');
+            const minimumPaymentMethodFine = 1000;
 
             const selectedReturnsLabel = /*[[#{librarian.returnDesk.selectedReturns}]]*/ 'Receive Selected Returns';
             const selectedReturnsCountLabel = /*[[#{librarian.returnDesk.selectedReturnsCount}]]*/ 'Receive Selected Returns ({0})';
@@ -560,12 +624,14 @@
                 if (conditionNoteSelect && fineInputContainer) {
                     const value = (conditionNoteSelect.value || '').toLocaleLowerCase('vi');
                     const fineError = document.getElementById('fineError');
-                    if (value.includes('hư hỏng nhẹ') || value.includes('minor damage')) {
+                    const isMinorDamage = value.includes('hư hỏng nhẹ') || value.includes('minor damage');
+                    if (isMinorDamage) {
                         fineInputContainer.style.display = 'block';
                     } else {
                         fineInputContainer.style.display = 'none';
                         if (damageFineInput) {
                             damageFineInput.value = '0';
+                            if (damageFineValue) damageFineValue.value = '0';
                             damageFineInput.classList.remove('is-invalid');
                         }
                         if (fineError) {
@@ -574,6 +640,29 @@
                     }
                     const isGood = value.startsWith('tốt') || value.startsWith('good');
                     if (conditionNoteAdditional) conditionNoteAdditional.required = !isGood;
+                    updatePaymentMethodVisibility(isMinorDamage);
+                }
+            }
+
+            function normalizeFineDigits(value) {
+                return (value || '').replace(/\D/g, '').slice(0, 9);
+            }
+
+            function fineAmountFromInput() {
+                const digits = normalizeFineDigits(damageFineInput?.value);
+                return digits === '' ? 0 : Number(digits);
+            }
+
+            function updatePaymentMethodVisibility(isMinorDamage) {
+                if (!paymentMethodContainer) return;
+                const shouldShow = Boolean(isMinorDamage) && fineAmountFromInput() >= minimumPaymentMethodFine;
+                paymentMethodContainer.style.display = shouldShow ? 'block' : 'none';
+                paymentMethodContainer.querySelectorAll('input[name="paymentMethod"]').forEach(input => {
+                    input.disabled = !shouldShow;
+                });
+                if (shouldShow && !paymentMethodContainer.querySelector('input[name="paymentMethod"]:checked')) {
+                    const cashMethod = paymentMethodContainer.querySelector('input[value="cash"]');
+                    if (cashMethod) cashMethod.checked = true;
                 }
             }
 
@@ -593,9 +682,8 @@
                         if (conditionNoteSelect && damageFineInput) {
                             const value = (conditionNoteSelect.value || '').toLocaleLowerCase('vi');
                             if (value.includes('hư hỏng nhẹ') || value.includes('minor damage')) {
-                                if (damageFineInput.value === '') damageFineInput.value = '0';
-                                const fineVal = Number(damageFineInput.value);
-                                if (!Number.isInteger(fineVal) || fineVal < 0 || fineVal > 500000000) {
+                                const fineVal = fineAmountFromInput();
+                                if (!Number.isInteger(fineVal) || fineVal < minimumPaymentMethodFine || fineVal > 500000000) {
                                     e.preventDefault();
                                     const fineError = document.getElementById('fineError');
                                     if (fineError) {
@@ -619,16 +707,23 @@
                     if (!/^[0-9]$/.test(event.key)) event.preventDefault();
                 });
                 damageFineInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/\D/g, '').slice(0, 9);
-                    const fineVal = this.value === '' ? 0 : Number(this.value);
+                    const digits = normalizeFineDigits(this.value);
+                    const fineVal = digits === '' ? 0 : Number(digits);
+                    this.value = digits === '' ? '' : new Intl.NumberFormat('vi-VN').format(fineVal);
+                    if (damageFineValue) damageFineValue.value = digits === '' ? '0' : digits;
                     const fineError = document.getElementById('fineError');
                     if (Number.isInteger(fineVal) && fineVal <= 500000000) {
                         this.classList.remove('is-invalid');
                         if (fineError) fineError.style.display = 'none';
                     }
+                    const condition = (conditionNoteSelect?.value || '').toLocaleLowerCase('vi');
+                    updatePaymentMethodVisibility(condition.includes('hư hỏng nhẹ') || condition.includes('minor damage'));
                 });
                 damageFineInput.addEventListener('blur', function() {
-                    if (this.value === '') this.value = '0';
+                    if (this.value === '') {
+                        this.value = '0';
+                        if (damageFineValue) damageFineValue.value = '0';
+                    }
                 });
             }
 
