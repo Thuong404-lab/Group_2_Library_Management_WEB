@@ -433,12 +433,15 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     }
 
     private LibrarianListItemResponse toLibrarianListItem(StaffAccount account) {
+        com.lms.entity.User user = account.getStaff() != null ? account.getStaff().getUser() : null;
         return new LibrarianListItemResponse(
-                account.getStaff().getStaffId(),
+                account.getStaff() != null ? account.getStaff().getStaffId() : null,
                 account.getId(),
                 account.getUsername(),
-                account.getStaff().getUser().getFullName(),
-                account.getStaff().getStaffType(),
+                user != null ? user.getFullName() : null,
+                user != null ? user.getEmail() : null,
+                user != null ? user.getPhone() : null,
+                account.getStaff() != null ? account.getStaff().getStaffType() : null,
                 accountStatus(account.getStatus()));
     }
 
