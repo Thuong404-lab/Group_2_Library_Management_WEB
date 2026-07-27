@@ -137,6 +137,30 @@ public class MemberNotificationServiceImpl implements MemberNotificationService 
 
     @Override
     @Transactional
+    public int deleteSelectedNotifications(String username, List<Integer> notificationIds) {
+        Member member = getMemberByUsername(username);
+        if (notificationIds == null || notificationIds.isEmpty()) {
+            return 0;
+        }
+        List<Integer> distinctIds = notificationIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (distinctIds.isEmpty()) {
+            return 0;
+        }
+        return memberNotificationRepository.deleteSelectedForMember(member.getMemberId(), distinctIds);
+    }
+
+    @Override
+    @Transactional
+    public int deleteAllNotifications(String username) {
+        Member member = getMemberByUsername(username);
+        return memberNotificationRepository.deleteAllForMember(member.getMemberId());
+    }
+
+    @Override
+    @Transactional
     public void sendNotificationToUser(String username, String title, String content) {
         Member member = getMemberByUsername(username);
         Notification notification = notificationRepository.save(createNotification(title, content));

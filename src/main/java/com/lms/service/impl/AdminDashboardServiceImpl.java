@@ -95,12 +95,6 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         data.put("activeStaff", staffRepository.countByUser_Status(UserStatus.Active));
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
         data.put("overdueItems", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
-        data.put("attentionItems",
-                bookItemRepository.countByBookConditionIgnoreCase("Severely damaged")
-                        + bookItemRepository.countByBookConditionIgnoreCase("Lost book"));
-        data.put("blockedAccounts", memberAccountRepository.countByStatusIgnoreCase("Blocked")
-                + staffAccountRepository.countByStatusIgnoreCase("Blocked"));
-
         BigDecimal monthlyRevenue = transactionRepository.sumRevenueByStatusAndTypesAndDateRange(
                 FinancialTransactionPolicy.COMPLETED_STATUS,
                 FinancialTransactionPolicy.REVENUE_TYPES, monthStart, nextMonthStart);

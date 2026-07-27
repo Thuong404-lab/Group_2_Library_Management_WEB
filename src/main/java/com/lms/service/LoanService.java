@@ -48,6 +48,9 @@ public interface LoanService {
     // Xác nhận trả sách hàng loạt với thông tin chi tiết
     com.lms.entity.Transaction confirmBatchReturnWithDetails(java.util.List<String> barcodes, java.time.LocalDateTime returnDate, String bookCondition, String damageNote, java.math.BigDecimal damageFine, String paymentMethod, String staffUsername);
 
+    /** Hoàn tất nhập kho các bản sao đang chờ thanh toán khoản phạt/bồi thường. */
+    void finalizePendingReturnsAfterFinePayment(Integer borrowId);
+
     java.util.List<com.lms.entity.BorrowDetail> getTodayReturnedBooks();
     void confirmBookReturn(Integer borrowDetailId, String conditionNote);
     void confirmCollection(Integer borrowId);

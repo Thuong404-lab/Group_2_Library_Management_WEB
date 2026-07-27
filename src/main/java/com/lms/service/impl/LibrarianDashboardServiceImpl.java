@@ -5,17 +5,16 @@ import com.lms.dto.response.LibrarianListItemResponse;
 import com.lms.entity.StaffAccount;
 import com.lms.entity.Book;
 import com.lms.entity.BookItem;
-import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.BookRequestStatus;
 import com.lms.enums.UserStatus;
 import com.lms.repository.StaffAccountRepository;
 import com.lms.repository.BookItemRepository;
 import com.lms.repository.BookRepository;
-import com.lms.repository.BookAcquisitionRequestRepository;
+import com.lms.repository.BookRequestRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
-import com.lms.repository.FeedbackRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.StaffRepository;
@@ -62,8 +61,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     private final ReservationRepository reservationRepository;
     private final BookItemRepository bookItemRepository;
     private final BookRepository bookRepository;
-    private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
-    private final FeedbackRepository feedbackRepository;
+    private final BookRequestRepository bookRequestRepository;
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final MemberRepository memberRepository;
@@ -79,8 +77,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             ReservationRepository reservationRepository,
             BookItemRepository bookItemRepository,
             BookRepository bookRepository,
-            BookAcquisitionRequestRepository bookAcquisitionRequestRepository,
-            FeedbackRepository feedbackRepository,
+            BookRequestRepository bookRequestRepository,
             CategoryRepository categoryRepository,
             GenreRepository genreRepository,
             MemberRepository memberRepository,
@@ -94,8 +91,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         this.reservationRepository = reservationRepository;
         this.bookItemRepository = bookItemRepository;
         this.bookRepository = bookRepository;
-        this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
-        this.feedbackRepository = feedbackRepository;
+        this.bookRequestRepository = bookRequestRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.memberRepository = memberRepository;
@@ -155,16 +151,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("pendingRefundReservations",
                 reservationRepository.countByStatusIgnoreCase("REFUND_PENDING"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
-        data.put("dueTodayDetails",
-                borrowDetailRepository.countCurrentLoansDueInRange(
-                        today.atStartOfDay(),
-                        today.plusDays(1).atStartOfDay(),
-                        CURRENT_LOAN_DETAIL_STATUSES));
-        data.put("pendingReturns", borrowDetailRepository.countByStatusIgnoreCase("Return_Pending"));
-        data.put("pendingRenewals", borrowDetailRepository.countByStatusIgnoreCase("Renew_Pending"));
-        data.put("pendingAcquisitionRequests",
-                bookAcquisitionRequestRepository.countByStatus(AcquisitionRequestStatus.PENDING));
-        data.put("unansweredReviews", feedbackRepository.countAwaitingLibrarianResponse());
+        data.put("pendingBookRequests",
+                bookRequestRepository.countByStatus(BookRequestStatus.PENDING));
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
         data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase(LIBRARIAN_STAFF_TYPE));
@@ -181,7 +169,7 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("reviews", interactionService.getReviewsForModeration(
                 null,
                 PageRequest.of(Math.max(0, reviewPage), DASHBOARD_PAGE_SIZE, Sort.by("createdDate").descending())));
-        data.put("requests", interactionService.getBookAcquisitionRequests(null, null,
+        data.put("requests", interactionService.getBookRequests(null, null,
                 PageRequest.of(Math.max(0, requestPage), DASHBOARD_PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
         data.put("shelves", storageService.getAllStorageLocations());

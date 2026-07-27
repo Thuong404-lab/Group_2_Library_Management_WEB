@@ -19,8 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.List;
+import java.util.Set;
 
 /** Isolated settlement logic owned by the PayOS integration flow. */
 @Service
@@ -38,6 +40,7 @@ public class PayOsSettlementService {
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final BorrowService borrowService;
+    private final LoanService loanService;
     private final MembershipService membershipService;
 
     public PayOsSettlementService(PayOsWalletRepository walletRepository,
@@ -48,6 +51,7 @@ public class PayOsSettlementService {
                                   NotificationRepository notificationRepository,
                                   MemberNotificationRepository memberNotificationRepository,
                                   BorrowService borrowService,
+                                  LoanService loanService,
                                   MembershipService membershipService,
                                   LocalizedMessageService localizedMessageService) {
         this.walletRepository = walletRepository;
@@ -58,6 +62,7 @@ public class PayOsSettlementService {
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.borrowService = borrowService;
+        this.loanService = loanService;
         this.membershipService = membershipService;
         this.localizedMessageService = localizedMessageService;
     }
@@ -126,6 +131,7 @@ public class PayOsSettlementService {
         fine.setReferenceCode("KQPAY-FINE-" + payment.getOrderCode());
         fine.setPerformedByStaff(payment.getInitiatedByStaff());
         Transaction saved = transactionRepository.save(fine);
+        finalizePendingReturnForFine(saved);
         createNotification(
                 payment.getMember(),
                 NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.SYSTEM,
@@ -144,6 +150,7 @@ public class PayOsSettlementService {
 
         BigDecimal total = BigDecimal.ZERO;
         Transaction first = null;
+        Set<Integer> borrowIds = new LinkedHashSet<>();
         for (PayOsPaymentFineItem item : items) {
             Integer fineId = item.getFineTransaction().getTransactionId();
             Transaction fine = transactionRepository.findByIdForUpdate(fineId)
@@ -168,6 +175,9 @@ public class PayOsSettlementService {
             fine.setReferenceCode("KQPAY-FINE-" + fineId + "-" + payment.getOrderCode());
             fine.setPerformedByStaff(payment.getInitiatedByStaff());
             Transaction saved = transactionRepository.save(fine);
+            if (saved.getBorrow() != null && saved.getBorrow().getBorrowId() != null) {
+                borrowIds.add(saved.getBorrow().getBorrowId());
+            }
             if (first == null) {
                 first = saved;
             }
@@ -175,6 +185,7 @@ public class PayOsSettlementService {
         if (total.compareTo(payment.getAmount()) != 0) {
             throw new ConflictException(localizedMessageService.get("backend.payment.fineTotalMismatch"));
         }
+        borrowIds.forEach(loanService::finalizePendingReturnsAfterFinePayment);
         createNotification(
                 payment.getMember(),
                 NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.SYSTEM,
@@ -229,6 +240,12 @@ public class PayOsSettlementService {
         transaction.setStatus(COMPLETED);
         transaction.setTransactionDate(LocalDateTime.now());
         return transactionRepository.save(transaction);
+    }
+
+    private void finalizePendingReturnForFine(Transaction fine) {
+        if (fine != null && fine.getBorrow() != null && fine.getBorrow().getBorrowId() != null) {
+            loanService.finalizePendingReturnsAfterFinePayment(fine.getBorrow().getBorrowId());
+        }
     }
 
     private Wallet createWallet(Member member) {

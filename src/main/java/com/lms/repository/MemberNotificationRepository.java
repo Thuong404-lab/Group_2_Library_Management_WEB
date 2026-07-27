@@ -43,6 +43,22 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
     int markUnreadNotificationsAsRead(@Param("memberId") Integer memberId,
                                       @Param("readDate") java.time.LocalDateTime readDate);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            delete from MemberNotification mn
+            where mn.member.memberId = :memberId
+              and mn.notification.notificationId in :notificationIds
+            """)
+    int deleteSelectedForMember(@Param("memberId") Integer memberId,
+                                @Param("notificationIds") List<Integer> notificationIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            delete from MemberNotification mn
+            where mn.member.memberId = :memberId
+            """)
+    int deleteAllForMember(@Param("memberId") Integer memberId);
+
     // Lấy 5 thông báo mới nhất cho chuông thông báo.
     List<MemberNotification> findTop5ByMember_MemberIdOrderByNotification_CreatedDateDesc(Integer memberId);
 

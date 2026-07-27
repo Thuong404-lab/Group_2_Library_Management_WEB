@@ -6,11 +6,12 @@ import com.lms.exception.ApplicationException;
 
 import com.lms.dto.request.LibrarianNotificationSendRequest;
 import com.lms.dto.request.LibrarianReviewReplyRequest;
+import com.lms.dto.response.LibrarianNotificationHistoryResponse;
 import com.lms.enums.NotificationType;
 import com.lms.enums.FeedbackStatus;
-import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.BookRequestStatus;
 import com.lms.util.ReviewPolicy;
-import com.lms.util.AcquisitionRequestPolicy;
+import com.lms.util.BookRequestPolicy;
 import com.lms.service.LibrarianInteractionService;
 import jakarta.validation.Valid;
 import com.lms.service.NotificationComposePolicy;
@@ -43,6 +44,7 @@ import java.util.UUID;
 public class LibrarianInteractionController extends LocalizedControllerSupport {
 
     private static final int PAGE_SIZE = 10;
+    private static final int NOTIFICATION_HISTORY_PAGE_SIZE = 10;
 
     private final LibrarianInteractionService librarianInteractionService;
 
@@ -162,6 +164,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
     @GetMapping("/notifications/new")
     public String notificationForm(
             @RequestParam(required = false, defaultValue = "") String historyType,
+            @RequestParam(defaultValue = "0") int historyPage,
             Model model,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (!model.containsAttribute("notificationRequest")) {
@@ -176,8 +179,12 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         model.addAttribute("selectedMembers", librarianInteractionService.getNotificationRecipients(request.getMemberIds()));
         model.addAttribute("activeMemberCount", librarianInteractionService.countActiveMembers());
         NotificationType selectedHistoryType = parseManualNotificationType(historyType);
-        model.addAttribute("recentNotifications",
-                librarianInteractionService.getRecentManualNotifications(selectedHistoryType));
+        Page<LibrarianNotificationHistoryResponse> notificationHistoryPage =
+                librarianInteractionService.getRecentManualNotifications(
+                        selectedHistoryType,
+                        PageRequest.of(Math.max(0, historyPage), NOTIFICATION_HISTORY_PAGE_SIZE));
+        model.addAttribute("notificationHistoryPage", notificationHistoryPage);
+        model.addAttribute("recentNotifications", notificationHistoryPage.getContent());
         model.addAttribute("notificationHistoryTypes", NotificationType.manualSelectableValues());
         model.addAttribute("selectedHistoryType",
                 selectedHistoryType == null ? "" : selectedHistoryType.name());
@@ -239,26 +246,26 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         return notificationRedirect(historyType, flash);
     }
 
-    @GetMapping("/acquisition-requests")
-    public String viewBookAcquisitionRequests(
+    @GetMapping({"/book-requests", "/acquisition-requests"})
+    public String viewBookRequests(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             Model model) {
 
-        model.addAttribute("requests", librarianInteractionService.getBookAcquisitionRequests(
-                status, keyword, PageRequest.of(Math.max(0, page), AcquisitionRequestPolicy.PAGE_SIZE,
+        model.addAttribute("requests", librarianInteractionService.getBookRequests(
+                status, keyword, PageRequest.of(Math.max(0, page), BookRequestPolicy.PAGE_SIZE,
                         Sort.by(Sort.Order.desc("createdDate"), Sort.Order.desc("requestId")))));
-        model.addAttribute("acquisitionStatuses", AcquisitionRequestStatus.values());
-        model.addAttribute("currentAcquisitionStatus",
+        model.addAttribute("bookRequestStatuses", BookRequestStatus.values());
+        model.addAttribute("currentBookRequestStatus",
                 status == null ? "" : status.strip().toUpperCase(Locale.ROOT));
-        model.addAttribute("acquisitionKeyword", keyword == null ? "" : keyword.strip());
+        model.addAttribute("bookRequestKeyword", keyword == null ? "" : keyword.strip());
 
-        return "librarian/acquisition-request-list";
+        return "librarian/book-request-list";
     }
 
-    @PostMapping("/acquisition-requests/{id}/approve")
-    public String approveBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+    @PostMapping({"/book-requests/{id}/approve", "/acquisition-requests/{id}/approve"})
+    public String approveBookRequest(@PathVariable("id") Integer requestId,
                                                 @RequestParam("note") String note,
                                                 @RequestParam(defaultValue = "0") int page,
                                                 @RequestParam(required = false) String status,
@@ -266,17 +273,17 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
                                                 Principal principal,
                                                 RedirectAttributes flash) {
         try {
-            librarianInteractionService.approveBookAcquisitionRequest(
+            librarianInteractionService.approveBookRequest(
                     requestId, note, principal.getName());
-            flash.addFlashAttribute("success", message("backend.librarian.acquisition.approved"));
+            flash.addFlashAttribute("success", message("backend.librarian.bookRequest.approved"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        return acquisitionRedirect(page, status, keyword, flash);
+        return bookRequestRedirect(page, status, keyword, flash);
     }
 
-    @PostMapping("/acquisition-requests/{id}/reject")
-    public String rejectBookAcquisitionRequest(@PathVariable("id") Integer requestId,
+    @PostMapping({"/book-requests/{id}/reject", "/acquisition-requests/{id}/reject"})
+    public String rejectBookRequest(@PathVariable("id") Integer requestId,
                                                @RequestParam("reason") String reason,
                                                @RequestParam(defaultValue = "0") int page,
                                                @RequestParam(required = false) String status,
@@ -284,13 +291,13 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
                                                Principal principal,
                                                RedirectAttributes flash) {
         try {
-            librarianInteractionService.rejectBookAcquisitionRequest(
+            librarianInteractionService.rejectBookRequest(
                     requestId, reason, principal.getName());
-            flash.addFlashAttribute("success", message("backend.librarian.acquisition.rejected"));
+            flash.addFlashAttribute("success", message("backend.librarian.bookRequest.rejected"));
         } catch (ApplicationException e) {
             flash.addFlashAttribute("error", e.getMessage());
         }
-        return acquisitionRedirect(page, status, keyword, flash);
+        return bookRequestRedirect(page, status, keyword, flash);
     }
 
     private Map<String, String> validateNotificationRequest(LibrarianNotificationSendRequest request) {
@@ -332,12 +339,12 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         }
     }
 
-    private String acquisitionRedirect(int page, String status, String keyword,
+    private String bookRequestRedirect(int page, String status, String keyword,
                                        RedirectAttributes attributes) {
         attributes.addAttribute("page", Math.max(0, page));
         if (status != null && !status.isBlank()) {
             try {
-                attributes.addAttribute("status", AcquisitionRequestStatus
+                attributes.addAttribute("status", BookRequestStatus
                         .valueOf(status.strip().toUpperCase(Locale.ROOT)).name());
             } catch (IllegalArgumentException ignored) {
                 // Do not propagate a tampered filter value into the redirect URL.
@@ -346,7 +353,7 @@ public class LibrarianInteractionController extends LocalizedControllerSupport {
         if (keyword != null && !keyword.isBlank()) {
             attributes.addAttribute("keyword", keyword.strip());
         }
-        return "redirect:/librarian/interaction/acquisition-requests";
+        return "redirect:/librarian/interaction/book-requests";
     }
 
 }

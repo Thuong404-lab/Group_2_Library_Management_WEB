@@ -25,6 +25,10 @@ public interface MemberNotificationService {
 
     long markNotificationAsRead(String username, Integer notificationId);
 
+    int deleteSelectedNotifications(String username, List<Integer> notificationIds);
+
+    int deleteAllNotifications(String username);
+
     // ======= BỔ SUNG PHƯƠNG THỨC GỬI THÔNG BÁO =======
     void sendNotificationToUser(String username, String title, String content);
 }

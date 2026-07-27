@@ -1,19 +1,19 @@
 package com.lms.service.impl;
 
-import com.lms.dto.request.MemberBookAcquisitionRequest;
-import com.lms.util.AcquisitionRequestPolicy;
+import com.lms.dto.request.MemberBookRequest;
+import com.lms.util.BookRequestPolicy;
 import com.lms.util.IsbnUtils;
 import com.lms.entity.MemberAccount;
-import com.lms.entity.BookAcquisitionRequest;
+import com.lms.entity.BookRequest;
 import com.lms.entity.Member;
-import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.BookRequestStatus;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
 import com.lms.repository.MemberAccountRepository;
-import com.lms.repository.BookAcquisitionRequestRepository;
+import com.lms.repository.BookRequestRepository;
 import com.lms.repository.BookRepository;
-import com.lms.service.MemberBookAcquisitionService;
+import com.lms.service.MemberBookRequestService;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,61 +30,61 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 @Service
-public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionService {
+public class MemberBookRequestServiceImpl implements MemberBookRequestService {
 
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
 
     private final MemberAccountRepository memberAccountRepository;
-    private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
+    private final BookRequestRepository bookRequestRepository;
     private final BookRepository bookRepository;
 
-    public MemberBookAcquisitionServiceImpl(MemberAccountRepository memberAccountRepository,
-                                            BookAcquisitionRequestRepository bookAcquisitionRequestRepository,
+    public MemberBookRequestServiceImpl(MemberAccountRepository memberAccountRepository,
+                                            BookRequestRepository bookRequestRepository,
                                             BookRepository bookRepository) {
         this.memberAccountRepository = memberAccountRepository;
-        this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
+        this.bookRequestRepository = bookRequestRepository;
         this.bookRepository = bookRepository;
     }
 
     @Override
     @Transactional
-    public void submitRequest(String username, MemberBookAcquisitionRequest request) {
+    public void submitRequest(String username, MemberBookRequest request) {
         NormalizedRequest normalized = validateAndNormalize(request);
         MemberAccount account = getMemberAccount(username);
         ensureActive(account);
         Member member = account.getMember();
 
-        if (bookAcquisitionRequestRepository.existsByMember_MemberIdAndDedupKeyAndStatusIn(
+        if (bookRequestRepository.existsByMember_MemberIdAndDedupKeyAndStatusIn(
                 member.getMemberId(), normalized.dedupKey(),
-                AcquisitionRequestPolicy.ACTIVE_STATUSES)) {
-            throw new ConflictException(messages.get("backend.acquisition.duplicate"));
+                BookRequestPolicy.ACTIVE_STATUSES)) {
+            throw new ConflictException(messages.get("backend.bookRequest.duplicate"));
         }
         ensureBookDoesNotExist(normalized);
 
-        BookAcquisitionRequest acquisitionRequest = new BookAcquisitionRequest();
-        acquisitionRequest.setMember(member);
-        apply(acquisitionRequest, normalized);
-        acquisitionRequest.setStatus(AcquisitionRequestStatus.PENDING);
-        acquisitionRequest.setDecisionNote(null);
-        acquisitionRequest.setProcessedDate(null);
-        acquisitionRequest.setCreatedDate(LocalDateTime.now());
+        BookRequest bookRequest = new BookRequest();
+        bookRequest.setMember(member);
+        apply(bookRequest, normalized);
+        bookRequest.setStatus(BookRequestStatus.PENDING);
+        bookRequest.setDecisionNote(null);
+        bookRequest.setProcessedDate(null);
+        bookRequest.setCreatedDate(LocalDateTime.now());
 
-        saveWithConcurrencyHandling(acquisitionRequest);
+        saveWithConcurrencyHandling(bookRequest);
     }
 
     @Override
     @Transactional
-    public void updatePendingRequest(String username, Integer requestId, MemberBookAcquisitionRequest request) {
+    public void updatePendingRequest(String username, Integer requestId, MemberBookRequest request) {
         NormalizedRequest normalized = validateAndNormalize(request);
         MemberAccount account = getMemberAccount(username);
         ensureActive(account);
-        BookAcquisitionRequest existing = getOwnedRequest(account.getMember(), requestId);
+        BookRequest existing = getOwnedRequest(account.getMember(), requestId);
         ensurePending(existing);
-        if (bookAcquisitionRequestRepository.existsByMember_MemberIdAndDedupKeyAndStatusInAndRequestIdNot(
+        if (bookRequestRepository.existsByMember_MemberIdAndDedupKeyAndStatusInAndRequestIdNot(
                 account.getMember().getMemberId(), normalized.dedupKey(),
-                AcquisitionRequestPolicy.ACTIVE_STATUSES, requestId)) {
-            throw new ConflictException(messages.get("backend.acquisition.duplicate"));
+                BookRequestPolicy.ACTIVE_STATUSES, requestId)) {
+            throw new ConflictException(messages.get("backend.bookRequest.duplicate"));
         }
         ensureBookDoesNotExist(normalized);
         apply(existing, normalized);
@@ -96,9 +96,9 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
     public void cancelPendingRequest(String username, Integer requestId) {
         MemberAccount account = getMemberAccount(username);
         ensureActive(account);
-        BookAcquisitionRequest existing = getOwnedRequest(account.getMember(), requestId);
+        BookRequest existing = getOwnedRequest(account.getMember(), requestId);
         ensurePending(existing);
-        existing.setStatus(AcquisitionRequestStatus.CANCELLED);
+        existing.setStatus(BookRequestStatus.CANCELLED);
         existing.setDecisionNote(null);
         existing.setProcessedBy(null);
         existing.setProcessedDate(LocalDateTime.now());
@@ -107,11 +107,11 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookAcquisitionRequest> getMyRequests(String username, Pageable pageable) {
+    public Page<BookRequest> getMyRequests(String username, Pageable pageable) {
         Member member = memberAccountRepository.findByUsername(username)
                 .map(MemberAccount::getMember)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.member.currentNotFound")));
-        return bookAcquisitionRequestRepository.findByMember_MemberIdOrderByCreatedDateDesc(
+        return bookRequestRepository.findByMember_MemberIdOrderByCreatedDateDesc(
                 member.getMemberId(), pageable);
     }
 
@@ -136,8 +136,8 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
 
     private void validateReferenceUrl(String referenceUrl) {
         if (referenceUrl == null) return;
-        if (referenceUrl.length() > AcquisitionRequestPolicy.REFERENCE_URL_MAX_LENGTH) {
-            throw new ValidationException(messages.get("backend.acquisition.referenceMaximum"));
+        if (referenceUrl.length() > BookRequestPolicy.REFERENCE_URL_MAX_LENGTH) {
+            throw new ValidationException(messages.get("backend.bookRequest.referenceMaximum"));
         }
         try {
             URI uri = URI.create(referenceUrl);
@@ -150,31 +150,31 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
         }
     }
 
-    private NormalizedRequest validateAndNormalize(MemberBookAcquisitionRequest request) {
+    private NormalizedRequest validateAndNormalize(MemberBookRequest request) {
         String title = normalizeRequired(request.getTitle(), messages.get("book.title"),
-                AcquisitionRequestPolicy.TITLE_MIN_LENGTH, AcquisitionRequestPolicy.TITLE_MAX_LENGTH);
+                BookRequestPolicy.TITLE_MIN_LENGTH, BookRequestPolicy.TITLE_MAX_LENGTH);
         String author = normalizeRequired(request.getAuthor(), messages.get("book.author"),
-                AcquisitionRequestPolicy.AUTHOR_MIN_LENGTH, AcquisitionRequestPolicy.AUTHOR_MAX_LENGTH);
-        String reason = normalizeRequired(request.getRequestReason(), messages.get("member.acquisition.reason"),
-                AcquisitionRequestPolicy.REASON_MIN_LENGTH, AcquisitionRequestPolicy.REASON_MAX_LENGTH);
+                BookRequestPolicy.AUTHOR_MIN_LENGTH, BookRequestPolicy.AUTHOR_MAX_LENGTH);
+        String reason = normalizeRequired(request.getRequestReason(), messages.get("member.bookRequest.reason"),
+                BookRequestPolicy.REASON_MIN_LENGTH, BookRequestPolicy.REASON_MAX_LENGTH);
         String publisher = normalizeOptional(request.getPublisher());
-        if (publisher != null && publisher.length() > AcquisitionRequestPolicy.PUBLISHER_MAX_LENGTH) {
-            throw new ValidationException(messages.get("backend.acquisition.publisherMaximum"));
+        if (publisher != null && publisher.length() > BookRequestPolicy.PUBLISHER_MAX_LENGTH) {
+            throw new ValidationException(messages.get("backend.bookRequest.publisherMaximum"));
         }
         if (publisher != null && publisher.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException(messages.get("backend.acquisition.publisherLetters"));
+            throw new ValidationException(messages.get("backend.bookRequest.publisherLetters"));
         }
         String referenceUrl = request.getReferenceUrl() == null ? null : request.getReferenceUrl().strip();
         if (referenceUrl != null && referenceUrl.isEmpty()) referenceUrl = null;
         validateReferenceUrl(referenceUrl);
         Integer year = request.getPublicationYear();
-        if (year != null && (year < AcquisitionRequestPolicy.MIN_PUBLICATION_YEAR
+        if (year != null && (year < BookRequestPolicy.MIN_PUBLICATION_YEAR
                 || year > Year.now().getValue())) {
-            throw new ValidationException(messages.get("validation.acquisition.year"));
+            throw new ValidationException(messages.get("validation.bookRequest.year"));
         }
         String isbn = IsbnUtils.normalize(request.getIsbn());
         if (isbn != null && !IsbnUtils.isValid(isbn)) {
-            throw new ValidationException(messages.get("validation.acquisition.isbnInvalid"));
+            throw new ValidationException(messages.get("validation.bookRequest.isbnInvalid"));
         }
         String dedupKey = isbn == null
                 ? "TEXT:" + keyPart(title) + "|" + keyPart(author)
@@ -186,7 +186,7 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
         boolean exists = request.isbn() != null
                 ? bookRepository.existsByNormalizedIsbn(request.isbn())
                 : bookRepository.existsByNormalizedTitleAndAuthor(request.title(), request.author());
-        if (exists) throw new ConflictException(messages.get("backend.acquisition.bookAlreadyExists"));
+        if (exists) throw new ConflictException(messages.get("backend.bookRequest.bookAlreadyExists"));
     }
 
     private MemberAccount getMemberAccount(String username) {
@@ -201,23 +201,23 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
 
     private void ensureActive(MemberAccount account) {
         if (!"Active".equalsIgnoreCase(account.getStatus())) {
-            throw new ConflictException(messages.get("backend.acquisition.inactiveMember"));
+            throw new ConflictException(messages.get("backend.bookRequest.inactiveMember"));
         }
     }
 
-    private BookAcquisitionRequest getOwnedRequest(Member member, Integer requestId) {
-        return bookAcquisitionRequestRepository.findByRequestIdAndMember_MemberId(requestId, member.getMemberId())
+    private BookRequest getOwnedRequest(Member member, Integer requestId) {
+        return bookRequestRepository.findByRequestIdAndMember_MemberId(requestId, member.getMemberId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        messages.get("backend.acquisition.notFound", requestId)));
+                        messages.get("backend.bookRequest.notFound", requestId)));
     }
 
-    private void ensurePending(BookAcquisitionRequest request) {
-        if (request.getStatus() != AcquisitionRequestStatus.PENDING) {
-            throw new ConflictException(messages.get("backend.acquisition.pendingOnly"));
+    private void ensurePending(BookRequest request) {
+        if (request.getStatus() != BookRequestStatus.PENDING) {
+            throw new ConflictException(messages.get("backend.bookRequest.pendingOnly"));
         }
     }
 
-    private void apply(BookAcquisitionRequest target, NormalizedRequest source) {
+    private void apply(BookRequest target, NormalizedRequest source) {
         target.setTitle(source.title());
         target.setAuthor(source.author());
         target.setIsbn(source.isbn());
@@ -228,13 +228,13 @@ public class MemberBookAcquisitionServiceImpl implements MemberBookAcquisitionSe
         target.setDedupKey(source.dedupKey());
     }
 
-    private void saveWithConcurrencyHandling(BookAcquisitionRequest request) {
+    private void saveWithConcurrencyHandling(BookRequest request) {
         try {
-            bookAcquisitionRequestRepository.saveAndFlush(request);
+            bookRequestRepository.saveAndFlush(request);
         } catch (OptimisticLockingFailureException exception) {
-            throw new ConflictException(messages.get("backend.acquisition.dataChanged"), exception);
+            throw new ConflictException(messages.get("backend.bookRequest.dataChanged"), exception);
         } catch (DataIntegrityViolationException exception) {
-            throw new ConflictException(messages.get("backend.acquisition.duplicate"), exception);
+            throw new ConflictException(messages.get("backend.bookRequest.duplicate"), exception);
         }
     }
 

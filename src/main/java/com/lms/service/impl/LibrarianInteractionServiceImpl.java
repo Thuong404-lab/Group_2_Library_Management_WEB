@@ -10,13 +10,13 @@ import com.lms.entity.*;
 import com.lms.exception.ResourceNotFoundException;
 import com.lms.exception.ConflictException;
 import com.lms.exception.ValidationException;
-import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.BookRequestStatus;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
 import com.lms.enums.FeedbackStatus;
 import com.lms.util.ReviewPolicy;
-import com.lms.util.AcquisitionRequestPolicy;
+import com.lms.util.BookRequestPolicy;
 import com.lms.repository.*;
 import com.lms.service.LibrarianInteractionService;
 import com.lms.service.LocalizedMessageService;
@@ -46,7 +46,7 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
     private final MemberRepository memberRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
-    private final BookAcquisitionRequestRepository bookAcquisitionRequestRepository;
+    private final BookRequestRepository bookRequestRepository;
     private final StaffAccountRepository staffAccountRepository;
 
     @Autowired
@@ -58,13 +58,13 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
                                            MemberRepository memberRepository,
                                            NotificationRepository notificationRepository,
                                            MemberNotificationRepository memberNotificationRepository,
-                                           BookAcquisitionRequestRepository bookAcquisitionRequestRepository,
+                                           BookRequestRepository bookRequestRepository,
                                            StaffAccountRepository staffAccountRepository) {
         this.feedbackRepository = feedbackRepository;
         this.memberRepository = memberRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
-        this.bookAcquisitionRequestRepository = bookAcquisitionRequestRepository;
+        this.bookRequestRepository = bookRequestRepository;
         this.staffAccountRepository = staffAccountRepository;
     }
 
@@ -283,20 +283,22 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional(readOnly = true)
-    public List<LibrarianNotificationHistoryResponse> getRecentManualNotifications(NotificationType notificationType) {
-        List<Notification> notifications = notificationType == null
-                ? notificationRepository.findTop10ByEventTypeOrderByCreatedDateDesc(NotificationEventType.MANUAL)
-                : notificationRepository.findTop10ByEventTypeAndNotificationTypeOrderByCreatedDateDesc(
-                        NotificationEventType.MANUAL, notificationType);
+    public Page<LibrarianNotificationHistoryResponse> getRecentManualNotifications(
+            NotificationType notificationType, Pageable pageable) {
+        Page<Notification> notifications = notificationType == null
+                ? notificationRepository.findByEventTypeOrderByCreatedDateDesc(
+                        NotificationEventType.MANUAL, pageable)
+                : notificationRepository.findByEventTypeAndNotificationTypeOrderByCreatedDateDesc(
+                        NotificationEventType.MANUAL, notificationType, pageable);
         return notifications
-                .stream().map(notification -> new LibrarianNotificationHistoryResponse(
+                .map(notification -> new LibrarianNotificationHistoryResponse(
                         notification.getNotificationId(), notification.getTitle(), notification.getNotificationType(),
                         notification.getStaff() != null && notification.getStaff().getUser() != null
                                 ? notification.getStaff().getUser().getFullName() : "",
                         notification.getCreatedDate(),
                         memberNotificationRepository.countByNotification_NotificationId(notification.getNotificationId()),
                         memberNotificationRepository.countByNotification_NotificationIdAndIsReadTrue(notification.getNotificationId())
-                )).toList();
+                ));
     }
 
     @Override
@@ -387,75 +389,75 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable) {
-        return getBookAcquisitionRequests(null, null, pageable);
+    public Page<BookRequest> getBookRequests(Pageable pageable) {
+        return getBookRequests(null, null, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookAcquisitionRequest> getBookAcquisitionRequests(String status, String keyword, Pageable pageable) {
-        AcquisitionRequestStatus requestedStatus = parseAcquisitionStatus(status);
+    public Page<BookRequest> getBookRequests(String status, String keyword, Pageable pageable) {
+        BookRequestStatus requestedStatus = parseBookRequestStatus(status);
         String normalizedKeyword = keyword == null ? "" : keyword.strip().replaceAll("\\s+", " ");
-        if (normalizedKeyword.length() > AcquisitionRequestPolicy.SEARCH_KEYWORD_MAX_LENGTH) {
-            throw new ValidationException(msg("backend.librarian.acquisition.keywordMaximum"));
+        if (normalizedKeyword.length() > BookRequestPolicy.SEARCH_KEYWORD_MAX_LENGTH) {
+            throw new ValidationException(msg("backend.librarian.bookRequest.keywordMaximum"));
         }
-        return bookAcquisitionRequestRepository.searchForModeration(
+        return bookRequestRepository.searchForModeration(
                 requestedStatus, normalizedKeyword, pageable);
     }
 
     @Override
     @Transactional
-    public void approveBookAcquisitionRequest(Integer requestId, String note, String staffUsername) {
-        BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
+    public void approveBookRequest(Integer requestId, String note, String staffUsername) {
+        BookRequest request = getPendingBookRequest(requestId);
         String normalizedNote = validateDecisionNote(note);
-        request.setStatus(AcquisitionRequestStatus.APPROVED);
+        request.setStatus(BookRequestStatus.APPROVED);
         request.setDecisionNote(normalizedNote);
         request.setProcessedDate(LocalDateTime.now());
         request.setProcessedBy(getStaff(staffUsername));
-        saveAcquisitionDecision(request);
+        saveBookRequestDecision(request);
         sendPersonalNotification(
                 request.getMember(),
                 NotificationType.ACQUISITION, NotificationEventType.ACQUISITION_APPROVED,
-                "notification.acquisitionApproved.title",
-                "notification.acquisitionApproved.content",
+                "notification.bookRequestApproved.title",
+                "notification.bookRequestApproved.content",
                 request.getTitle(), normalizedNote
         );
     }
 
     @Override
     @Transactional
-    public void rejectBookAcquisitionRequest(Integer requestId, String reason, String staffUsername) {
+    public void rejectBookRequest(Integer requestId, String reason, String staffUsername) {
         String normalizedReason = validateDecisionNote(reason);
-        BookAcquisitionRequest request = getPendingAcquisitionRequest(requestId);
-        request.setStatus(AcquisitionRequestStatus.REJECTED);
+        BookRequest request = getPendingBookRequest(requestId);
+        request.setStatus(BookRequestStatus.REJECTED);
         request.setDecisionNote(normalizedReason);
         request.setProcessedDate(LocalDateTime.now());
         request.setProcessedBy(getStaff(staffUsername));
-        saveAcquisitionDecision(request);
+        saveBookRequestDecision(request);
         sendPersonalNotification(
                 request.getMember(),
                 NotificationType.ACQUISITION, NotificationEventType.ACQUISITION_REJECTED,
-                "notification.acquisitionRejected.title",
-                "notification.acquisitionRejected.content",
+                "notification.bookRequestRejected.title",
+                "notification.bookRequestRejected.content",
                 request.getTitle(), normalizedReason
         );
     }
 
-    private BookAcquisitionRequest getPendingAcquisitionRequest(Integer requestId) {
-        BookAcquisitionRequest request = bookAcquisitionRequestRepository.findById(requestId)
-                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.acquisition.notFound")));
-        if (request.getStatus() != AcquisitionRequestStatus.PENDING) {
-            throw new ConflictException(msg("backend.librarian.acquisition.alreadyProcessed"));
+    private BookRequest getPendingBookRequest(Integer requestId) {
+        BookRequest request = bookRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException(msg("backend.librarian.bookRequest.notFound")));
+        if (request.getStatus() != BookRequestStatus.PENDING) {
+            throw new ConflictException(msg("backend.librarian.bookRequest.alreadyProcessed"));
         }
         return request;
     }
 
-    private AcquisitionRequestStatus parseAcquisitionStatus(String status) {
+    private BookRequestStatus parseBookRequestStatus(String status) {
         if (status == null || status.isBlank()) return null;
         try {
-            return AcquisitionRequestStatus.valueOf(status.strip().toUpperCase(Locale.ROOT));
+            return BookRequestStatus.valueOf(status.strip().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException exception) {
-            throw new ValidationException(msg("backend.librarian.acquisition.statusInvalid"));
+            throw new ValidationException(msg("backend.librarian.bookRequest.statusInvalid"));
         }
     }
 
@@ -463,16 +465,16 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         String normalized = value == null ? "" : value.strip()
                 .replaceAll("(?:\\R\\s*){3,}", System.lineSeparator() + System.lineSeparator());
         if (normalized.isEmpty()) {
-            throw new ValidationException(msg("librarian.acquisition.validationRequired"));
+            throw new ValidationException(msg("librarian.bookRequest.validationRequired"));
         }
-        if (normalized.length() < AcquisitionRequestPolicy.DECISION_NOTE_MIN_LENGTH) {
-            throw new ValidationException(msg("librarian.acquisition.validationMinimum"));
+        if (normalized.length() < BookRequestPolicy.DECISION_NOTE_MIN_LENGTH) {
+            throw new ValidationException(msg("librarian.bookRequest.validationMinimum"));
         }
-        if (normalized.length() > AcquisitionRequestPolicy.DECISION_NOTE_MAX_LENGTH) {
-            throw new ValidationException(msg("librarian.acquisition.validationMaximum"));
+        if (normalized.length() > BookRequestPolicy.DECISION_NOTE_MAX_LENGTH) {
+            throw new ValidationException(msg("librarian.bookRequest.validationMaximum"));
         }
         if (normalized.codePoints().noneMatch(Character::isLetter)) {
-            throw new ValidationException(msg("librarian.acquisition.validationLetters"));
+            throw new ValidationException(msg("librarian.bookRequest.validationLetters"));
         }
         return normalized;
     }
@@ -481,14 +483,14 @@ public class LibrarianInteractionServiceImpl implements LibrarianInteractionServ
         return staffAccountRepository.findByUsername(username)
                 .map(StaffAccount::getStaff)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        msg("backend.librarian.acquisition.staffNotFound")));
+                        msg("backend.librarian.bookRequest.staffNotFound")));
     }
 
-    private void saveAcquisitionDecision(BookAcquisitionRequest request) {
+    private void saveBookRequestDecision(BookRequest request) {
         try {
-            bookAcquisitionRequestRepository.saveAndFlush(request);
+            bookRequestRepository.saveAndFlush(request);
         } catch (OptimisticLockingFailureException exception) {
-            throw new ConflictException(msg("backend.acquisition.dataChanged"), exception);
+            throw new ConflictException(msg("backend.bookRequest.dataChanged"), exception);
         }
     }
 
