@@ -88,7 +88,7 @@
                         <label for="reservationDays" class="member-notifications-eyebrow mb-2 d-block"
                                th:text="#{member.borrowCreate.preferredDays}">Preferred loan period</label>
                         <input type="number" id="reservationDays" name="numberOfDays"
-                               class="form-control" min="1" th:max="${maxBorrowDays}"
+                               class="form-control" min="1" step="1" th:max="${maxBorrowDays}"
                                th:value="${defaultBorrowDays}" required form="reservationSubmitForm">
                         <small class="text-muted d-block mt-1">
                             <span th:text="#{member.cart.allowedLimitPrefix}">Maximum allowed </span>
@@ -155,11 +155,11 @@
         function updateCalculations() {
             if (!daysInput) return;
             if (balanceAlert) balanceAlert.classList.add('d-none');
-            const days = parseInt(daysInput.value, 10);
+            const days = Number(daysInput.value);
             let isValid = true;
             let errorMsg = '';
 
-            if (isNaN(days) || days < 1 || days > maxBorrowDays) {
+            if (!Number.isInteger(days) || days < 1 || days > maxBorrowDays) {
                 isValid = false;
                 errorMsg = msgInvalidDays;
             }
@@ -173,6 +173,9 @@
             } else {
                 daysInput.classList.remove('is-invalid');
                 if (errorBox) errorBox.classList.add('d-none');
+                // The field can be temporarily empty while typing. Re-enable
+                // the submit action as soon as the manually entered value is valid.
+                if (submitBtn) submitBtn.disabled = false;
             }
 
             const totalDeposit = dailyDepositRate * days;
@@ -190,8 +193,8 @@
 
         if (reservationForm) {
             reservationForm.addEventListener('submit', function(event) {
-                const days = parseInt(daysInput?.value, 10);
-                if (isNaN(days) || days < 1 || days > maxBorrowDays) {
+                const days = Number(daysInput?.value);
+                if (!Number.isInteger(days) || days < 1 || days > maxBorrowDays) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
                     updateCalculations();
