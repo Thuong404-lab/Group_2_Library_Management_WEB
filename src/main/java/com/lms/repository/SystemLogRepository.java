@@ -74,9 +74,9 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
             LEFT JOIN log.user user
             WHERE (
                 (:section = 'auth' AND log.actionType IN ('LOGIN', 'LOGOUT', 'GOOGLE'))
-                OR (:section = 'circulation' AND log.actionType IN ('REQUEST_BORROW', 'REQUEST_RETURN', 'RESERVE_BOOK'))
+                OR (:section = 'circulation' AND log.actionType IN ('REQUEST_BORROW', 'REQUEST_RETURN', 'RESERVE_BOOK', 'REQUEST_RENEWAL', 'CANCEL_RENEWAL', 'APPROVE_RENEWAL', 'REJECT_RENEWAL'))
                 OR (:section = 'operations' AND log.actionType NOT IN
-                    ('LOGIN', 'LOGOUT', 'GOOGLE', 'REQUEST_BORROW', 'REQUEST_RETURN', 'RESERVE_BOOK'))
+                    ('LOGIN', 'LOGOUT', 'GOOGLE', 'REQUEST_BORROW', 'REQUEST_RETURN', 'RESERVE_BOOK', 'REQUEST_RENEWAL', 'CANCEL_RENEWAL', 'APPROVE_RENEWAL', 'REJECT_RENEWAL'))
             )
             AND (:actionType = '' OR log.actionType = :actionType)
             AND (:keyword = ''

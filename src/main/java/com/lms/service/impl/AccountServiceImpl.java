@@ -278,7 +278,7 @@ public class AccountServiceImpl implements AccountService {
             throw new AccountFormValidationException(
                     Map.of("_global", messages.get("backend.account.incompleteMemberData")));
         }
-        if (memberAccountDeletionRepository.hasActiveBusiness(member.getMemberId())) {
+        if (memberAccountDeletionRepository.hasBusinessHistory(member.getMemberId())) {
             throw new AccountFormValidationException(
                     Map.of("_global", messages.get("backend.member.deleteHasHistory")));
         }
@@ -329,7 +329,7 @@ public class AccountServiceImpl implements AccountService {
         if (account == null || account.getMember() == null) {
             return false;
         }
-        return !memberAccountDeletionRepository.hasActiveBusiness(account.getMember().getMemberId());
+        return !memberAccountDeletionRepository.hasBusinessHistory(account.getMember().getMemberId());
     }
 
     @Override
