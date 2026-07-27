@@ -8,7 +8,7 @@ import com.lms.dto.response.NotificationRecipientSearchResponse;
 import com.lms.dto.response.NotificationSendResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.lms.entity.BookAcquisitionRequest;
+import com.lms.entity.BookRequest;
 import com.lms.entity.Member;
 import com.lms.enums.NotificationType;
 
@@ -34,17 +34,18 @@ public interface LibrarianInteractionService {
 
     List<NotificationRecipientSearchResponse> getNotificationRecipients(List<Integer> memberIds);
 
-    List<LibrarianNotificationHistoryResponse> getRecentManualNotifications(NotificationType notificationType);
+    Page<LibrarianNotificationHistoryResponse> getRecentManualNotifications(
+            NotificationType notificationType, Pageable pageable);
 
     List<Member> getAllMembers();
 
-    Page<BookAcquisitionRequest> getBookAcquisitionRequests(Pageable pageable);
+    Page<BookRequest> getBookRequests(Pageable pageable);
 
-    Page<BookAcquisitionRequest> getBookAcquisitionRequests(String status, String keyword, Pageable pageable);
+    Page<BookRequest> getBookRequests(String status, String keyword, Pageable pageable);
 
-    void approveBookAcquisitionRequest(Integer requestId, String note, String staffUsername);
+    void approveBookRequest(Integer requestId, String note, String staffUsername);
 
-    void rejectBookAcquisitionRequest(Integer requestId, String reason, String staffUsername);
+    void rejectBookRequest(Integer requestId, String reason, String staffUsername);
 
 
 }

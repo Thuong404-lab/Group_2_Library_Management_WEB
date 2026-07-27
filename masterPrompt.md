@@ -277,7 +277,7 @@ Dùng phần danh sách “All Notifications/Tất cả thông báo” của tra
 Toast
 Dùng toast thêm/bỏ Favorite và AppFeedback làm chuẩn.
 Validation
-Dùng validation của form “Gửi đề xuất mới” trong Book Acquisition Request làm chuẩn.
+Dùng validation của form “Gửi đề xuất mới” trong Book Request làm chuẩn.
 Modal
 Dùng modal “Gửi đề xuất mới” đã chuẩn hóa làm chuẩn. 11. Bảng màu
 50 #FCEEE7
@@ -530,7 +530,7 @@ ID DESC làm tie-breaker.
     Borrowed books.
     Favorites.
     My reviews.
-    Acquisition requests.
+    Book requests.
     Notifications.
     Profile.
 

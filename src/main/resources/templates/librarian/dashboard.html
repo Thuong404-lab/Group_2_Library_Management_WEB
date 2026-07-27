@@ -94,17 +94,6 @@
                     </div>
                 </a>
 
-                <a th:href="@{/librarian/loan/borrow-schedule}"
-                    class="overview-kpi-card overview-kpi-card--success">
-                    <div class="overview-kpi-icon"><i class="bi bi-check2-square" aria-hidden="true"></i></div>
-                    <div class="overview-kpi-copy">
-                        <p class="overview-kpi-label" th:text="#{librarian.dashboard.dueToday}">Due Today</p>
-                        <strong class="overview-kpi-value app-stat-number" th:text="${dueTodayDetails ?: 0}">0</strong>
-                        <span class="overview-kpi-caption" th:text="#{librarian.dashboard.dueTodayCaption}">Copies
-                            expected today</span>
-                    </div>
-                </a>
-
                 <a th:href="@{/librarian/borrow/create(tab='reservations')}"
                     class="overview-kpi-card overview-kpi-card--warning">
                     <div class="overview-kpi-icon"><i class="bi bi-bookmark-star" aria-hidden="true"></i></div>
@@ -116,6 +105,19 @@
                         <span class="overview-kpi-caption"
                             th:text="#{librarian.dashboard.pendingReservationsCaption}">Requests requiring
                             attention</span>
+                    </div>
+                </a>
+
+                <a th:href="@{/librarian/interaction/book-requests}"
+                    class="overview-kpi-card overview-kpi-card--warning">
+                    <div class="overview-kpi-icon"><i class="bi bi-journal-plus" aria-hidden="true"></i></div>
+                    <div class="overview-kpi-copy">
+                        <p class="overview-kpi-label"
+                            th:text="#{librarian.dashboard.pendingBookRequests}">Book Requests</p>
+                        <strong class="overview-kpi-value app-stat-number"
+                            th:text="${pendingBookRequests ?: 0}">0</strong>
+                        <span class="overview-kpi-caption"
+                            th:text="#{librarian.bookRequest.description}">Review books suggested by readers.</span>
                     </div>
                 </a>
 
@@ -154,57 +156,6 @@
                 </a>
                 </div>
             </section>
-
-            <section class="overview-work-queue" aria-labelledby="workQueueTitle">
-                <header class="overview-work-queue-header">
-                    <div>
-                        <span th:text="#{librarian.dashboard.priorityQueue}">PRIORITY QUEUE</span>
-                        <h2 id="workQueueTitle" th:text="#{librarian.dashboard.workQueue}">Tasks awaiting action</h2>
-                    </div>
-                    <p th:text="#{librarian.dashboard.workQueueDescription}">Open a queue to review and complete pending
-                        requests.</p>
-                </header>
-                <div class="overview-work-queue-grid">
-                    <a th:href="@{/librarian/members/refunds}" class="overview-work-item"
-                        th:classappend="${pendingRefundReservations > 0} ? ' is-urgent' : ''">
-                        <i class="bi bi-wallet2" aria-hidden="true"></i>
-                        <div><strong class="app-stat-number"
-                                th:text="${pendingRefundReservations ?: 0}">0</strong><span
-                                th:text="#{librarian.dashboard.pendingRefunds}">Duyệt hoàn tiền cọc</span></div>
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                    </a>
-                    <a th:href="@{/librarian/borrow/create(tab='returns')}" class="overview-work-item"
-                        th:classappend="${pendingReturns > 0} ? ' is-urgent'">
-                        <i class="bi bi-box-arrow-in-left" aria-hidden="true"></i>
-                        <div><strong class="app-stat-number" th:text="${pendingReturns ?: 0}">0</strong><span
-                                th:text="#{librarian.dashboard.pendingReturns}">Return requests</span></div>
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                    </a>
-                    <a th:href="@{/librarian/borrow/create}" class="overview-work-item"
-                        th:classappend="${pendingRenewals > 0} ? ' has-work'">
-                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-                        <div><strong class="app-stat-number" th:text="${pendingRenewals ?: 0}">0</strong><span
-                                th:text="#{librarian.dashboard.pendingRenewals}">Renewal requests</span></div>
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                    </a>
-                    <a th:href="@{/librarian/interaction/acquisition-requests}" class="overview-work-item"
-                        th:classappend="${pendingAcquisitionRequests > 0} ? ' has-work'">
-                        <i class="bi bi-journal-plus" aria-hidden="true"></i>
-                        <div><strong class="app-stat-number"
-                                th:text="${pendingAcquisitionRequests ?: 0}">0</strong><span
-                                th:text="#{librarian.dashboard.pendingAcquisitions}">Book suggestions</span></div>
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                    </a>
-                    <a th:href="@{/librarian/interaction/reviews}" class="overview-work-item"
-                        th:classappend="${unansweredReviews > 0} ? ' has-work'">
-                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        <div><strong class="app-stat-number" th:text="${unansweredReviews ?: 0}">0</strong><span
-                                th:text="#{librarian.dashboard.unansweredReviews}">Reviews without response</span></div>
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                    </a>
-                </div>
-            </section>
-
 
             <!-- Main Dashboard Content -->
             <div class="overview-content-grid">

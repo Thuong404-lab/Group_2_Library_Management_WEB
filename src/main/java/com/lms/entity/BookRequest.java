@@ -1,13 +1,14 @@
 package com.lms.entity;
 
-import com.lms.enums.AcquisitionRequestStatus;
+import com.lms.enums.BookRequestStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import java.time.LocalDateTime;
 
 @Entity
+// Keep the legacy physical table name so existing installations retain all request data.
 @Table(name = "BookAcquisitionRequests", schema = "dbo")
-public class BookAcquisitionRequest {
+public class BookRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,7 +49,7 @@ public class BookAcquisitionRequest {
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'PENDING'")
     @Column(nullable = false, length = 20)
-    private AcquisitionRequestStatus status = AcquisitionRequestStatus.PENDING;
+    private BookRequestStatus status = BookRequestStatus.PENDING;
 
     @Column(name = "decision_note", length = 500)
     private String decisionNote;
@@ -64,10 +65,10 @@ public class BookAcquisitionRequest {
     @Column(nullable = false)
     private Long version;
 
-    public BookAcquisitionRequest() {
+    public BookRequest() {
     }
 
-    public BookAcquisitionRequest(Integer requestId, Member member, String title, LocalDateTime createdDate, String author) {
+    public BookRequest(Integer requestId, Member member, String title, LocalDateTime createdDate, String author) {
         this.requestId = requestId;
         this.member = member;
         this.title = title;
@@ -125,8 +126,8 @@ public class BookAcquisitionRequest {
     public void setRequestReason(String requestReason) { this.requestReason = requestReason; }
     public String getReferenceUrl() { return referenceUrl; }
     public void setReferenceUrl(String referenceUrl) { this.referenceUrl = referenceUrl; }
-    public AcquisitionRequestStatus getStatus() { return status; }
-    public void setStatus(AcquisitionRequestStatus status) { this.status = status; }
+    public BookRequestStatus getStatus() { return status; }
+    public void setStatus(BookRequestStatus status) { this.status = status; }
     public String getDecisionNote() { return decisionNote; }
     public void setDecisionNote(String decisionNote) { this.decisionNote = decisionNote; }
     public LocalDateTime getProcessedDate() { return processedDate; }

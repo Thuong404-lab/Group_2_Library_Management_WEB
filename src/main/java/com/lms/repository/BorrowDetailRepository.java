@@ -245,5 +245,8 @@ public interface BorrowDetailRepository extends JpaRepository<BorrowDetail, Inte
     long countActiveOrPendingRequestsByMemberAndBook(@Param("memberId") Integer memberId, @Param("bookId") Integer bookId);
 
     Optional<BorrowDetail> findFirstByBookItem_BookItemIdAndStatusInIgnoreCase(Integer bookItemId, List<String> statuses);
+
+    @Query("SELECT DISTINCT bd.status FROM BorrowDetail bd WHERE bd.status IS NOT NULL")
+    List<String> findDistinctStatuses();
 }
 
