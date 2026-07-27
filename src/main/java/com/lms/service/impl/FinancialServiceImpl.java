@@ -256,7 +256,6 @@ public class FinancialServiceImpl implements FinancialService {
         walletRepository.save(wallet);
 
         saveWalletTransaction(wallet, null, DEPOSIT_TYPE, depositAmount.negate(), COMPLETED_STATUS);
-
         reservation.setStatus("Deposit_Paid");
         reservationRepository.save(reservation);
 

@@ -399,6 +399,9 @@ public class LoanServiceImpl implements LoanService {
         }
 
         BorrowDetail detail = activeLoans.get(0);
+        if ("Return_Pending".equalsIgnoreCase(detail.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.return.pendingPayment"));
+        }
         if (detail.getBorrow() != null && detail.getBorrow().getBorrowDate() != null
                 && returnDate.isBefore(detail.getBorrow().getBorrowDate())) {
             throw new ValidationException(localizedMessageService.get("backend.return.beforeBorrowDate"));
@@ -427,14 +430,6 @@ public class LoanServiceImpl implements LoanService {
         }
         boolean requiresCompensation = requiresDamageCompensation(bookCondition);
 
-        if (item != null) {
-            item.setStatus(resolveReturnedItemStatus(bookCondition));
-            item.setBookCondition(
-                    bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
-            item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
-            bookItemRepository.save(item);
-        }
-
         String fullConditionNote = bookCondition != null ? bookCondition.trim() : "Tốt";
         if (damageNote != null && !damageNote.trim().isEmpty()) {
             fullConditionNote += " - " + damageNote.trim();
@@ -442,8 +437,16 @@ public class LoanServiceImpl implements LoanService {
         detail.setReturnDate(returnDate);
         detail.setConditionNote(fullConditionNote);
         detail.setConditionCode(resolveConditionCode(bookCondition));
-        detail.setStatus(STATUS_RETURNED);
         borrowDetailRepository.save(detail);
+
+        // Lưu biên bản kiểm nhận trước để khoản phạt quá hạn/bồi thường dùng
+        // đúng ngày trả thực tế. Bản sao vẫn ở trạng thái đang mượn khi còn nợ.
+        if (item != null) {
+            item.setBookCondition(
+                    bookCondition != null && !bookCondition.trim().isEmpty() ? bookCondition.trim() : "Tốt");
+            item.setDamageNote(damageNote != null && !damageNote.trim().isEmpty() ? damageNote.trim() : null);
+            bookItemRepository.save(item);
+        }
 
         if (detail.getDueDate() != null && returnDate.isAfter(detail.getDueDate())) {
             processOverdueFine(detail);
@@ -457,22 +460,14 @@ public class LoanServiceImpl implements LoanService {
             damageFineTx = processDamageFine(detail, damageFine, resolvedPaymentMethod, staffUsername);
         }
 
-        updateParentBorrowStatus(detail.getBorrow());
-        sendInternalNotification(detail.getBorrow().getMember(),
-                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
-                "systemNotification.return.desk.title",
-                "systemNotification.return.desk.content", detail.getBook().getTitle());
-
-        // Tự động phân gán cho độc giả đứng đầu hàng đợi Đặt trước (FIFO) nếu bản sao ở trạng thái Available
-        if (item != null && "Available".equalsIgnoreCase(item.getStatus()) && detail.getBook() != null && detail.getBook().getBookId() != null) {
-            Integer bookId = detail.getBook().getBookId();
-            List<Reservation> waitingReservations = reservationRepository
-                    .findByBook_BookIdAndStatusInOrderByReservationDateAsc(bookId, List.of("Deposit_Paid", "Pending"));
-            if (!waitingReservations.isEmpty()) {
-                item.setStatus("Reserved");
-                bookItemRepository.save(item);
-            }
+        if (hasPendingFineTransactions(detail)) {
+            detail.setStatus("Return_Pending");
+            borrowDetailRepository.save(detail);
+            updateParentBorrowStatus(detail.getBorrow());
+            return damageFineTx;
         }
+
+        finalizeReturnedDetail(detail);
 
         return damageFineTx;
     }
@@ -969,6 +964,67 @@ public class LoanServiceImpl implements LoanService {
         };
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void finalizePendingReturnsAfterFinePayment(Integer borrowId) {
+        if (borrowId == null) {
+            return;
+        }
+        Borrow borrow = borrowRepository.findById(borrowId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.notFoundById", borrowId)));
+        for (BorrowDetail detail : borrowDetailRepository.findByBorrowId(borrowId)) {
+            if ("Return_Pending".equalsIgnoreCase(detail.getStatus()) && !hasPendingFineTransactions(detail)) {
+                finalizeReturnedDetail(detail);
+            }
+        }
+        updateParentBorrowStatus(borrow);
+    }
+
+    private boolean hasPendingFineTransactions(BorrowDetail detail) {
+        return detail != null && detail.getBorrowDetailId() != null
+                && transactionRepository.countPendingFineTransactionsByBorrowDetailId(
+                        detail.getBorrowDetailId(), List.of("FINE", "DAMAGE_FEE")) > 0;
+    }
+
+    /** Moves a physically received book into storage only after its charges are settled. */
+    private void finalizeReturnedDetail(BorrowDetail detail) {
+        if (detail == null || detail.getBorrow() == null) {
+            return;
+        }
+        BookItem item = detail.getBookItem();
+        if (item != null) {
+            item.setStatus(resolveReturnedItemStatus(detail.getConditionNote()));
+            bookItemRepository.save(item);
+        }
+
+        detail.setStatus(STATUS_RETURNED);
+        borrowDetailRepository.save(detail);
+        updateParentBorrowStatus(detail.getBorrow());
+
+        Member member = detail.getBorrow().getMember();
+        String bookTitle = detail.getBook() == null || detail.getBook().getTitle() == null
+                ? localizedMessageService.get("backend.book.unknownTitle")
+                : detail.getBook().getTitle();
+        sendInternalNotification(member,
+                NotificationType.LOAN, NotificationEventType.RETURN_CONFIRMED, NotificationSource.LIBRARIAN,
+                "systemNotification.return.desk.title",
+                "systemNotification.return.desk.content", bookTitle);
+
+        // Reserve the returned copy for the first waiting reservation only when
+        // it is genuinely available after all associated charges were settled.
+        if (item != null && "Available".equalsIgnoreCase(item.getStatus()) && detail.getBook() != null
+                && detail.getBook().getBookId() != null) {
+            List<Reservation> waitingReservations = reservationRepository
+                    .findByBook_BookIdAndStatusInOrderByReservationDateAsc(detail.getBook().getBookId(),
+                            List.of("Deposit_Paid", "Pending"));
+            if (!waitingReservations.isEmpty()) {
+                item.setStatus("Reserved");
+                bookItemRepository.save(item);
+            }
+        }
+    }
+
     /**
      * Cáº­p nháº­t tráº¡ng thÃ¡i cá»§a phiáº¿u mÆ°á»£n cha dá»±a trÃªn cÃ¡c chi
      * tiáº¿t sÃ¡ch Ä‘Ã£ tráº£
@@ -977,6 +1033,7 @@ public class LoanServiceImpl implements LoanService {
         List<BorrowDetail> allDetails = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
         boolean allReturned = true;
         boolean hasOverdue = false;
+        boolean hasPendingReturn = false;
 
         for (BorrowDetail d : allDetails) {
             if (!STATUS_RETURNED.equalsIgnoreCase(d.getStatus())) {
@@ -985,10 +1042,15 @@ public class LoanServiceImpl implements LoanService {
             if (STATUS_OVERDUE.equalsIgnoreCase(d.getStatus())) {
                 hasOverdue = true;
             }
+            if ("Return_Pending".equalsIgnoreCase(d.getStatus())) {
+                hasPendingReturn = true;
+            }
         }
 
         if (allReturned) {
             borrow.setStatus(STATUS_RETURNED);
+        } else if (hasPendingReturn) {
+            borrow.setStatus("Return_Pending");
         } else if (hasOverdue) {
             borrow.setStatus(STATUS_OVERDUE);
         } else {

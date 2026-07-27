@@ -17,6 +17,7 @@ import com.lms.repository.StaffRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.FinancialService;
 import com.lms.service.FineBatchPaymentService;
+import com.lms.service.LoanService;
 import com.lms.dto.response.MemberListViewData;
 import com.lms.dto.response.TopUpMemberOption;
 import com.lms.service.LibrarianMemberService;
@@ -66,6 +67,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
     private final OverdueViolationQueryService overdueViolationQueryService;
     private final FineBatchPaymentService fineBatchPaymentService;
     private final StaffRepository staffRepository;
+    private final LoanService loanService;
 
     public MemberMgmtController(LibrarianMemberService memberService,
             FinancialService financialService,
@@ -74,7 +76,8 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             OverdueReminderService overdueReminderService,
             OverdueViolationQueryService overdueViolationQueryService,
             FineBatchPaymentService fineBatchPaymentService,
-            StaffRepository staffRepository) {
+            StaffRepository staffRepository,
+            LoanService loanService) {
         this.memberService = memberService;
         this.financialService = financialService;
         this.transactionRepository = transactionRepository;
@@ -83,6 +86,7 @@ public class MemberMgmtController extends LocalizedControllerSupport {
         this.overdueViolationQueryService = overdueViolationQueryService;
         this.fineBatchPaymentService = fineBatchPaymentService;
         this.staffRepository = staffRepository;
+        this.loanService = loanService;
     }
 
     @GetMapping("/members")
@@ -297,7 +301,9 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
+            Integer borrowId = borrowIdForFine(fineId);
             financialService.payFineByCash(fineId, requireStaff(userDetails));
+            finalizePendingReturn(borrowId);
             redirectAttributes.addFlashAttribute("success", message("backend.fine.cashPaid"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
@@ -310,7 +316,9 @@ public class MemberMgmtController extends LocalizedControllerSupport {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             RedirectAttributes redirectAttributes) {
         try {
+            Integer borrowId = borrowIdForFine(fineId);
             financialService.payFineByWalletAtDesk(fineId, requireStaff(userDetails));
+            finalizePendingReturn(borrowId);
             redirectAttributes.addFlashAttribute("success", message("backend.fine.walletPaid"));
         } catch (ApplicationException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
@@ -558,6 +566,19 @@ public class MemberMgmtController extends LocalizedControllerSupport {
 
     private String trim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private Integer borrowIdForFine(Integer fineId) {
+        return transactionRepository.findById(fineId)
+                .map(Transaction::getBorrow)
+                .map(borrow -> borrow.getBorrowId())
+                .orElse(null);
+    }
+
+    private void finalizePendingReturn(Integer borrowId) {
+        if (borrowId != null) {
+            loanService.finalizePendingReturnsAfterFinePayment(borrowId);
+        }
     }
 
     private void addCurrentUser(Model model, CustomUserDetails userDetails) {
