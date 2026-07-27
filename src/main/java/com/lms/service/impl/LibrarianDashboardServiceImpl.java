@@ -15,7 +15,6 @@ import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
-import com.lms.repository.FeedbackRepository;
 import com.lms.repository.MemberRepository;
 import com.lms.repository.ReservationRepository;
 import com.lms.repository.StaffRepository;
@@ -63,7 +62,6 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
     private final BookItemRepository bookItemRepository;
     private final BookRepository bookRepository;
     private final BookRequestRepository bookRequestRepository;
-    private final FeedbackRepository feedbackRepository;
     private final CategoryRepository categoryRepository;
     private final GenreRepository genreRepository;
     private final MemberRepository memberRepository;
@@ -80,7 +78,6 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
             BookItemRepository bookItemRepository,
             BookRepository bookRepository,
             BookRequestRepository bookRequestRepository,
-            FeedbackRepository feedbackRepository,
             CategoryRepository categoryRepository,
             GenreRepository genreRepository,
             MemberRepository memberRepository,
@@ -95,7 +92,6 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         this.bookItemRepository = bookItemRepository;
         this.bookRepository = bookRepository;
         this.bookRequestRepository = bookRequestRepository;
-        this.feedbackRepository = feedbackRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
         this.memberRepository = memberRepository;
@@ -155,11 +151,8 @@ public class LibrarianDashboardServiceImpl implements LibrarianDashboardService 
         data.put("pendingRefundReservations",
                 reservationRepository.countByStatusIgnoreCase("REFUND_PENDING"));
         data.put("overdueDetails", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
-        data.put("pendingReturns", borrowDetailRepository.countByStatusIgnoreCase("Return_Pending"));
-        data.put("pendingRenewals", borrowDetailRepository.countByStatusIgnoreCase("Renew_Pending"));
         data.put("pendingBookRequests",
                 bookRequestRepository.countByStatus(BookRequestStatus.PENDING));
-        data.put("unansweredReviews", feedbackRepository.countAwaitingLibrarianResponse());
         data.put("availableItems", bookItemRepository.countByStatusIgnoreCase("Available"));
         data.put("totalMembers", memberRepository.count());
         data.put("totalLibrarians", staffRepository.countByStaffTypeIgnoreCase(LIBRARIAN_STAFF_TYPE));
