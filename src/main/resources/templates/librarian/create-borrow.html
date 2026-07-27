@@ -222,7 +222,7 @@
                                     id="reservations" role="tabpanel" aria-labelledby="reservations-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="reserve : ${activeReservations}"
-                                            th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
+                                            th:href="@{/librarian/borrow/create(reservationId=${reserve.id},tab='reservations',reservationStatus=${reservationStatus})}"
                                             class="list-group-item list-group-item-action borrow-request-item"
                                             th:classappend="${selectedReservation != null && selectedReservation.reservationId == reserve.id} ? 'borrow-active-request-item' : ''"
                                             th:data-fullname="${reserve.memberName}"
@@ -714,7 +714,7 @@
                                 <span class="borrow-reference-badge"
                                     th:text="#{librarian.borrowDesk.reservationCode(${selectedReservation.reservationId})}">Reservation
                                     code</span>
-                                <a th:href="@{/librarian/borrow/create(tab='reservations')}" class="app-icon-action"
+                                <a th:href="@{/librarian/borrow/create(tab='reservations',reservationStatus=${reservationStatus})}" class="app-icon-action"
                                     th:title="#{common.close}" th:aria-label="#{common.close}">
                                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                                 </a>

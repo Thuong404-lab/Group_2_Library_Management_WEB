@@ -4,7 +4,6 @@ import com.lms.dto.response.LibrarianRevenueReportData;
 import com.lms.dto.response.ReportExport;
 import com.lms.exception.ValidationException;
 import com.lms.service.ReportService;
-import com.lms.service.LibrarianDashboardService;
 import com.lms.util.ReportPeriodPolicy;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
@@ -24,11 +23,9 @@ import java.time.LocalDate;
 @RequestMapping("/librarian/reports")
 public class ReportController {
     private final ReportService reportService;
-    private final LibrarianDashboardService dashboardService;
 
-    public ReportController(ReportService reportService, LibrarianDashboardService dashboardService) {
+    public ReportController(ReportService reportService) {
         this.reportService = reportService;
-        this.dashboardService = dashboardService;
     }
 
     // UC-17.1: Librarian revenue report
@@ -53,7 +50,6 @@ public class ReportController {
         model.addAttribute("toDate", formToDate);
         model.addAttribute("maxDate", LocalDate.now(ReportPeriodPolicy.LIBRARY_ZONE));
         model.addAttribute("maxReportRangeDays", ReportPeriodPolicy.MAX_RANGE_DAYS);
-        model.addAllAttributes(dashboardService.getStatisticsData());
         return "librarian/revenue-report";
     }
 

@@ -6,6 +6,7 @@ import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.ReservationRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.impl.ReportServiceImpl;
 import com.lms.util.ReportPeriodPolicy;
@@ -31,7 +32,8 @@ class ReportPeriodValidationTest {
                 mock(TransactionRepository.class),
                 mock(MemberRepository.class),
                 mock(BookRepository.class),
-                mock(BookItemRepository.class));
+                mock(BookItemRepository.class),
+                mock(ReservationRepository.class));
         ReflectionTestUtils.setField(
                 reportService, "messages", mock(LocalizedMessageService.class));
         today = LocalDate.now(ReportPeriodPolicy.LIBRARY_ZONE);
@@ -43,24 +45,35 @@ class ReportPeriodValidationTest {
                 () -> reportService.getLibrarianRevenueReport(null, today));
         assertThrows(ValidationException.class,
                 () -> reportService.getLibrarianRevenueReport(today, null));
+        assertThrows(ValidationException.class,
+                () -> reportService.getAdminConsoleReport(null, today));
+        assertThrows(ValidationException.class,
+                () -> reportService.getAdminConsoleReport(today, null));
     }
 
     @Test
     void rejectsFutureDates() {
         assertThrows(ValidationException.class,
                 () -> reportService.getLibrarianRevenueReport(today, today.plusDays(1)));
+        assertThrows(ValidationException.class,
+                () -> reportService.getAdminConsoleReport(today, today.plusDays(1)));
     }
 
     @Test
     void rejectsReversedDateRange() {
         assertThrows(ValidationException.class,
                 () -> reportService.getLibrarianRevenueReport(today, today.minusDays(1)));
+        assertThrows(ValidationException.class,
+                () -> reportService.getAdminConsoleReport(today, today.minusDays(1)));
     }
 
     @Test
     void rejectsDateRangeLongerThanBusinessLimit() {
         assertThrows(ValidationException.class,
                 () -> reportService.getLibrarianRevenueReport(
+                        today.minusDays(ReportPeriodPolicy.MAX_RANGE_DAYS + 1), today));
+        assertThrows(ValidationException.class,
+                () -> reportService.getAdminConsoleReport(
                         today.minusDays(ReportPeriodPolicy.MAX_RANGE_DAYS + 1), today));
     }
 }
