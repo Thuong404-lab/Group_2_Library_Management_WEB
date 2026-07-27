@@ -34,9 +34,10 @@ public class StaffAccountController extends LocalizedControllerSupport {
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam(required = false, defaultValue = "") String username,
             @RequestParam(required = false, defaultValue = "") String password,
+            @RequestParam(required = false, defaultValue = "") String confirmPassword,
             @RequestParam(required = false, defaultValue = "") String staffType) {
         AdminStaffAccountCreateRequest request = new AdminStaffAccountCreateRequest(
-                fullName, email, phone, username, password, staffType);
+                fullName, email, phone, username, password, confirmPassword, staffType);
         return accountService.validateStaffAccountCreate(request);
     }
 
@@ -46,10 +47,11 @@ public class StaffAccountController extends LocalizedControllerSupport {
             @RequestParam(required = false, defaultValue = "") String phone,
             @RequestParam String username,
             @RequestParam String password,
+            @RequestParam(required = false, defaultValue = "") String confirmPassword,
             @RequestParam String staffType,
             RedirectAttributes redirectAttributes) {
         AdminStaffAccountCreateRequest request = new AdminStaffAccountCreateRequest(
-                fullName, email, phone, username, password, staffType);
+                fullName, email, phone, username, password, confirmPassword, staffType);
         try {
             accountService.createStaffAccount(request);
             if ("Librarian".equalsIgnoreCase(trim(request.getStaffType()))) {
