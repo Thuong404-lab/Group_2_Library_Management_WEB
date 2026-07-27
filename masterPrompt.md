@@ -530,7 +530,7 @@ ID DESC làm tie-breaker.
     Borrowed books.
     Favorites.
     My reviews.
-    Book requests.
+    Acquisition requests.
     Notifications.
     Profile.
 
