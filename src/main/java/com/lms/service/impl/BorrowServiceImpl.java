@@ -791,7 +791,7 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setStatus("Renew_Pending");
         borrowDetailRepository.save(detail);
         auditLogService.log(com.lms.enums.ActionType.REQUEST_RENEWAL,
-                "Member " + username + " requested " + renewalDays + " renewal days for detail #" + borrowDetailId);
+                localizedMessageService.get("backend.renewal.audit.requested", username, renewalDays, borrowDetailId));
     }
 
     @Override
@@ -810,7 +810,7 @@ public class BorrowServiceImpl implements BorrowService {
         }
         loanService.rejectRenewal(borrowDetailId, "SYSTEM", "OTHER", "Cancelled by member");
         auditLogService.log(com.lms.enums.ActionType.CANCEL_RENEWAL,
-                "Member " + username + " cancelled renewal request for detail #" + borrowDetailId);
+                localizedMessageService.get("backend.renewal.audit.cancelled", username, borrowDetailId));
     }
 
     @Override
