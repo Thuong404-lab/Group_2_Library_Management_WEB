@@ -399,7 +399,8 @@ public class LoanServiceImpl implements LoanService {
         }
 
         BorrowDetail detail = activeLoans.get(0);
-        if ("Return_Pending".equalsIgnoreCase(detail.getStatus())) {
+        if ("Return_Pending".equalsIgnoreCase(detail.getStatus())
+                && hasPendingFineTransactions(detail)) {
             throw new ConflictException(localizedMessageService.get("backend.return.pendingPayment"));
         }
         if (detail.getBorrow() != null && detail.getBorrow().getBorrowDate() != null
