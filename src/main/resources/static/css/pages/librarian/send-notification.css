@@ -1594,6 +1594,235 @@
     }
 }
 
+/* Compact composer entry point and notification-history filter. */
+.staff-shell--librarian .notification-compose-page .notification-hero-action {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    min-width: 184px;
+    min-height: 48px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 0 20px;
+    border: 1px solid rgba(255, 255, 255, .7);
+    border-radius: 10px;
+    background: #fffdf9;
+    color: #4d3324;
+    font-family: var(--app-font-ui);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.staff-shell--librarian .notification-compose-page .notification-hero-action:hover,
+.staff-shell--librarian .notification-compose-page .notification-hero-action:focus {
+    border-color: #fff;
+    background: #fff7ed;
+    color: #4d3324;
+    transform: translateY(-1px);
+}
+
+.staff-shell--librarian .notification-compose-page .notification-hero-action:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .28);
+}
+
+.notification-compose-page .notification-compose-modal .modal-dialog {
+    width: min(1180px, calc(100% - 32px));
+    max-width: 1180px;
+}
+
+.notification-compose-page .notification-compose-modal .modal-content {
+    overflow: hidden;
+    border: 1px solid var(--notification-line);
+    border-radius: 18px;
+    background: #fffdf9;
+    box-shadow: 0 24px 70px rgba(47, 29, 18, .24);
+}
+
+.notification-compose-page .notification-compose-modal .modal-header {
+    min-height: 88px;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--notification-line);
+    background: #fbf4ed;
+}
+
+.notification-compose-page .notification-compose-modal .modal-header .app-page-eyebrow {
+    margin-bottom: 5px;
+    color: var(--notification-primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .11em;
+}
+
+.notification-compose-page .notification-compose-modal .modal-title {
+    color: var(--notification-ink);
+    font-family: var(--app-font-display);
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.notification-compose-page .notification-compose-modal .modal-body {
+    padding: 28px;
+    background: #fffdf9;
+}
+
+.notification-compose-page .notification-compose-modal .notification-form-actions {
+    gap: 10px;
+}
+
+.notification-compose-page .notification-compose-cancel {
+    display: inline-flex;
+    min-width: 110px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--notification-line);
+    border-radius: 10px;
+    background: var(--notification-canvas);
+    color: var(--notification-ink);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.notification-compose-page .notification-compose-cancel:hover,
+.notification-compose-page .notification-compose-cancel:focus {
+    border-color: var(--notification-primary);
+    background: #fff8f3;
+    color: var(--notification-primary);
+}
+
+.notification-compose-page .notification-history-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.notification-compose-page .notification-history-header > div {
+    min-width: 0;
+}
+
+.notification-compose-page .notification-history-filter {
+    display: grid;
+    grid-template-columns: minmax(210px, 250px) auto;
+    flex: 0 0 auto;
+    align-items: end;
+    gap: 7px 10px;
+}
+
+.notification-compose-page .notification-history-filter label {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--notification-ink);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.notification-compose-page .notification-history-filter select,
+.notification-compose-page .notification-history-filter button {
+    height: 42px;
+    border-radius: 9px;
+    font-family: var(--app-font-ui);
+    font-size: 13px;
+}
+
+.notification-compose-page .notification-history-filter select {
+    min-width: 0;
+    padding: 0 36px 0 12px;
+    border: 1px solid var(--notification-line);
+    background: var(--notification-canvas);
+    color: var(--notification-ink);
+}
+
+.notification-compose-page .notification-history-filter select:focus {
+    border-color: var(--notification-primary);
+    outline: 0;
+    box-shadow: 0 0 0 3px var(--notification-focus);
+}
+
+.notification-compose-page .notification-history-filter button {
+    min-width: 86px;
+    padding: 0 16px;
+    border: 1px solid var(--notification-primary);
+    background: var(--notification-primary);
+    color: #fff;
+    font-weight: 700;
+}
+
+.notification-compose-page .notification-history-filter button:hover,
+.notification-compose-page .notification-history-filter button:focus {
+    border-color: var(--notification-primary-hover);
+    background: var(--notification-primary-hover);
+}
+
+@media (max-width: 991.98px) {
+    .notification-compose-page .notification-history-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .notification-compose-page .notification-history-filter {
+        align-self: flex-end;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .staff-shell--librarian .notification-compose-page .notification-page-hero {
+        align-items: flex-start !important;
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    .staff-shell--librarian .notification-compose-page .notification-hero-action {
+        width: 100%;
+    }
+
+    .notification-compose-page .notification-compose-modal .modal-dialog {
+        width: calc(100% - 20px);
+        margin: 10px auto;
+    }
+
+    .notification-compose-page .notification-compose-modal .modal-header,
+    .notification-compose-page .notification-compose-modal .modal-body {
+        padding: 20px;
+    }
+
+    .notification-compose-page .notification-compose-modal .notification-form-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .notification-compose-page .notification-compose-modal .notification-compose-cancel,
+    .notification-compose-page .notification-compose-modal .notification-submit {
+        width: 100%;
+    }
+
+    .notification-compose-page .notification-history-filter {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-self: stretch;
+    }
+}
+
+@media (max-width: 479.98px) {
+    .notification-compose-page .notification-history-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .notification-compose-page .notification-history-filter label {
+        grid-column: auto;
+    }
+
+    .notification-compose-page .notification-history-filter button {
+        width: 100%;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .staff-shell--librarian .notification-compose-page .notification-member-item {
         transition: none;
