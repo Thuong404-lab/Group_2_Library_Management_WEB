@@ -87,8 +87,7 @@ public class AuthServiceImpl implements AuthService {
         if (username == null || username.isEmpty()) {
             throw new AuthException(messages.get("validation.usernameRequired"));
         }
-        if (username.length() < 3 || username.length() > 20
-                || username.chars().anyMatch(Character::isWhitespace)) {
+        if (!username.matches("^[\\x21-\\x7E]{3,20}$")) {
             throw new AuthException(messages.get("validation.username"));
         }
 

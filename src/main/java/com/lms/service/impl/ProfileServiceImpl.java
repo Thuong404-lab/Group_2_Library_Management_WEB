@@ -138,8 +138,11 @@ public class ProfileServiceImpl implements ProfileService {
         if (normalized.isEmpty()) {
             throw new ValidationException("username", messages.get("validation.usernameRequired"));
         }
-        if (normalized.length() < 3 || normalized.length() > 100) {
+        if (normalized.length() < 3 || normalized.length() > 20) {
             throw new ValidationException("username", messages.get("validation.usernameLength"));
+        }
+        if (!normalized.matches("^[\\x21-\\x7E]+$")) {
+            throw new ValidationException("username", messages.get("validation.username"));
         }
         if (!normalized.equals(currentUsername)
                 && (memberAccountRepository.findByUsername(normalized).isPresent()

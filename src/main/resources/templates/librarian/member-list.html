@@ -128,8 +128,8 @@
                                             <input class="form-control validate-field" name="username"
                                                 id="createMemberUsername" required
                                                 th:data-required-message="#{validation.usernameRequired}"
-                                                th:data-invalid-message="#{validation.usernameLength}"
-                                                minlength="3" maxlength="20"
+                                                th:data-invalid-message="#{validation.username}"
+                                                minlength="3" maxlength="20" pattern="^[\x21-\x7E]{3,20}$"
                                                 th:placeholder="#{librarian.members.usernamePlaceholder}"
                                                 autocomplete="new-password"
                                                 onkeydown="if(event.key === ' ') event.preventDefault();"
@@ -504,13 +504,13 @@
                                                                         Username <span class="required-marker">*</span>
                                                                     </label>
                                                                     <input class="form-control validate-field" name="username"
-                                                                        data-label="Username" minlength="3" maxlength="20"
+                                                                        data-label="Username" minlength="3" maxlength="20" pattern="^[\x21-\x7E]{3,20}$"
                                                                         onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                         th:value="${editAccountId != null and editAccountId == account.id and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                         th:classappend="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
                                                                         required>
                                                                     <div class="invalid-feedback" data-error-for="username"
-                                                                        th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['username'] != null ? editFieldErrors['username'] : #messages.msg('validation.usernameLength')}">
+                                                                        th:text="${editAccountId != null and editAccountId == account.id and editFieldErrors != null and editFieldErrors['username'] != null ? editFieldErrors['username'] : #messages.msg('validation.username')}">
                                                                         Username must contain 3-20 letters, numbers,
                                                                         underscores, and no spaces.
                                                                     </div>
@@ -991,6 +991,8 @@
                             errors.username = /*[[#{validation.usernameRequired}]]*/ "Username is required.";
                         } else if (username.length < 3 || username.length > 20) {
                             errors.username = /*[[#{validation.usernameLength}]]*/ "Username must be between 3 and 20 characters.";
+                        } else if (!/^[\x21-\x7E]+$/.test(username)) {
+                            errors.username = /*[[#{validation.username}]]*/ "Username must be 3-20 characters, contain no spaces or accented characters, and may include special characters.";
                         }
                         if (email === "") {
                             errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";
