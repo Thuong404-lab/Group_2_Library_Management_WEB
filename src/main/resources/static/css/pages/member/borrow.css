@@ -747,3 +747,48 @@ body .member-loan-page .member-borrow-span-background-color-border-color-09.memb
         display: none;
     }
 }
+
+.renew-action-tooltip {
+    position: relative;
+    display: inline-flex;
+}
+
+.renew-action-tooltip.is-disabled .btn-renew-action {
+    pointer-events: none;
+}
+
+.renew-action-tooltip.is-disabled::after {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    z-index: 30;
+    width: max-content;
+    max-width: min(320px, 80vw);
+    padding: 8px 10px;
+    border-radius: 7px;
+    background: #3f2a1d;
+    color: #fff;
+    content: attr(data-tooltip);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+    white-space: normal;
+    box-shadow: 0 6px 18px rgba(63, 42, 29, .2);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(3px);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+    pointer-events: none;
+}
+
+.renew-action-tooltip.is-disabled:hover::after,
+.renew-action-tooltip.is-disabled:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.renew-action-tooltip:focus-visible {
+    outline: 0;
+}
