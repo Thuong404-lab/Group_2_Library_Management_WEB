@@ -110,12 +110,23 @@
                                 </td>
 
                                 <td th:data-label="#{librarian.staff.information}">
-                                    <div class="fw-bold" th:text="${staff.fullName}">Staff name</div>
+                                    <div>
+                                        <div class="fw-bold" th:text="${staff.fullName}">Staff name</div>
+                                        <div class="small text-muted"
+                                            th:if="${staff.email != null and !#strings.isEmpty(staff.email)}">
+                                            <i class="bi bi-envelope me-1"></i>
+                                            <span th:text="${staff.email}">email</span>
+                                        </div>
+                                        <div class="small text-muted"
+                                            th:if="${staff.phone != null and !#strings.isEmpty(staff.phone)}">
+                                            <i class="bi bi-telephone me-1"></i>
+                                            <span class="app-phone-number" th:text="${staff.phone}">phone</span>
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <td th:data-label="#{librarian.staff.type}">
-                                    <span class="librarian-role-badge"
-                                        th:text="${#messages.msg('role.librarian')}">
+                                    <span class="librarian-role-badge" th:text="${#messages.msg('role.librarian')}">
                                         Librarian
                                     </span>
                                 </td>
@@ -135,7 +146,8 @@
                                         <button type="button" class="member-icon-action view-detail-tooltip-trigger"
                                             data-bs-toggle="modal" data-bs-target="#viewStaffModal"
                                             th:data-staff-id="${staff.staffId}" th:data-username="${staff.username}"
-                                            th:data-full-name="${staff.fullName}" th:data-staff-type="#{role.librarian}"
+                                            th:data-full-name="${staff.fullName}" th:data-email="${staff.email}"
+                                            th:data-phone="${staff.phone}" th:data-staff-type="#{role.librarian}"
                                             th:data-account-status="${staff.status.name()}"
                                             th:data-status-label="${staff.status.name() == 'Active' ? #messages.msg('status.active') : (staff.status.name() == 'Inactive' ? #messages.msg('status.inactive') : #messages.msg('status.blocked'))}"
                                             th:data-bs-title="#{librarian.staff.viewDetails}"
@@ -222,8 +234,6 @@
                     <div class="modal-header member-modal-header">
                         <h5 class="modal-title member-modal-title-accent" id="viewStaffModalLabel"
                             th:text="#{librarian.staff.details}">Librarian details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            th:aria-label="#{common.close}"></button>
                     </div>
                     <div class="modal-body member-modal-body">
                         <div class="row g-3">
@@ -243,13 +253,23 @@
                                 <div class="fw-bold" data-detail-full-name></div>
                             </div>
                             <div class="col-md-6">
-                                <div class="small text-muted text-uppercase fw-bold"
-                                    th:text="#{common.status}">Status</div>
+                                <div class="small text-muted text-uppercase fw-bold" th:text="#{member.profile.email}">
+                                    Email</div>
+                                <div class="fw-bold" data-detail-email></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold" th:text="#{member.profile.phone}">
+                                    Phone</div>
+                                <div class="fw-bold app-phone-number" data-detail-phone></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-muted text-uppercase fw-bold" th:text="#{common.status}">Status
+                                </div>
                                 <span class="status-badge" data-detail-status></span>
                             </div>
                             <div class="col-md-6">
-                                <div class="small text-muted text-uppercase fw-bold"
-                                    th:text="#{librarian.staff.type}">Staff type</div>
+                                <div class="small text-muted text-uppercase fw-bold" th:text="#{librarian.staff.type}">
+                                    Staff type</div>
                                 <span class="librarian-role-badge" data-detail-staff-type></span>
                             </div>
                         </div>
@@ -282,6 +302,8 @@
                     detailModal.querySelector("[data-detail-staff-id]").textContent = button.dataset.staffId;
                     detailModal.querySelector("[data-detail-username]").textContent = button.dataset.username;
                     detailModal.querySelector("[data-detail-full-name]").textContent = button.dataset.fullName;
+                    detailModal.querySelector("[data-detail-email]").textContent = button.dataset.email || "—";
+                    detailModal.querySelector("[data-detail-phone]").textContent = button.dataset.phone || "—";
                     detailModal.querySelector("[data-detail-staff-type]").textContent = button.dataset.staffType;
 
                     const status = detailModal.querySelector("[data-detail-status]");
@@ -289,7 +311,7 @@
                     status.textContent = button.dataset.statusLabel;
                     status.className = "status-badge " + (
                         statusCode === "Active" ? "status-active" :
-                        statusCode === "Blocked" ? "status-blocked" : "status-inactive"
+                            statusCode === "Blocked" ? "status-blocked" : "status-inactive"
                     );
                 });
             });

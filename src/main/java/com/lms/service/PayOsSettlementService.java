@@ -19,8 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.List;
+import java.util.Set;
 
 /** Isolated settlement logic owned by the PayOS integration flow. */
 @Service
@@ -38,6 +40,7 @@ public class PayOsSettlementService {
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
     private final BorrowService borrowService;
+    private final LoanService loanService;
     private final MembershipService membershipService;
 
     public PayOsSettlementService(PayOsWalletRepository walletRepository,
@@ -48,6 +51,7 @@ public class PayOsSettlementService {
                                   NotificationRepository notificationRepository,
                                   MemberNotificationRepository memberNotificationRepository,
                                   BorrowService borrowService,
+                                  LoanService loanService,
                                   MembershipService membershipService,
                                   LocalizedMessageService localizedMessageService) {
         this.walletRepository = walletRepository;
@@ -58,6 +62,7 @@ public class PayOsSettlementService {
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
         this.borrowService = borrowService;
+        this.loanService = loanService;
         this.membershipService = membershipService;
         this.localizedMessageService = localizedMessageService;
     }
@@ -126,6 +131,7 @@ public class PayOsSettlementService {
         fine.setReferenceCode("KQPAY-FINE-" + payment.getOrderCode());
         fine.setPerformedByStaff(payment.getInitiatedByStaff());
         Transaction saved = transactionRepository.save(fine);
+        finalizePendingReturnForFine(saved);
         createNotification(
                 payment.getMember(),
                 NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.SYSTEM,
@@ -144,6 +150,7 @@ public class PayOsSettlementService {
 
         BigDecimal total = BigDecimal.ZERO;
         Transaction first = null;
+        Set<Integer> borrowIds = new LinkedHashSet<>();
         for (PayOsPaymentFineItem item : items) {
             Integer fineId = item.getFineTransaction().getTransactionId();
             Transaction fine = transactionRepository.findByIdForUpdate(fineId)
@@ -168,6 +175,9 @@ public class PayOsSettlementService {
             fine.setReferenceCode("KQPAY-FINE-" + fineId + "-" + payment.getOrderCode());
             fine.setPerformedByStaff(payment.getInitiatedByStaff());
             Transaction saved = transactionRepository.save(fine);
+            if (saved.getBorrow() != null && saved.getBorrow().getBorrowId() != null) {
+                borrowIds.add(saved.getBorrow().getBorrowId());
+            }
             if (first == null) {
                 first = saved;
             }
@@ -175,6 +185,7 @@ public class PayOsSettlementService {
         if (total.compareTo(payment.getAmount()) != 0) {
             throw new ConflictException(localizedMessageService.get("backend.payment.fineTotalMismatch"));
         }
+        borrowIds.forEach(loanService::finalizePendingReturnsAfterFinePayment);
         createNotification(
                 payment.getMember(),
                 NotificationType.FINANCE, NotificationEventType.FINE_PAID, NotificationSource.SYSTEM,
@@ -197,7 +208,11 @@ public class PayOsSettlementService {
                 && !"PAYMENT_PENDING".equals(status)) {
             throw new ConflictException(localizedMessageService.get("backend.payment.loanNotPayable"));
         }
-        if (transactionRepository.hasCompletedBorrowFee(memberId, borrowId)) {
+        if (transactionRepository.hasCompletedBorrowFee(memberId, borrowId)
+                || transactionRepository
+                        .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+                                borrowId, "BORROW_FEE", "Held")
+                        .isPresent()) {
             throw new ConflictException(localizedMessageService.get("backend.financial.borrowFeeAlreadyPaid"));
         }
         BigDecimal amount = requirePositiveWholeVnd(payment.getAmount());
@@ -206,9 +221,22 @@ public class PayOsSettlementService {
         }
         Wallet wallet = walletRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException(localizedMessageService.get("backend.financial.walletNotFound")));
-        Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate());
-        membershipService.synchronizeMemberTier(memberId);
-        borrowService.activatePendingBankBorrow(borrowId);
+        boolean onlineRequestAwaitingApproval = payment.getInitiatedByStaff() == null
+                && "PAYMENT_PENDING".equals(status);
+        Transaction transaction = saveTransaction(wallet, borrow, "BORROW_FEE", amount.negate(),
+                onlineRequestAwaitingApproval ? "Held" : COMPLETED);
+        transaction.setChannel("PAYOS");
+        transaction.setReferenceCode("KQPAY-BORROW-" + payment.getOrderCode());
+        transaction.setPerformedByStaff(payment.getInitiatedByStaff());
+        transaction.setPaidAt(payment.getPaidAt() == null ? LocalDateTime.now() : payment.getPaidAt());
+        transaction = transactionRepository.save(transaction);
+
+        if (onlineRequestAwaitingApproval) {
+            borrowService.markPendingBankBorrowPaidForApproval(borrowId);
+        } else {
+            membershipService.synchronizeMemberTier(memberId);
+            borrowService.activatePendingBankBorrow(borrowId);
+        }
         return transaction;
     }
 
@@ -221,14 +249,24 @@ public class PayOsSettlementService {
     }
 
     private Transaction saveTransaction(Wallet wallet, Borrow borrow, String type, BigDecimal amount) {
+        return saveTransaction(wallet, borrow, type, amount, COMPLETED);
+    }
+
+    private Transaction saveTransaction(Wallet wallet, Borrow borrow, String type, BigDecimal amount, String status) {
         Transaction transaction = new Transaction();
         transaction.setWallet(wallet);
         transaction.setBorrow(borrow);
         transaction.setTransactionType(type);
         transaction.setAmount(amount);
-        transaction.setStatus(COMPLETED);
+        transaction.setStatus(status);
         transaction.setTransactionDate(LocalDateTime.now());
         return transactionRepository.save(transaction);
+    }
+
+    private void finalizePendingReturnForFine(Transaction fine) {
+        if (fine != null && fine.getBorrow() != null && fine.getBorrow().getBorrowId() != null) {
+            loanService.finalizePendingReturnsAfterFinePayment(fine.getBorrow().getBorrowId());
+        }
     }
 
     private Wallet createWallet(Member member) {

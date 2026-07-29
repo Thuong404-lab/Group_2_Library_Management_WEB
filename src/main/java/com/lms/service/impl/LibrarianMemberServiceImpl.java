@@ -135,8 +135,14 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (!phone.isEmpty() && userRepository.existsByPhone(phone)) {
             errors.put("phone", messages.get("backend.account.phoneUsed"));
         }
-        if (!username.isEmpty() && memberAccountRepository.existsByUsernameIgnoreCase(username)) {
-            errors.put("username", messages.get("backend.account.usernameExists"));
+        if (!username.isEmpty()) {
+            if (username.length() < 3 || username.length() > 20) {
+                errors.put("username", messages.get("validation.usernameLength"));
+            } else if (!username.matches("^[\\x21-\\x7E]+$")) {
+                errors.put("username", messages.get("validation.username"));
+            } else if (memberAccountRepository.existsByUsernameIgnoreCase(username)) {
+                errors.put("username", messages.get("backend.account.usernameExists"));
+            }
         }
         if (request.getPassword() != null
                 && request.getConfirmPassword() != null
@@ -211,9 +217,14 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         String email = trim(request.getEmail());
         String phone = trim(request.getPhone());
 
-        if (!username.isEmpty()
-                && memberAccountRepository.existsByUsernameIgnoreCaseAndIdNot(username, account.getId())) {
-            errors.put("username", messages.get("backend.account.usernameExists"));
+        if (!username.isEmpty()) {
+            if (username.length() < 3 || username.length() > 20) {
+                errors.put("username", messages.get("validation.usernameLength"));
+            } else if (!username.matches("^[\\x21-\\x7E]+$")) {
+                errors.put("username", messages.get("validation.username"));
+            } else if (memberAccountRepository.existsByUsernameIgnoreCaseAndIdNot(username, account.getId())) {
+                errors.put("username", messages.get("backend.account.usernameExists"));
+            }
         }
         if (!email.isEmpty() && userRepository.existsByEmailIgnoreCaseAndIdNot(email, account.getMember().getUser().getId())) {
             errors.put("email", messages.get("backend.account.emailUsed"));
@@ -276,7 +287,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (member == null || user == null) {
             throw new DataProcessingException(messages.get("backend.account.incompleteMemberData"));
         }
-        if (memberAccountDeletionRepository.hasActiveBusiness(member.getMemberId())) {
+        if (memberAccountDeletionRepository.hasBusinessHistory(member.getMemberId())) {
             throw new ConflictException(messages.get("backend.member.deleteHasHistory"));
         }
 
@@ -331,7 +342,7 @@ public class LibrarianMemberServiceImpl implements LibrarianMemberService {
         if (account == null || account.getMember() == null) {
             return false;
         }
-        return !memberAccountDeletionRepository.hasActiveBusiness(account.getMember().getMemberId());
+        return !memberAccountDeletionRepository.hasBusinessHistory(account.getMember().getMemberId());
     }
 
     private UserStatus requireStatus(String status) {

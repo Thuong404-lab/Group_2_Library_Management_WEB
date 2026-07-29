@@ -141,7 +141,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label text-muted small fw-bold" th:text="#{member.profile.username}">Username</label>
-                                <input type="text" name="username" class="form-control" th:classappend="${usernameError} ? 'is-invalid' : ''" th:value="${failedUsername != null ? failedUsername : #authentication.name}" required minlength="3" maxlength="100" pattern="^[a-zA-Z0-9_.]+$" th:readonly="${isInactiveMember}" th:data-msg-required="#{validation.usernameRequired}" th:data-msg-pattern="#{validation.usernameFormat}">
+                                <input type="text" name="username" class="form-control" th:classappend="${usernameError} ? 'is-invalid' : ''" th:value="${failedUsername != null ? failedUsername : #authentication.name}" required minlength="3" maxlength="20" pattern="^[\x21-\x7E]{3,20}$" th:readonly="${isInactiveMember}" th:data-msg-required="#{validation.usernameRequired}" th:data-msg-pattern="#{validation.username}">
                                 <div class="invalid-feedback" th:text="${usernameError != null ? usernameError : #messages.msg('validation.usernameRequired')}">Please enter a valid username.</div>
                             </div>
                             <div class="col-md-6 mb-3">

@@ -75,16 +75,10 @@
                             <select class="form-select member-filter-select" name="status" data-auto-submit
                                     th:aria-label="#{librarian.borrowList.filterStatus}">
                                 <option value="" th:text="#{librarian.staff.allStatuses}">All statuses</option>
-                                <option value="Active" th:selected="${status == 'Active'}" th:text="#{librarian.borrowList.status.active}">Borrowing (Active)</option>
-                                <option value="Waiting_Pickup" th:selected="${status == 'Waiting_Pickup'}" th:text="#{librarian.borrowList.status.pickup}">Awaiting physical book pickup</option>
-                                <option value="Returned" th:selected="${status == 'Returned'}" th:text="#{librarian.borrowList.status.returned}">Completed (Returned)</option>
-                                <option value="Overdue" th:selected="${status == 'Overdue'}" th:text="#{librarian.borrowList.status.overdue}">Overdue</option>
-                                <option value="Pending" th:selected="${status == 'Pending'}" th:text="#{librarian.borrowList.status.pending}">Pending approval</option>
-                                <option value="Rejected" th:selected="${status == 'Rejected'}" th:text="#{librarian.borrowList.status.rejected}">Rejected</option>
-                                <option value="Return_Pending" th:selected="${status == 'Return_Pending'}" th:text="#{librarian.borrowList.status.returnPending}">Return requested</option>
-                                <option value="Payment_Pending" th:selected="${status == 'Payment_Pending'}" th:text="#{loan.status.paymentPending}">Payment pending</option>
-                                <option value="Payment_Expired" th:selected="${status == 'Payment_Expired'}" th:text="#{loan.status.paymentExpired}">Payment expired</option>
-                                <option value="Canceled" th:selected="${status == 'Canceled' or status == 'Cancelled'}" th:text="#{librarian.borrowMember.status.canceled}">Canceled</option>
+                                <option th:each="option : ${borrowStatusOptions}"
+                                        th:value="${option.value}"
+                                        th:selected="${status == option.value}"
+                                        th:text="${#messages.msg(option.messageKey)}">Status</option>
                             </select>
 
                             <!-- Nút tìm kiếm chuẩn -->

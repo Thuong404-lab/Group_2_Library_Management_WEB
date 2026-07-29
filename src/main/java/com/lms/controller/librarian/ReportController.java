@@ -2,8 +2,9 @@ package com.lms.controller.librarian;
 
 import com.lms.dto.response.LibrarianRevenueReportData;
 import com.lms.dto.response.ReportExport;
+import com.lms.exception.ValidationException;
 import com.lms.service.ReportService;
-import com.lms.service.LibrarianDashboardService;
+import com.lms.util.ReportPeriodPolicy;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -22,11 +23,9 @@ import java.time.LocalDate;
 @RequestMapping("/librarian/reports")
 public class ReportController {
     private final ReportService reportService;
-    private final LibrarianDashboardService dashboardService;
 
-    public ReportController(ReportService reportService, LibrarianDashboardService dashboardService) {
+    public ReportController(ReportService reportService) {
         this.reportService = reportService;
-        this.dashboardService = dashboardService;
     }
 
     // UC-17.1: Librarian revenue report
@@ -35,12 +34,22 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             Model model) {
-        LibrarianRevenueReportData report = reportService.getLibrarianRevenueReport(fromDate, toDate);
+        LibrarianRevenueReportData report;
+        LocalDate formFromDate = fromDate;
+        LocalDate formToDate = toDate;
+        try {
+            report = reportService.getLibrarianRevenueReport(fromDate, toDate);
+            formFromDate = report.getFromDate();
+            formToDate = report.getToDate();
+        } catch (ValidationException exception) {
+            report = reportService.getLibrarianRevenueReport(null, null);
+            model.addAttribute("reportDateError", exception.getMessage());
+        }
         model.addAttribute("report", report);
-        model.addAttribute("fromDate", report.getFromDate());
-        model.addAttribute("toDate", report.getToDate());
-        model.addAttribute("maxDate", LocalDate.now());
-        model.addAllAttributes(dashboardService.getStatisticsData());
+        model.addAttribute("fromDate", formFromDate);
+        model.addAttribute("toDate", formToDate);
+        model.addAttribute("maxDate", LocalDate.now(ReportPeriodPolicy.LIBRARY_ZONE));
+        model.addAttribute("maxReportRangeDays", ReportPeriodPolicy.MAX_RANGE_DAYS);
         return "librarian/revenue-report";
     }
 

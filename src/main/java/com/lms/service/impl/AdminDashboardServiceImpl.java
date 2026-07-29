@@ -95,12 +95,6 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         data.put("activeStaff", staffRepository.countByUser_Status(UserStatus.Active));
         data.put("activeBorrows", borrowRepository.countByStatusIgnoreCase("Active"));
         data.put("overdueItems", borrowDetailRepository.countByStatusIgnoreCase("Overdue"));
-        data.put("attentionItems",
-                bookItemRepository.countByBookConditionIgnoreCase("Severely damaged")
-                        + bookItemRepository.countByBookConditionIgnoreCase("Lost book"));
-        data.put("blockedAccounts", memberAccountRepository.countByStatusIgnoreCase("Blocked")
-                + staffAccountRepository.countByStatusIgnoreCase("Blocked"));
-
         BigDecimal monthlyRevenue = transactionRepository.sumRevenueByStatusAndTypesAndDateRange(
                 FinancialTransactionPolicy.COMPLETED_STATUS,
                 FinancialTransactionPolicy.REVENUE_TYPES, monthStart, nextMonthStart);
@@ -115,7 +109,16 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         data.put("revenueChangeDirection", revenueChangePercent.signum());
         data.put("revenueChangeDisplay", formatRevenueChange(revenueChangePercent));
 
-        data.put("recentLogs", systemLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 5)).getContent());
+        List<com.lms.entity.SystemLog> recentLogs = systemLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 5)).getContent();
+        recentLogs.forEach(log -> {
+            if (log != null && log.getCreatedAt() != null) {
+                log.setCreatedAt(log.getCreatedAt()
+                        .atZone(java.time.ZoneOffset.UTC)
+                        .withZoneSameInstant(java.time.ZoneId.of("Asia/Ho_Chi_Minh"))
+                        .toLocalDateTime());
+            }
+        });
+        data.put("recentLogs", recentLogs);
         List<Map<String, Object>> monthStats = getLastSixMonthStats();
         data.put("monthStats", monthStats);
         data.put("hasCirculationData", monthStats.stream()

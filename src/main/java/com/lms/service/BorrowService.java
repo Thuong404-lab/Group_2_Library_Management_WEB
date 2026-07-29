@@ -13,6 +13,7 @@ public interface BorrowService {
     // Luá»“ng mÆ°á»£n trá»±c tiáº¿p táº¡i quáº§y
     Borrow processBorrowing(BorrowRequest request, String librarianUsername);
     Borrow activatePendingBankBorrow(Integer borrowId);
+    Borrow markPendingBankBorrowPaidForApproval(Integer borrowId);
     void cancelPendingBankBorrow(Integer borrowId, String paymentStatus);
 
     // Luá»“ng Ä‘Äƒng kÃ½ mÆ°á»£n trá»±c tuyáº¿n (Chá» duyá»‡t)

@@ -17,14 +17,31 @@ public class MemberAccountDeletionRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public boolean hasActiveBusiness(Integer memberId) {
+    /**
+     * Determines whether a member has persisted business history that must be retained.
+     *
+     * <p>A member with only completed borrows or paid payments used to be shown the
+     * hard-delete confirmation. The subsequent delete then failed because those history
+     * records still hold foreign-key references to the member or wallet. Keep the
+     * deletion decision aligned with the database constraints: hard deletion is only
+     * available for accounts that have never created a business record.</p>
+     */
+    public boolean hasBusinessHistory(Integer memberId) {
         Integer result = jdbcTemplate.queryForObject("""
                 SELECT CASE WHEN
-                    EXISTS (SELECT 1 FROM dbo.Borrows WHERE member_id = ? AND UPPER(status) NOT IN ('RETURNED', 'CANCELED', 'CANCELLED', 'REJECTED'))
-                    OR EXISTS (SELECT 1 FROM dbo.Reservations WHERE member_id = ? AND UPPER(status) NOT IN ('COMPLETED', 'CANCELED', 'CANCELLED', 'REFUNDED', 'EXPIRED', 'REJECTED'))
-                    OR EXISTS (SELECT 1 FROM dbo.PayOSPayments WHERE member_id = ? AND UPPER(status) NOT IN ('PAID', 'CANCELLED', 'CANCELED', 'EXPIRED'))
+                    EXISTS (SELECT 1 FROM dbo.Borrows WHERE member_id = ?)
+                    OR EXISTS (SELECT 1 FROM dbo.Reservations WHERE member_id = ?)
+                    OR EXISTS (SELECT 1 FROM dbo.PayOSPayments WHERE member_id = ?)
+                    OR EXISTS (
+                        SELECT 1
+                        FROM dbo.Transactions transaction_history
+                        INNER JOIN dbo.Wallets wallet ON wallet.wallet_id = transaction_history.wallet_id
+                        WHERE wallet.member_id = ?
+                    )
+                    OR EXISTS (SELECT 1 FROM dbo.Feedbacks WHERE member_id = ?)
+                    OR EXISTS (SELECT 1 FROM dbo.BookAcquisitionRequests WHERE member_id = ?)
                 THEN 1 ELSE 0 END
-                """, Integer.class, memberId, memberId, memberId);
+                """, Integer.class, memberId, memberId, memberId, memberId, memberId, memberId);
         return Integer.valueOf(1).equals(result);
     }
 

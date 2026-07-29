@@ -15,6 +15,12 @@ public class LibrarianRevenueReportData {
     private final BigDecimal averageTransaction;
     private final List<ReportMetric> transactionBreakdown;
     private final List<ReportMetric> monthlyRevenueStats;
+    private final long activeBorrows;
+    private final long pendingReservationRequests;
+    private final long depositPaidReservations;
+    private final long readyReservations;
+    private final long overdueItems;
+    private final long totalMembers;
 
     public LibrarianRevenueReportData(LocalDate fromDate,
             LocalDate toDate,
@@ -24,7 +30,13 @@ public class LibrarianRevenueReportData {
             long totalTransactions,
             BigDecimal averageTransaction,
             List<ReportMetric> transactionBreakdown,
-            List<ReportMetric> monthlyRevenueStats) {
+            List<ReportMetric> monthlyRevenueStats,
+            long activeBorrows,
+            long pendingReservationRequests,
+            long depositPaidReservations,
+            long readyReservations,
+            long overdueItems,
+            long totalMembers) {
         this.fromDate = fromDate;
         this.toDate = toDate;
         this.generatedAt = generatedAt;
@@ -34,6 +46,12 @@ public class LibrarianRevenueReportData {
         this.averageTransaction = averageTransaction == null ? BigDecimal.ZERO : averageTransaction;
         this.transactionBreakdown = transactionBreakdown;
         this.monthlyRevenueStats = monthlyRevenueStats;
+        this.activeBorrows = activeBorrows;
+        this.pendingReservationRequests = pendingReservationRequests;
+        this.depositPaidReservations = depositPaidReservations;
+        this.readyReservations = readyReservations;
+        this.overdueItems = overdueItems;
+        this.totalMembers = totalMembers;
     }
 
     public LocalDate getFromDate() {
@@ -70,5 +88,29 @@ public class LibrarianRevenueReportData {
 
     public List<ReportMetric> getMonthlyRevenueStats() {
         return monthlyRevenueStats;
+    }
+
+    public long getActiveBorrows() {
+        return activeBorrows;
+    }
+
+    public long getPendingReservationRequests() {
+        return pendingReservationRequests;
+    }
+
+    public long getDepositPaidReservations() {
+        return depositPaidReservations;
+    }
+
+    public long getReadyReservations() {
+        return readyReservations;
+    }
+
+    public long getOverdueItems() {
+        return overdueItems;
+    }
+
+    public long getTotalMembers() {
+        return totalMembers;
     }
 }

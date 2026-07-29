@@ -5,7 +5,7 @@
 <head>
     <title th:text="#{librarian.notification.title}">Send Notifications to Members</title>
     <link rel="stylesheet" th:href="@{/css/pages/librarian/dashboard.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css(v='20260727-compose-modal-history-filter-v2')}">
+    <link rel="stylesheet" th:href="@{/css/pages/librarian/send-notification.css(v='20260728-history-pagination-v1')}">
 </head>
 <body>
 <main layout:fragment="content"
@@ -321,6 +321,10 @@
                                 th:text="${#messages.msg(type.messageKey)}">General notification</option>
                     </select>
                     <button type="submit" th:text="#{common.filter}">Filter</button>
+                    <a th:if="${!#strings.isEmpty(selectedHistoryType)}"
+                       class="notification-history-filter-reset"
+                       th:href="@{/librarian/interaction/notifications/new}"
+                       th:text="#{common.clearFilter}">Clear filter</a>
                 </form>
             </div>
             <div class="table-responsive notification-history-table-wrap" th:if="${recentNotifications != null and !recentNotifications.isEmpty()}">
@@ -355,6 +359,52 @@
                     No matching notifications.
                 </span>
             </div>
+            <nav class="app-pagination-nav notification-history-pagination"
+                 th:if="${notificationHistoryPage != null and notificationHistoryPage.totalPages > 1}"
+                 th:aria-label="#{notification.pagination}"
+                 th:with="startPage=${notificationHistoryPage.totalPages <= 10 ? 0 : (notificationHistoryPage.number < 9 ? 0 : (notificationHistoryPage.number - 8 > notificationHistoryPage.totalPages - 10 ? notificationHistoryPage.totalPages - 10 : notificationHistoryPage.number - 8))},
+                          endPage=${startPage + 9 < notificationHistoryPage.totalPages ? startPage + 9 : notificationHistoryPage.totalPages - 1}">
+                <ul class="pagination app-pagination">
+                    <li class="page-item" th:classappend="${notificationHistoryPage.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/librarian/interaction/notifications/new(historyPage=0,historyType=${selectedHistoryType})}"
+                           th:text="#{pagination.first}">First</a>
+                    </li>
+                    <li class="page-item" th:classappend="${notificationHistoryPage.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/librarian/interaction/notifications/new(historyPage=${notificationHistoryPage.number - 1},historyType=${selectedHistoryType})}"
+                           th:aria-label="#{pagination.previous}">
+                            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                    <li class="page-item disabled" th:if="${startPage > 0}">
+                        <span class="page-link" aria-hidden="true">&hellip;</span>
+                    </li>
+                    <li class="page-item"
+                        th:each="pageIndex : ${#numbers.sequence(startPage, endPage)}"
+                        th:classappend="${pageIndex == notificationHistoryPage.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/librarian/interaction/notifications/new(historyPage=${pageIndex},historyType=${selectedHistoryType})}"
+                           th:text="${pageIndex + 1}"
+                           th:aria-current="${pageIndex == notificationHistoryPage.number} ? 'page'">1</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${endPage < notificationHistoryPage.totalPages - 1}">
+                        <span class="page-link" aria-hidden="true">&hellip;</span>
+                    </li>
+                    <li class="page-item" th:classappend="${notificationHistoryPage.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/librarian/interaction/notifications/new(historyPage=${notificationHistoryPage.number + 1},historyType=${selectedHistoryType})}"
+                           th:aria-label="#{pagination.next}">
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                    <li class="page-item" th:classappend="${notificationHistoryPage.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/librarian/interaction/notifications/new(historyPage=${notificationHistoryPage.totalPages - 1},historyType=${selectedHistoryType})}"
+                           th:text="#{pagination.last}">Last</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </section>
 

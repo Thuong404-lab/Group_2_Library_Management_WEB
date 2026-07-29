@@ -314,6 +314,35 @@ public class BorrowServiceImpl implements BorrowService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public Borrow markPendingBankBorrowPaidForApproval(Integer borrowId) {
+        Borrow borrow = borrowRepository.findById(borrowId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.notFoundById", borrowId)));
+        if ("Pending".equalsIgnoreCase(borrow.getStatus())) {
+            return borrow;
+        }
+        if (!PAYMENT_PENDING.equalsIgnoreCase(borrow.getStatus())) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.notAwaitingPayment"));
+        }
+
+        List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
+        if (details.isEmpty()) {
+            throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
+        }
+        for (BorrowDetail detail : details) {
+            if (!PAYMENT_PENDING.equalsIgnoreCase(detail.getStatus()) || detail.getBookItem() != null) {
+                throw new ConflictException(localizedMessageService.get("backend.borrow.detailNotAwaitingPayment"));
+            }
+            detail.setStatus("Pending");
+            borrowDetailRepository.save(detail);
+        }
+
+        borrow.setStatus("Pending");
+        return borrowRepository.save(borrow);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void cancelPendingBankBorrow(Integer borrowId, String paymentStatus) {
         Borrow borrow = borrowRepository.findById(borrowId).orElse(null);
         if (borrow == null || !PAYMENT_PENDING.equalsIgnoreCase(borrow.getStatus())) {
@@ -428,6 +457,11 @@ public class BorrowServiceImpl implements BorrowService {
             borrowDetailRepository.save(detail);
         }
 
+        transactionRepository
+                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+                        borrowId, "BORROW_FEE", "Held")
+                .ifPresent(heldPayment -> refundHeldBorrowPaymentToWallet(member, borrow, heldPayment));
+
         // Gửi thông báo đến member
         String content = localizedMessageService.get("systemNotification.borrow.rejected.content", bookNames, borrowId);
         if (reason != null && !reason.trim().isEmpty()) {
@@ -447,6 +481,38 @@ public class BorrowServiceImpl implements BorrowService {
                     "systemNotification.borrow.rejected.title", "systemNotification.borrow.rejected.contentWithReason",
                     bookNames, BorrowCodeFormatter.format(borrowId), translatedReason, rejection.detail());
         }
+    }
+
+    private void refundHeldBorrowPaymentToWallet(Member member, Borrow borrow, Transaction heldPayment) {
+        Wallet wallet = heldPayment.getWallet();
+        if (wallet == null) {
+            wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                    .orElseThrow(() -> new ConflictException(
+                            localizedMessageService.get("backend.financial.walletNotFound")));
+        }
+        BigDecimal refundAmount = heldPayment.getAmount() == null
+                ? BigDecimal.ZERO : heldPayment.getAmount().abs();
+        BigDecimal oldBalance = wallet.getBalance() == null ? BigDecimal.ZERO : wallet.getBalance();
+        wallet.setBalance(oldBalance.add(refundAmount));
+        walletRepository.save(wallet);
+
+        heldPayment.setStatus("Refunded");
+        transactionRepository.save(heldPayment);
+
+        Transaction refund = new Transaction();
+        refund.setWallet(wallet);
+        refund.setBorrow(borrow);
+        refund.setTransactionType("REFUND");
+        refund.setAmount(refundAmount);
+        refund.setTransactionDate(LocalDateTime.now());
+        refund.setPaidAt(LocalDateTime.now());
+        refund.setStatus("Completed");
+        refund.setChannel("PAYOS_REFUND_WALLET");
+        refund.setReferenceCode("PAYOS-REFUND-BORROW-" + borrow.getBorrowId() + "-" + heldPayment.getTransactionId());
+        refund.setBalanceBefore(oldBalance);
+        refund.setBalanceAfter(wallet.getBalance());
+        transactionRepository.save(refund);
+        membershipService.synchronizeMemberTier(member.getMemberId());
     }
 
     @Override
@@ -564,26 +630,37 @@ public class BorrowServiceImpl implements BorrowService {
 
         // â”€â”€ 3. Trá»« tiá»n vÃ­
         // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
-                .orElseThrow(() -> new ConflictException(
-                        localizedMessageService.get("backend.financial.walletNotFound")));
-        if (wallet.getBalance().compareTo(finalFee) < 0) {
-            throw new ConflictException(localizedMessageService.get(
-                    "backend.borrow.insufficientBalanceForFee", String.format("%,.0f", finalFee)));
-        }
-        wallet.setBalance(wallet.getBalance().subtract(finalFee));
-        walletRepository.save(wallet);
+        java.util.Optional<Transaction> heldPayment = transactionRepository
+                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+                        borrowId, "BORROW_FEE", "Held");
+        if (heldPayment.isPresent()) {
+            Transaction transaction = heldPayment.get();
+            if (transaction.getAmount() == null || transaction.getAmount().abs().compareTo(finalFee) != 0) {
+                throw new ConflictException(localizedMessageService.get("backend.payment.borrowFeeChanged"));
+            }
+            transaction.setStatus("Completed");
+            transaction.setPaidAt(transaction.getPaidAt() == null ? LocalDateTime.now() : transaction.getPaidAt());
+            transactionRepository.save(transaction);
+        } else {
+            Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
+                    .orElseThrow(() -> new ConflictException(
+                            localizedMessageService.get("backend.financial.walletNotFound")));
+            if (wallet.getBalance().compareTo(finalFee) < 0) {
+                throw new ConflictException(localizedMessageService.get(
+                        "backend.borrow.insufficientBalanceForFee", String.format("%,.0f", finalFee)));
+            }
+            wallet.setBalance(wallet.getBalance().subtract(finalFee));
+            walletRepository.save(wallet);
 
-        // â”€â”€ 4. Ghi lá»‹ch sá»­ giao dá»‹ch
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        Transaction transaction = new Transaction();
-        transaction.setWallet(wallet);
-        transaction.setBorrow(borrow);
-        transaction.setTransactionType("BORROW_FEE");
-        transaction.setAmount(finalFee.negate());
-        transaction.setTransactionDate(LocalDateTime.now());
-        transaction.setStatus("Completed");
-        transactionRepository.save(transaction);
+            Transaction transaction = new Transaction();
+            transaction.setWallet(wallet);
+            transaction.setBorrow(borrow);
+            transaction.setTransactionType("BORROW_FEE");
+            transaction.setAmount(finalFee.negate());
+            transaction.setTransactionDate(LocalDateTime.now());
+            transaction.setStatus("Completed");
+            transactionRepository.save(transaction);
+        }
         membershipService.synchronizeMemberTier(member.getMemberId());
 
         // â”€â”€ 5. Cáº­p nháº­t tráº¡ng thÃ¡i sang Chá» nháº­n báº£n váº­t lÃ½
@@ -791,7 +868,7 @@ public class BorrowServiceImpl implements BorrowService {
         detail.setStatus("Renew_Pending");
         borrowDetailRepository.save(detail);
         auditLogService.log(com.lms.enums.ActionType.REQUEST_RENEWAL,
-                "Member " + username + " requested " + renewalDays + " renewal days for detail #" + borrowDetailId);
+                localizedMessageService.get("backend.renewal.audit.requested", username, renewalDays, borrowDetailId));
     }
 
     @Override
@@ -810,7 +887,7 @@ public class BorrowServiceImpl implements BorrowService {
         }
         loanService.rejectRenewal(borrowDetailId, "SYSTEM", "OTHER", "Cancelled by member");
         auditLogService.log(com.lms.enums.ActionType.CANCEL_RENEWAL,
-                "Member " + username + " cancelled renewal request for detail #" + borrowDetailId);
+                localizedMessageService.get("backend.renewal.audit.cancelled", username, borrowDetailId));
     }
 
     @Override
@@ -1751,7 +1828,6 @@ public class BorrowServiceImpl implements BorrowService {
 
         List<String> titles = new ArrayList<>();
         java.util.Set<Integer> validatedBookIds = new java.util.HashSet<>();
-        java.util.Map<Integer, java.util.ArrayDeque<BookItem>> availableItemsByBook = new java.util.HashMap<>();
         for (Integer bookId : bookIds) {
             Book book = bookRepository.findByIdForUpdate(bookId)
                     .orElseThrow(() -> new IllegalArgumentException(
@@ -1763,26 +1839,17 @@ public class BorrowServiceImpl implements BorrowService {
 
             if (validatedBookIds.add(bookId)) {
                 long requestedCopies = java.util.Collections.frequency(bookIds, bookId);
-                List<BookItem> availableItems = bookItemRepository.findAvailableByBookIdForUpdate(bookId);
-                if (requestedCopies > availableItems.size()) {
+                long availableCopies = bookItemRepository.countByBook_BookIdAndStatusIgnoreCase(bookId, "Available");
+                if (requestedCopies > availableCopies) {
                     throw new ConflictException(
-                            localizedMessageService.get("backend.borrow.stockExceeded", availableItems.size()));
+                            localizedMessageService.get("backend.borrow.stockExceeded", availableCopies));
                 }
-                availableItemsByBook.put(bookId, new java.util.ArrayDeque<>(availableItems));
             }
-
-            BookItem reservedItem = availableItemsByBook.get(bookId).pollFirst();
-            if (reservedItem == null) {
-                throw new ConflictException(
-                        localizedMessageService.get("backend.borrow.noAvailableCopy", book.getTitle()));
-            }
-            reservedItem.setStatus(PAYMENT_PENDING);
-            bookItemRepository.save(reservedItem);
 
             BorrowDetail detail = new BorrowDetail();
             detail.setBorrow(borrow);
             detail.setBook(book);
-            detail.setBookItem(reservedItem);
+            detail.setBookItem(null);
             detail.setDueDate(LocalDateTime.now().plusDays(borrowDays));
             detail.setStatus(BorrowServiceImpl.PAYMENT_PENDING);
             detail.setRenewCount(0);
@@ -1790,7 +1857,6 @@ public class BorrowServiceImpl implements BorrowService {
 
             titles.add(book.getTitle());
         }
-
         auditLogService.log(com.lms.enums.ActionType.REQUEST_BORROW,
                 localizedMessageService.get("backend.borrow.audit.multiRequested", username, bookIds.size(),
                         String.join(", ", titles), borrowDays));

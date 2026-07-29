@@ -197,7 +197,6 @@
                                 </td>
 
                                 <td class="text-end pe-3 member-actions" th:data-label="#{common.actions}"
-                                    th:classappend="${account.status != 'Active'} ? ' member-actions--reserved-deactivate' : ''"
                                     th:with="member=${account.user != null ? memberByUserId[account.user.id] : null}">
                                     <button type="button" class="member-icon-action account-action-tooltip"
                                         data-bs-toggle="modal"
@@ -267,8 +266,9 @@
                                                                 <input class="form-control" name="username"
                                                                     th:id="${'updateUsername' + account.accountId}"
                                                                     th:data-label="#{member.profile.username}"
-                                                                    pattern="[a-zA-Z0-9_]{3,20}" minlength="3"
+                                                                    minlength="3"
                                                                     maxlength="20"
+                                                                    pattern="^[\x21-\x7E]{3,20}$"
                                                                     th:value="${editAccountId != null and editAccountId == account.accountId and editFormValues != null ? editFormValues['username'] : account.username}"
                                                                     onkeydown="if(event.key === ' ') event.preventDefault();"
                                                                     th:classappend="${editAccountId != null and editAccountId == account.accountId and editFieldErrors != null and editFieldErrors['username'] != null} ? 'is-invalid'"
@@ -655,10 +655,7 @@
                             <tr th:if="${#lists.isEmpty(accounts.content)}">
                                 <td colspan="6" class="text-center text-muted py-5">
                                     <i class="bi bi-inbox empty-state-icon d-block mb-2"></i>
-                                    <p class="mb-3" th:text="#{admin.accounts.empty}">No accounts found.</p>
-                                    <a th:if="${!#strings.isEmpty(keyword) or !#strings.isEmpty(selectedTier) or !#strings.isEmpty(selectedStatus)}"
-                                        class="btn member-modal-secondary" th:href="@{/admin/member-list}"
-                                        th:text="#{common.clearFilter}">Clear filter</a>
+                                    <p class="mb-0" th:text="#{admin.accounts.empty}">No accounts found.</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -847,8 +844,10 @@
                         }
                         if (username === "") {
                             errors.username = /*[[#{validation.usernameRequired}]]*/ "Username is required.";
-                        } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-                            errors.username = /*[[#{validation.username}]]*/ "Username must contain 3-20 letters, numbers, or underscores.";
+                        } else if (username.length < 3 || username.length > 20) {
+                            errors.username = /*[[#{validation.usernameLength}]]*/ "Username must be between 3 and 20 characters.";
+                        } else if (!/^[\x21-\x7E]+$/.test(username)) {
+                            errors.username = /*[[#{validation.username}]]*/ "Username must be 3-20 characters, contain no spaces or accented characters, and may include special characters.";
                         }
                         if (email === "") {
                             errors.email = /*[[#{validation.emailRequired}]]*/ "Email is required.";

@@ -2,10 +2,20 @@ package com.lms.service.impl;
 
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.io.font.PdfEncodings;
+import com.itextpdf.kernel.colors.Color;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.layout.properties.VerticalAlignment;
 import com.lms.dto.response.LibrarianRevenueReportData;
 import com.lms.dto.response.ReportExport;
 import com.lms.dto.response.ReportMetric;
@@ -16,24 +26,31 @@ import com.lms.repository.BookRepository;
 import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.MemberRepository;
+import com.lms.repository.ReservationRepository;
 import com.lms.repository.TransactionRepository;
 import com.lms.service.ReportService;
 import com.lms.service.LocalizedMessageService;
 import com.lms.util.FinancialTransactionPolicy;
+import com.lms.util.ReportPeriodPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,27 +65,28 @@ import java.util.Map;
 public class ReportServiceImpl implements ReportService {
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
-    private static final long MAX_REPORT_RANGE_DAYS = 1_826;
-
     private final BorrowRepository borrowRepository;
     private final BorrowDetailRepository borrowDetailRepository;
     private final TransactionRepository transactionRepository;
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookItemRepository bookItemRepository;
+    private final ReservationRepository reservationRepository;
 
     public ReportServiceImpl(BorrowRepository borrowRepository,
             BorrowDetailRepository borrowDetailRepository,
             TransactionRepository transactionRepository,
             MemberRepository memberRepository,
             BookRepository bookRepository,
-            BookItemRepository bookItemRepository) {
+            BookItemRepository bookItemRepository,
+            ReservationRepository reservationRepository) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.transactionRepository = transactionRepository;
         this.memberRepository = memberRepository;
         this.bookRepository = bookRepository;
         this.bookItemRepository = bookItemRepository;
+        this.reservationRepository = reservationRepository;
     }
 
 
@@ -86,6 +104,10 @@ public class ReportServiceImpl implements ReportService {
                 FinancialTransactionPolicy.REVENUE_TYPES,
                 startDate,
                 endDate);
+        List<ReportMetric> transactionBreakdown = toRevenueTransactionBreakdown(startDate, endDate);
+        long totalTransactions = transactionBreakdown.stream().mapToLong(ReportMetric::getCount).sum();
+        BigDecimal totalRefunds = completedRefunds(startDate, endDate);
+        BigDecimal averageTransaction = averageTransaction(totalRevenue, totalTransactions);
 
         return new ReportViewData(
                 normalizedFromDate,
@@ -100,16 +122,24 @@ public class ReportServiceImpl implements ReportService {
                 bookRepository.countByStatusIgnoreCase("Active"),
                 bookItemRepository.countByStatusIgnoreCase("Available"),
                 totalRevenue,
-                toRevenueTransactionBreakdown(startDate, endDate),
+                totalRefunds,
+                totalTransactions,
+                averageTransaction,
+                transactionBreakdown,
+                toMonthlyRevenueStats(normalizedFromDate, normalizedToDate),
                 toTopBooks(startDate, endDate),
                 toTopMembers(startDate, endDate),
-                toMonthlyBorrowStats(normalizedFromDate, normalizedToDate));
+                toMonthlyBorrowStats(normalizedFromDate, normalizedToDate),
+                borrowRepository.countByStatusIgnoreCase("Active"),
+                reservationRepository.countByStatusIgnoreCase("PENDING"),
+                reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"),
+                reservationRepository.countByStatusIgnoreCase("READY"));
     }
 
     @Override
     public ReportExport exportAdminReport(LocalDate fromDate, LocalDate toDate, String format) {
         ReportViewData report = getAdminConsoleReport(fromDate, toDate);
-        String normalizedFormat = format == null ? "csv" : format.toLowerCase(Locale.ROOT);
+        String normalizedFormat = normalizeExportFormat(format);
         String baseName = "admin-report-" + report.getFromDate() + "-to-" + report.getToDate();
 
         if ("pdf".equals(normalizedFormat)) {
@@ -137,14 +167,8 @@ public class ReportServiceImpl implements ReportService {
                 FinancialTransactionPolicy.REVENUE_TYPES,
                 startDate,
                 endDate);
-        BigDecimal totalRefunds = transactionRepository.sumAbsoluteAmountByTypeAndStatusAndDateRange(
-                FinancialTransactionPolicy.REFUND_TYPE,
-                FinancialTransactionPolicy.COMPLETED_STATUS,
-                startDate,
-                endDate);
-        BigDecimal averageTransaction = totalTransactions == 0
-                ? BigDecimal.ZERO
-                : totalRevenue.divide(BigDecimal.valueOf(totalTransactions), 2, RoundingMode.HALF_UP);
+        BigDecimal totalRefunds = completedRefunds(startDate, endDate);
+        BigDecimal averageTransaction = averageTransaction(totalRevenue, totalTransactions);
 
         return new LibrarianRevenueReportData(
                 normalizedFromDate,
@@ -155,7 +179,13 @@ public class ReportServiceImpl implements ReportService {
                 totalTransactions,
                 averageTransaction,
                 transactionBreakdown,
-                toMonthlyRevenueStats(normalizedFromDate, normalizedToDate));
+                toMonthlyRevenueStats(normalizedFromDate, normalizedToDate),
+                borrowRepository.countByStatusIgnoreCase("Active"),
+                reservationRepository.countByStatusIgnoreCase("PENDING"),
+                reservationRepository.countByStatusIgnoreCase("DEPOSIT_PAID"),
+                reservationRepository.countByStatusIgnoreCase("READY"),
+                borrowDetailRepository.countByStatusIgnoreCase("Overdue"),
+                memberRepository.count());
     }
 
     @Override
@@ -163,7 +193,7 @@ public class ReportServiceImpl implements ReportService {
     public ReportExport exportLibrarianRevenueReport(LocalDate fromDate, LocalDate toDate, String format) {
         String normalizedFormat = normalizeExportFormat(format);
         LibrarianRevenueReportData report = getLibrarianRevenueReport(fromDate, toDate);
-        String baseName = "librarian-revenue-report-" + report.getFromDate() + "-to-" + report.getToDate();
+        String baseName = "librarian-report-" + report.getFromDate() + "-to-" + report.getToDate();
 
         if ("pdf".equals(normalizedFormat)) {
             return new ReportExport(baseName + ".pdf", "application/pdf", buildLibrarianRevenuePdf(report));
@@ -248,23 +278,50 @@ public class ReportServiceImpl implements ReportService {
 
     private byte[] buildCsv(ReportViewData report) {
         StringBuilder csv = new StringBuilder("\uFEFF");
-        csv.append("Library Management Admin Report\n");
-        csv.append("From,").append(report.getFromDate()).append("\n");
-        csv.append("To,").append(report.getToDate()).append("\n\n");
-        csv.append("Metric,Value\n");
-        appendCsvRow(csv, "Borrow records", report.getTotalBorrows());
-        appendCsvRow(csv, "Borrowed items", report.getTotalBorrowedItems());
-        appendCsvRow(csv, "On-time returns", report.getOnTimeReturns());
-        appendCsvRow(csv, "Late returns", report.getLateReturns());
-        appendCsvRow(csv, "Current overdue items", report.getOverdueItems());
-        appendCsvRow(csv, "Members", report.getTotalMembers());
-        appendCsvRow(csv, "Active books", report.getActiveBooks());
-        appendCsvRow(csv, "Available copies", report.getAvailableItems());
-        appendCsvRow(csv, "Revenue", report.getTotalRevenue());
-        appendMetricSection(csv, "Transaction type", "Transactions", "Amount", report.getTransactionBreakdown());
-        appendMetricSection(csv, "Top book", "Borrows", null, report.getTopBooks());
-        appendMetricSection(csv, "Top member", "Items", null, report.getTopMembers());
-        appendMetricSection(csv, "Month", "Borrows", null, report.getMonthlyBorrowStats());
+        csv.append(escapeCsv(messages.get("admin.reports.exportTitle"))).append("\n");
+        appendCsvRow(csv, messages.get("librarian.report.exportFrom"), formatDate(report.getFromDate()));
+        appendCsvRow(csv, messages.get("librarian.report.exportTo"), formatDate(report.getToDate()));
+        appendCsvRow(csv, messages.get("librarian.report.generatedAt"), formatDateTime(report.getGeneratedAt()));
+
+        appendSectionHeading(csv, messages.get("librarian.report.currentActivity"));
+        appendCsvRow(csv, messages.get("admin.dashboard.activeLoans"), report.getActiveBorrows());
+        appendCsvRow(csv, messages.get("librarian.report.pendingReservations"), report.getPendingReservationRequests());
+        appendCsvRow(csv, messages.get("librarian.report.readyReservations"), report.getReadyReservations());
+        appendCsvRow(csv, messages.get("loan.status.overdue"), report.getOverdueItems());
+        appendCsvRow(csv, messages.get("librarian.report.registeredMembers"), report.getTotalMembers());
+
+        appendSectionHeading(csv, messages.get("admin.reports.periodActivity"));
+        appendCsvRow(csv, messages.get("admin.reports.loans"), report.getTotalBorrows());
+        appendCsvRow(csv, messages.get("admin.reports.borrowedCopies"), report.getTotalBorrowedItems());
+
+        appendSectionHeading(csv, messages.get("admin.reports.inventoryStatus"));
+        appendCsvRow(csv, messages.get("admin.reports.activeTitles"), report.getActiveBooks());
+        appendCsvRow(csv, messages.get("admin.reports.availableCopies"), report.getAvailableItems());
+
+        appendSectionHeading(csv, messages.get("librarian.report.revenueMetrics"));
+        appendCsvRow(csv, messages.get("librarian.report.totalRevenue"), formatMoney(report.getTotalRevenue()));
+        appendCsvRow(csv, messages.get("librarian.report.totalRefunds"), formatMoney(report.getTotalRefunds()));
+        appendCsvRow(csv, messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions());
+        appendCsvRow(csv, messages.get("librarian.report.averageTransaction"),
+                formatMoney(report.getAverageTransaction()));
+
+        appendCsvTableHeading(csv, messages.get("librarian.report.byType"));
+        appendMetricSection(csv, messages.get("librarian.report.exportTransactionType"),
+                messages.get("librarian.report.transactionCount"),
+                messages.get("librarian.report.exportAmount"), report.getTransactionBreakdown(), true);
+        appendCsvTableHeading(csv, messages.get("librarian.report.monthly"));
+        appendMetricSection(csv, messages.get("librarian.report.month"),
+                messages.get("librarian.report.transactionCount"),
+                messages.get("librarian.report.exportAmount"), report.getMonthlyRevenueStats(), true);
+        appendCsvTableHeading(csv, messages.get("admin.reports.monthlyLoans"));
+        appendMetricSection(csv, messages.get("librarian.report.month"),
+                messages.get("admin.reports.loans"), null, report.getMonthlyBorrowStats(), false);
+        appendCsvTableHeading(csv, messages.get("admin.reports.topBooks"));
+        appendMetricSection(csv, messages.get("admin.reports.topBooks"),
+                messages.get("admin.reports.loans"), null, report.getTopBooks(), false);
+        appendCsvTableHeading(csv, messages.get("admin.reports.topMembers"));
+        appendMetricSection(csv, messages.get("admin.reports.topMembers"),
+                messages.get("admin.reports.borrowedCopies"), null, report.getTopMembers(), false);
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
@@ -273,29 +330,39 @@ public class ReportServiceImpl implements ReportService {
         PdfWriter writer = new PdfWriter(outputStream);
         PdfDocument pdfDocument = new PdfDocument(writer);
 
-        try (Document document = new Document(pdfDocument)) {
-            document.add(new Paragraph("Library Management Admin Report").setBold().setFontSize(18));
-            document.add(new Paragraph("Period: " + report.getFromDate() + " to " + report.getToDate()));
-            document.add(new Paragraph("Generated at: " + report.getGeneratedAt()));
-
-            Table overview = new Table(UnitValue.createPercentArray(new float[] { 2, 1 }))
-                    .useAllAvailableWidth();
-            overview.addHeaderCell("Metric");
-            overview.addHeaderCell("Value");
-            addPdfRow(overview, "Borrow records", report.getTotalBorrows());
-            addPdfRow(overview, "Borrowed items", report.getTotalBorrowedItems());
-            addPdfRow(overview, "On-time returns", report.getOnTimeReturns());
-            addPdfRow(overview, "Late returns", report.getLateReturns());
-            addPdfRow(overview, "Current overdue items", report.getOverdueItems());
-            addPdfRow(overview, "Members", report.getTotalMembers());
-            addPdfRow(overview, "Active books", report.getActiveBooks());
-            addPdfRow(overview, "Available copies", report.getAvailableItems());
-            addPdfRow(overview, "Revenue", report.getTotalRevenue());
-            document.add(overview);
-
-            addMetricPdfSection(document, "Transaction breakdown", "Amount", report.getTransactionBreakdown(), true);
-            addMetricPdfSection(document, "Top borrowed books", "Borrows", report.getTopBooks(), false);
-            addMetricPdfSection(document, "Top borrowing members", "Items", report.getTopMembers(), false);
+        try (Document document = createPdfDocument(pdfDocument, PageSize.A4.rotate(),
+                messages.get("admin.reports.exportTitle"), report.getFromDate(), report.getToDate(),
+                report.getGeneratedAt())) {
+            addSummaryPdfSection(document, messages.get("librarian.report.currentActivity"), List.of(
+                    metric(messages.get("admin.dashboard.activeLoans"), report.getActiveBorrows()),
+                    metric(messages.get("librarian.report.pendingReservations"), report.getPendingReservationRequests()),
+                    metric(messages.get("librarian.report.readyReservations"), report.getReadyReservations()),
+                    metric(messages.get("loan.status.overdue"), report.getOverdueItems()),
+                    metric(messages.get("librarian.report.registeredMembers"), report.getTotalMembers())));
+            addSummaryPdfSection(document, messages.get("admin.reports.periodActivity"), List.of(
+                    metric(messages.get("admin.reports.loans"), report.getTotalBorrows()),
+                    metric(messages.get("admin.reports.borrowedCopies"), report.getTotalBorrowedItems())));
+            addSummaryPdfSection(document, messages.get("admin.reports.inventoryStatus"), List.of(
+                    metric(messages.get("admin.reports.activeTitles"), report.getActiveBooks()),
+                    metric(messages.get("admin.reports.availableCopies"), report.getAvailableItems())));
+            addSummaryPdfSection(document, messages.get("librarian.report.revenueMetrics"), List.of(
+                    metric(messages.get("librarian.report.totalRevenue"), formatMoney(report.getTotalRevenue())),
+                    metric(messages.get("librarian.report.totalRefunds"), formatMoney(report.getTotalRefunds())),
+                    metric(messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions()),
+                    metric(messages.get("librarian.report.averageTransaction"),
+                            formatMoney(report.getAverageTransaction()))));
+            addMetricPdfSection(document, messages.get("librarian.report.byType"),
+                    messages.get("librarian.report.transactionCount"), report.getTransactionBreakdown(), true);
+            addMetricPdfSection(document, messages.get("librarian.report.monthly"),
+                    messages.get("librarian.report.transactionCount"), report.getMonthlyRevenueStats(), true);
+            addMetricPdfSection(document, messages.get("admin.reports.monthlyLoans"),
+                    messages.get("admin.reports.loans"), report.getMonthlyBorrowStats(), false);
+            addMetricPdfSection(document, messages.get("admin.reports.topBooks"),
+                    messages.get("admin.reports.loans"), report.getTopBooks(), false);
+            addMetricPdfSection(document, messages.get("admin.reports.topMembers"),
+                    messages.get("admin.reports.borrowedCopies"), report.getTopMembers(), false);
+        } catch (IOException exception) {
+            throw new IllegalStateException(messages.get("backend.report.pdfFontUnavailable"), exception);
         }
 
         return outputStream.toByteArray();
@@ -304,21 +371,31 @@ public class ReportServiceImpl implements ReportService {
     private byte[] buildLibrarianRevenueCsv(LibrarianRevenueReportData report) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append(escapeCsv(messages.get("librarian.report.exportTitle"))).append("\n");
-        appendCsvRow(csv, messages.get("librarian.report.exportFrom"), report.getFromDate());
-        appendCsvRow(csv, messages.get("librarian.report.exportTo"), report.getToDate());
-        appendCsvRow(csv, messages.get("librarian.report.generatedAt"), report.getGeneratedAt());
-        csv.append("\n").append(escapeCsv(messages.get("librarian.report.exportMetric")))
-                .append(",").append(escapeCsv(messages.get("librarian.report.exportValue"))).append("\n");
-        appendCsvRow(csv, messages.get("librarian.report.totalRevenue"), report.getTotalRevenue());
-        appendCsvRow(csv, messages.get("librarian.report.totalRefunds"), report.getTotalRefunds());
+        appendCsvRow(csv, messages.get("librarian.report.exportFrom"), formatDate(report.getFromDate()));
+        appendCsvRow(csv, messages.get("librarian.report.exportTo"), formatDate(report.getToDate()));
+        appendCsvRow(csv, messages.get("librarian.report.generatedAt"), formatDateTime(report.getGeneratedAt()));
+
+        appendSectionHeading(csv, messages.get("librarian.report.currentActivity"));
+        appendCsvRow(csv, messages.get("admin.dashboard.activeLoans"), report.getActiveBorrows());
+        appendCsvRow(csv, messages.get("librarian.report.pendingReservations"), report.getPendingReservationRequests());
+        appendCsvRow(csv, messages.get("librarian.report.readyReservations"), report.getReadyReservations());
+        appendCsvRow(csv, messages.get("loan.status.overdue"), report.getOverdueItems());
+        appendCsvRow(csv, messages.get("librarian.report.registeredMembers"), report.getTotalMembers());
+
+        appendSectionHeading(csv, messages.get("librarian.report.revenueMetrics"));
+        appendCsvRow(csv, messages.get("librarian.report.totalRevenue"), formatMoney(report.getTotalRevenue()));
+        appendCsvRow(csv, messages.get("librarian.report.totalRefunds"), formatMoney(report.getTotalRefunds()));
         appendCsvRow(csv, messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions());
-        appendCsvRow(csv, messages.get("librarian.report.averageTransaction"), report.getAverageTransaction());
+        appendCsvRow(csv, messages.get("librarian.report.averageTransaction"),
+                formatMoney(report.getAverageTransaction()));
+        appendCsvTableHeading(csv, messages.get("librarian.report.byType"));
         appendMetricSection(csv, messages.get("librarian.report.exportTransactionType"),
                 messages.get("librarian.report.transactionCount"),
-                messages.get("librarian.report.exportAmount"), report.getTransactionBreakdown());
+                messages.get("librarian.report.exportAmount"), report.getTransactionBreakdown(), true);
+        appendCsvTableHeading(csv, messages.get("librarian.report.monthly"));
         appendMetricSection(csv, messages.get("librarian.report.month"),
                 messages.get("librarian.report.transactionCount"),
-                messages.get("librarian.report.exportAmount"), report.getMonthlyRevenueStats());
+                messages.get("librarian.report.exportAmount"), report.getMonthlyRevenueStats(), true);
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
@@ -327,29 +404,29 @@ public class ReportServiceImpl implements ReportService {
         PdfWriter writer = new PdfWriter(outputStream);
         PdfDocument pdfDocument = new PdfDocument(writer);
 
-        try (Document document = new Document(pdfDocument)) {
-            document.add(new Paragraph(messages.get("librarian.report.exportTitle")).setBold().setFontSize(18));
-            document.add(new Paragraph(messages.get("librarian.report.exportPeriod") + ": "
-                    + report.getFromDate() + " - " + report.getToDate()));
-            document.add(new Paragraph(messages.get("librarian.report.generatedAt") + ": "
-                    + report.getGeneratedAt()));
-
-            Table overview = new Table(UnitValue.createPercentArray(new float[] { 2, 1 }))
-                    .useAllAvailableWidth();
-            overview.addHeaderCell(messages.get("librarian.report.exportMetric"));
-            overview.addHeaderCell(messages.get("librarian.report.exportValue"));
-            addPdfRow(overview, messages.get("librarian.report.totalRevenue"), report.getTotalRevenue());
-            addPdfRow(overview, messages.get("librarian.report.totalRefunds"), report.getTotalRefunds());
-            addPdfRow(overview, messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions());
-            addPdfRow(overview, messages.get("librarian.report.averageTransaction"), report.getAverageTransaction());
-            document.add(overview);
-
+        try (Document document = createPdfDocument(pdfDocument, PageSize.A4,
+                messages.get("librarian.report.exportTitle"), report.getFromDate(), report.getToDate(),
+                report.getGeneratedAt())) {
+            addSummaryPdfSection(document, messages.get("librarian.report.currentActivity"), List.of(
+                    metric(messages.get("admin.dashboard.activeLoans"), report.getActiveBorrows()),
+                    metric(messages.get("librarian.report.pendingReservations"), report.getPendingReservationRequests()),
+                    metric(messages.get("librarian.report.readyReservations"), report.getReadyReservations()),
+                    metric(messages.get("loan.status.overdue"), report.getOverdueItems()),
+                    metric(messages.get("librarian.report.registeredMembers"), report.getTotalMembers())));
+            addSummaryPdfSection(document, messages.get("librarian.report.revenueMetrics"), List.of(
+                    metric(messages.get("librarian.report.totalRevenue"), formatMoney(report.getTotalRevenue())),
+                    metric(messages.get("librarian.report.totalRefunds"), formatMoney(report.getTotalRefunds())),
+                    metric(messages.get("librarian.report.exportCompletedTransactions"), report.getTotalTransactions()),
+                    metric(messages.get("librarian.report.averageTransaction"),
+                            formatMoney(report.getAverageTransaction()))));
             addMetricPdfSection(document, messages.get("librarian.report.byType"),
                     messages.get("librarian.report.transactionCount"),
                     report.getTransactionBreakdown(), true);
             addMetricPdfSection(document, messages.get("librarian.report.monthly"),
                     messages.get("librarian.report.transactionCount"),
                     report.getMonthlyRevenueStats(), true);
+        } catch (IOException exception) {
+            throw new IllegalStateException(messages.get("backend.report.pdfFontUnavailable"), exception);
         }
 
         return outputStream.toByteArray();
@@ -359,23 +436,39 @@ public class ReportServiceImpl implements ReportService {
             String labelHeader,
             String countHeader,
             String amountHeader,
-            List<ReportMetric> metrics) {
-        csv.append("\n").append(labelHeader).append(",").append(countHeader);
+            List<ReportMetric> metrics,
+            boolean amountIsMoney) {
+        csv.append("\n").append(escapeCsv(labelHeader)).append(",").append(escapeCsv(countHeader));
         if (amountHeader != null) {
-            csv.append(",").append(amountHeader);
+            csv.append(",").append(escapeCsv(amountHeader + (amountIsMoney ? " (VND)" : "")));
         }
         csv.append("\n");
+        if (metrics.isEmpty()) {
+            csv.append(escapeCsv(messages.get("admin.reports.noData"))).append("\n");
+            return;
+        }
         for (ReportMetric metric : metrics) {
-            csv.append(escapeCsv(metric.getLabel())).append(",").append(metric.getCount());
+            csv.append(escapeCsv(metric.getLabel())).append(",").append(escapeCsv(String.valueOf(metric.getCount())));
             if (amountHeader != null) {
-                csv.append(",").append(metric.getAmount());
+                Object amount = amountIsMoney ? formatMoney(metric.getAmount()) : metric.getAmount();
+                csv.append(",").append(escapeCsv(String.valueOf(amount)));
             }
             csv.append("\n");
         }
     }
 
     private void appendCsvRow(StringBuilder csv, String label, Object value) {
-        csv.append(escapeCsv(label)).append(",").append(value).append("\n");
+        csv.append(escapeCsv(label)).append(",").append(escapeCsv(String.valueOf(value))).append("\n");
+    }
+
+    private void appendSectionHeading(StringBuilder csv, String heading) {
+        csv.append("\n").append(escapeCsv(heading)).append("\n")
+                .append(escapeCsv(messages.get("librarian.report.exportMetric"))).append(",")
+                .append(escapeCsv(messages.get("librarian.report.exportValue"))).append("\n");
+    }
+
+    private void appendCsvTableHeading(StringBuilder csv, String heading) {
+        csv.append("\n").append(escapeCsv(heading)).append("\n");
     }
 
     private String escapeCsv(String value) {
@@ -383,33 +476,167 @@ public class ReportServiceImpl implements ReportService {
         return "\"" + normalized.replace("\"", "\"\"") + "\"";
     }
 
-    private void addPdfRow(Table table, String label, Object value) {
-        table.addCell(label);
-        table.addCell(String.valueOf(value));
-    }
-
     private void addMetricPdfSection(Document document,
             String title,
             String valueHeader,
             List<ReportMetric> metrics,
             boolean includeAmount) {
-        document.add(new Paragraph(title).setBold().setMarginTop(16));
+        document.add(sectionTitle(title));
         Table table = includeAmount
                 ? new Table(UnitValue.createPercentArray(new float[] { 3, 1, 1 })).useAllAvailableWidth()
                 : new Table(UnitValue.createPercentArray(new float[] { 3, 1 })).useAllAvailableWidth();
-        table.addHeaderCell(messages.get("librarian.report.exportName"));
-        table.addHeaderCell(valueHeader);
+        table.addHeaderCell(headerCell(messages.get("librarian.report.exportName")));
+        table.addHeaderCell(headerCell(valueHeader));
         if (includeAmount) {
-            table.addHeaderCell(messages.get("librarian.report.exportAmount"));
+            table.addHeaderCell(headerCell(messages.get("librarian.report.exportAmount") + " (VND)"));
         }
         for (ReportMetric metric : metrics) {
-            table.addCell(metric.getLabel());
-            table.addCell(String.valueOf(metric.getCount()));
+            table.addCell(bodyCell(metric.getLabel(), false));
+            table.addCell(bodyCell(String.valueOf(metric.getCount()), true));
             if (includeAmount) {
-                table.addCell(String.valueOf(metric.getAmount()));
+                table.addCell(bodyCell(formatMoney(metric.getAmount()), true));
             }
         }
+        if (metrics.isEmpty()) {
+            table.addCell(new Cell(1, includeAmount ? 3 : 2)
+                    .setPadding(10).setTextAlignment(TextAlignment.CENTER)
+                    .setBorder(new SolidBorder(pdfBorder(), .6f))
+                    .add(new Paragraph(messages.get("admin.reports.noData"))));
+        }
         document.add(table);
+    }
+
+    private BigDecimal completedRefunds(LocalDateTime startDate, LocalDateTime endDate) {
+        return transactionRepository.sumAbsoluteAmountByTypeAndStatusAndDateRange(
+                FinancialTransactionPolicy.REFUND_TYPE,
+                FinancialTransactionPolicy.COMPLETED_STATUS,
+                startDate,
+                endDate);
+    }
+
+    private BigDecimal averageTransaction(BigDecimal totalRevenue, long totalTransactions) {
+        BigDecimal safeRevenue = totalRevenue == null ? BigDecimal.ZERO : totalRevenue;
+        return totalTransactions == 0
+                ? BigDecimal.ZERO
+                : safeRevenue.divide(BigDecimal.valueOf(totalTransactions), 2, RoundingMode.HALF_UP);
+    }
+
+    private Document createPdfDocument(PdfDocument pdfDocument,
+            PageSize pageSize,
+            String title,
+            LocalDate fromDate,
+            LocalDate toDate,
+            LocalDateTime generatedAt) throws IOException {
+        pdfDocument.setDefaultPageSize(pageSize);
+        Document document = new Document(pdfDocument);
+        document.setMargins(28, 28, 28, 28);
+        document.setFont(reportFont());
+
+        Color brandDark = new DeviceRgb(83, 59, 47);
+        Color brand = new DeviceRgb(150, 96, 43);
+        Table heading = new Table(UnitValue.createPercentArray(new float[] { 3, 2 })).useAllAvailableWidth();
+        heading.addCell(new Cell().setPadding(14).setBorder(null).setBackgroundColor(brandDark)
+                .add(new Paragraph(title).setBold().setFontSize(18)
+                        .setFontColor(new DeviceRgb(255, 255, 255))));
+        heading.addCell(new Cell().setPadding(14).setBorder(null).setBackgroundColor(brand)
+                .setTextAlignment(TextAlignment.RIGHT)
+                .add(new Paragraph(messages.get("librarian.report.exportPeriod") + ": "
+                        + formatDate(fromDate) + " - " + formatDate(toDate))
+                        .setFontSize(9).setFontColor(new DeviceRgb(255, 255, 255)))
+                .add(new Paragraph(messages.get("librarian.report.generatedAt") + ": "
+                        + formatDateTime(generatedAt))
+                        .setFontSize(8).setFontColor(new DeviceRgb(255, 255, 255))));
+        document.add(heading);
+        return document;
+    }
+
+    private void addSummaryPdfSection(Document document, String title, List<SummaryMetric> metrics) {
+        document.add(sectionTitle(title));
+        Table table = new Table(UnitValue.createPercentArray(new float[] { 3, 1 }))
+                .useAllAvailableWidth();
+        for (SummaryMetric metric : metrics) {
+            table.addCell(bodyCell(metric.label(), false));
+            table.addCell(bodyCell(metric.value(), true));
+        }
+        document.add(table);
+    }
+
+    private Paragraph sectionTitle(String title) {
+        return new Paragraph(title)
+                .setBold()
+                .setFontSize(12)
+                .setFontColor(new DeviceRgb(83, 50, 21))
+                .setMarginTop(14)
+                .setMarginBottom(6);
+    }
+
+    private Cell headerCell(String value) {
+        return new Cell()
+                .setPadding(7)
+                .setBackgroundColor(new DeviceRgb(252, 238, 231))
+                .setBorder(new SolidBorder(pdfBorder(), .6f))
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                .add(new Paragraph(value).setBold().setFontSize(8).setMargin(0));
+    }
+
+    private Cell bodyCell(String value, boolean alignRight) {
+        Cell cell = new Cell()
+                .setPadding(7)
+                .setBorder(new SolidBorder(pdfBorder(), .6f))
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                .add(new Paragraph(value == null ? "" : value).setFontSize(8).setMargin(0));
+        if (alignRight) {
+            cell.setTextAlignment(TextAlignment.RIGHT);
+        }
+        return cell;
+    }
+
+    private Color pdfBorder() {
+        return new DeviceRgb(225, 211, 197);
+    }
+
+    private PdfFont reportFont() throws IOException {
+        try (var resource = ReportServiceImpl.class.getResourceAsStream("/fonts/NotoSans-Regular.ttf")) {
+            if (resource != null) {
+                return PdfFontFactory.createFont(resource.readAllBytes(), PdfEncodings.IDENTITY_H,
+                        PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+            }
+        }
+        for (String candidate : List.of(
+                "C:/Windows/Fonts/arial.ttf",
+                "C:/Windows/Fonts/tahoma.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+                "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+                "/System/Library/Fonts/Supplemental/Arial.ttf")) {
+            if (Files.isRegularFile(Path.of(candidate))) {
+                return PdfFontFactory.createFont(candidate, PdfEncodings.IDENTITY_H,
+                        PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
+            }
+        }
+        throw new IOException(messages.get("backend.report.pdfFontUnavailable"));
+    }
+
+    private SummaryMetric metric(String label, Object value) {
+        return new SummaryMetric(label, String.valueOf(value));
+    }
+
+    private String formatDate(LocalDate value) {
+        return value == null ? "" : value.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    private String formatDateTime(LocalDateTime value) {
+        return value == null ? "" : value.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+    }
+
+    private String formatMoney(BigDecimal value) {
+        NumberFormat formatter = NumberFormat.getNumberInstance(LocaleContextHolder.getLocale());
+        formatter.setMinimumFractionDigits(0);
+        formatter.setMaximumFractionDigits(2);
+        return formatter.format(value == null ? BigDecimal.ZERO : value) + " " + messages.get("currency.vnd");
+    }
+
+    private record SummaryMetric(String label, String value) {
     }
 
     private long toLong(Object value) {
@@ -417,18 +644,25 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private LocalDate[] normalizeDateRange(LocalDate fromDate, LocalDate toDate) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ReportPeriodPolicy.LIBRARY_ZONE);
+        if ((fromDate == null) != (toDate == null)) {
+            throw new ValidationException(messages.get("backend.report.dateRangeRequired"));
+        }
         if ((fromDate != null && fromDate.isAfter(today))
                 || (toDate != null && toDate.isAfter(today))) {
             throw new ValidationException(messages.get("backend.report.futureDate"));
         }
-        LocalDate normalizedToDate = toDate == null ? LocalDate.now() : toDate;
-        LocalDate normalizedFromDate = fromDate == null ? normalizedToDate.minusDays(29) : fromDate;
+        LocalDate normalizedToDate = toDate == null ? today : toDate;
+        LocalDate normalizedFromDate = fromDate == null
+                ? normalizedToDate.minusDays(ReportPeriodPolicy.DEFAULT_LOOKBACK_DAYS)
+                : fromDate;
         if (normalizedFromDate.isAfter(normalizedToDate)) {
             throw new ValidationException(messages.get("backend.report.invalidRange"));
         }
-        if (ChronoUnit.DAYS.between(normalizedFromDate, normalizedToDate) > MAX_REPORT_RANGE_DAYS) {
-            throw new ValidationException(messages.get("backend.report.rangeTooLarge", MAX_REPORT_RANGE_DAYS));
+        if (ChronoUnit.DAYS.between(normalizedFromDate, normalizedToDate)
+                > ReportPeriodPolicy.MAX_RANGE_DAYS) {
+            throw new ValidationException(messages.get(
+                    "backend.report.rangeTooLarge", ReportPeriodPolicy.MAX_RANGE_DAYS));
         }
         return new LocalDate[] { normalizedFromDate, normalizedToDate };
     }

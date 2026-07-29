@@ -27,7 +27,8 @@ public class CreateMemberAccountRequest {
     private String phone;
 
     @NotBlank(message = "{validation.usernameRequired}")
-    @Pattern(regexp = "^(?:|[a-zA-Z0-9_]{3,20})$", message = "{validation.username}")
+    @Size(min = 3, max = 20, message = "{validation.usernameLength}")
+    @Pattern(regexp = "^[\\x21-\\x7E]+$", message = "{validation.username}")
     private String username;
 
     @NotBlank(message = "{backend.account.passwordRequired}")

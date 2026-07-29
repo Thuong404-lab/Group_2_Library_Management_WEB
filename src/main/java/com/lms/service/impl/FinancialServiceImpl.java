@@ -186,15 +186,37 @@ public class FinancialServiceImpl implements FinancialService {
     @Override
     @Transactional(readOnly = true)
     public BigDecimal calculateBorrowingFeeAmount(Integer borrowId) {
+        Borrow borrow = borrowRepository.findById(borrowId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        localizedMessageService.get("backend.loan.notFoundById", borrowId)));
         List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrowId);
         if (details == null || details.isEmpty()) {
             throw new ConflictException(localizedMessageService.get("backend.borrow.noDetails"));
         }
 
-        return details.stream()
+        BigDecimal baseAmount = details.stream()
                 .map(detail -> BigDecimal.valueOf(calculateBorrowDays(detail))
                         .multiply(getBorrowFeeForCondition(detail.getBookItem())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        /*
+         * The membership reduction is part of the payable borrowing fee, not a
+         * UI-only preview. This single calculation is used by wallet payment,
+         * QR/KQPay order creation, and KQPay settlement verification so every
+         * payment channel charges the same discounted amount.
+         */
+        BigDecimal discountPercent = borrow.getMember() != null
+                && borrow.getMember().getTier() != null
+                && borrow.getMember().getTier().getDiscountPercent() != null
+                        ? borrow.getMember().getTier().getDiscountPercent()
+                        : BigDecimal.ZERO;
+        BigDecimal validDiscount = discountPercent.max(BigDecimal.ZERO).min(BigDecimal.valueOf(100));
+        BigDecimal discountedAmount = baseAmount.multiply(
+                BigDecimal.ONE.subtract(validDiscount.divide(BigDecimal.valueOf(100), 6,
+                        java.math.RoundingMode.HALF_UP)));
+
+        // KQPay accepts VND only; round once here so every channel uses one amount.
+        return discountedAmount.setScale(0, java.math.RoundingMode.HALF_UP);
     }
 
     @Override
@@ -234,7 +256,6 @@ public class FinancialServiceImpl implements FinancialService {
         walletRepository.save(wallet);
 
         saveWalletTransaction(wallet, null, DEPOSIT_TYPE, depositAmount.negate(), COMPLETED_STATUS);
-
         reservation.setStatus("Deposit_Paid");
         reservationRepository.save(reservation);
 

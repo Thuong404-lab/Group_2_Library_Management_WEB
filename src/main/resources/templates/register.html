@@ -39,10 +39,13 @@
                             <span th:text="#{register.fullName}">Full name</span>
                             <span class="required-mark" aria-hidden="true">*</span>
                         </label>
-                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}"
+                        <input type="text" class="form-control" id="fullName" th:field="*{fullName}" th:errorclass="is-invalid"
                                th:placeholder="#{register.fullName.placeholder}" placeholder="Enter your full name"
-                               minlength="2" maxlength="50" required autofocus autocomplete="name">
-                        <div class="invalid-feedback" th:text="#{register.fullName.required}">Please enter a valid full name.</div>
+                               minlength="2" maxlength="50" pattern="^[\p{L}]+(?:\s+[\p{L}]+)*$" required autofocus autocomplete="name">
+                        <div class="invalid-feedback">
+                            <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
+                            <span th:unless="${#fields.hasErrors('fullName')}" th:text="#{register.fullName.required}">Please enter a valid full name.</span>
+                        </div>
                     </div>
 
                     <div class="register-field-grid">
@@ -51,11 +54,14 @@
                                 <span th:text="#{register.username}">Username</span>
                                 <span class="required-mark" aria-hidden="true">*</span>
                             </label>
-                            <input type="text" class="form-control" id="username" th:field="*{username}"
+                            <input type="text" class="form-control" id="username" th:field="*{username}" th:errorclass="is-invalid"
                                    th:placeholder="#{register.username.placeholder}" placeholder="Choose a username"
-                                   minlength="3" maxlength="20" pattern="^[a-zA-Z0-9_]{3,20}$"
+                                   minlength="3" maxlength="20" pattern="^[\x21-\x7E]{3,20}$"
                                    th:title="#{validation.username}" required autocomplete="username">
-                            <div class="invalid-feedback" th:text="#{register.username.required}">Please enter a username (3-20 characters).</div>
+                            <div class="invalid-feedback">
+                                <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+                                <span th:unless="${#fields.hasErrors('username')}" th:text="#{register.username.required}">Please enter a username (3-20 characters).</span>
+                            </div>
                         </div>
 
                         <div class="auth-field">
@@ -63,10 +69,13 @@
                                 <span th:text="#{register.email}">Email</span>
                                 <span class="required-mark" aria-hidden="true">*</span>
                             </label>
-                            <input type="email" class="form-control" id="email" th:field="*{email}"
+                            <input type="email" class="form-control" id="email" th:field="*{email}" th:errorclass="is-invalid"
                                    th:placeholder="#{register.email.placeholder}" placeholder="Enter your email"
-                                   maxlength="100" th:title="#{validation.email}" required autocomplete="email">
-                            <div class="invalid-feedback" th:text="#{register.email.required}">Please enter a valid email address.</div>
+                                   maxlength="255" th:title="#{validation.email}" required autocomplete="email">
+                            <div class="invalid-feedback">
+                                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                                <span th:unless="${#fields.hasErrors('email')}" th:text="#{register.email.required}">Please enter a valid email address.</span>
+                            </div>
                         </div>
                     </div>
 
@@ -77,7 +86,7 @@
                                 <span class="required-mark" aria-hidden="true">*</span>
                             </label>
                             <div class="auth-password-field">
-                                <input type="password" class="form-control" id="password" th:field="*{password}"
+                                <input type="password" class="form-control" id="password" th:field="*{password}" th:errorclass="is-invalid"
                                        th:placeholder="#{auth.password.placeholder}" placeholder="Enter your password"
                                        minlength="6" maxlength="50" pattern="^\S+$"
                                        th:title="#{validation.passwordNoSpaces}" required autocomplete="new-password">
@@ -85,7 +94,10 @@
                                         th:aria-label="#{auth.password.show}" th:title="#{auth.password.show}">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
-                                <div class="invalid-feedback" th:text="#{register.password.required}">Please enter a password (at least 6 characters).</div>
+                                <div class="invalid-feedback">
+                                    <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+                                    <span th:unless="${#fields.hasErrors('password')}" th:text="#{register.password.required}">Please enter a password (at least 6 characters).</span>
+                                </div>
                             </div>
                         </div>
 
@@ -95,7 +107,7 @@
                                 <span class="required-mark" aria-hidden="true">*</span>
                             </label>
                             <div class="auth-password-field">
-                                <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}"
+                                <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" th:errorclass="is-invalid"
                                        th:placeholder="#{register.confirmPassword.placeholder}" placeholder="Enter your password again"
                                        minlength="6" maxlength="50" pattern="^\S+$"
                                        th:title="#{validation.passwordNoSpaces}" required autocomplete="new-password">
@@ -103,7 +115,10 @@
                                         th:aria-label="#{auth.password.show}" th:title="#{auth.password.show}">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
-                                <div class="invalid-feedback" th:text="#{auth.password.mismatch}">Passwords must match.</div>
+                                <div class="invalid-feedback" id="confirmPasswordFeedback">
+                                    <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></span>
+                                    <span th:unless="${#fields.hasErrors('confirmPassword')}" th:text="#{validation.confirmPasswordRequired}">Please confirm your password.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -113,11 +128,14 @@
                             <span th:text="#{register.phone}">Phone number</span>
                             <span class="required-mark" aria-hidden="true">*</span>
                         </label>
-                        <input type="tel" class="form-control" id="phone" th:field="*{phone}"
+                        <input type="tel" class="form-control" id="phone" th:field="*{phone}" th:errorclass="is-invalid"
                                th:placeholder="#{register.phone.placeholder}" placeholder="Enter your phone number"
                                pattern="^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\d{7}$"
                                th:title="#{backend.profile.phoneFormat}" required autocomplete="tel">
-                        <div class="invalid-feedback" th:text="#{register.phone.required}">Please enter a valid 10-digit phone number.</div>
+                        <div class="invalid-feedback">
+                            <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+                            <span th:unless="${#fields.hasErrors('phone')}" th:text="#{register.phone.required}">Please enter a valid 10-digit phone number.</span>
+                        </div>
                     </div>
 
                     <button id="submitBtn" class="btn btn-primary-custom auth-primary-button w-100" type="submit">
@@ -150,8 +168,16 @@
             const mismatchMessage = /*[[#{auth.password.mismatch}]]*/ 'Passwords must match.';
             const showPasswordLabel = /*[[#{auth.password.show}]]*/ 'Show password';
             const hidePasswordLabel = /*[[#{auth.password.hide}]]*/ 'Hide password';
+            const confirmRequiredMessage = /*[[#{validation.confirmPasswordRequired}]]*/ 'Please confirm your password.';
             const passwordInput = document.getElementById('password');
             const confirmPasswordInput = document.getElementById('confirmPassword');
+            const confirmPasswordFeedback = document.getElementById('confirmPasswordFeedback');
+
+            document.querySelectorAll('#registerForm .form-control').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    input.classList.remove('is-invalid');
+                });
+            });
 
             document.querySelectorAll('.toggle-password').forEach(function (button) {
                 button.addEventListener('click', function () {
@@ -166,9 +192,15 @@
             });
 
             function validatePasswordMatch() {
-                confirmPasswordInput.setCustomValidity(
-                    passwordInput.value === confirmPasswordInput.value ? '' : mismatchMessage
-                );
+                const hasMismatch = confirmPasswordInput.value !== ''
+                    && passwordInput.value !== confirmPasswordInput.value;
+                confirmPasswordInput.setCustomValidity(hasMismatch ? mismatchMessage : '');
+
+                if (!confirmPasswordInput.classList.contains('is-invalid')) {
+                    confirmPasswordFeedback.textContent = hasMismatch
+                        ? mismatchMessage
+                        : confirmRequiredMessage;
+                }
             }
 
             passwordInput.addEventListener('input', validatePasswordMatch);

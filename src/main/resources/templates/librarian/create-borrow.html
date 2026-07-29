@@ -23,12 +23,6 @@
                 </div>
             </header>
 
-            <div th:if="${successMessage}" class="app-alert app-alert--success mb-4" role="alert">
-                <span th:text="${successMessage}" th:remove="tag">Success message</span>
-            </div>
-            <div th:if="${errorMessage}" class="app-alert app-alert--danger mb-4" role="alert">
-                <span th:text="${errorMessage}" th:remove="tag">Error message</span>
-            </div>
 
             <div class="borrow-workspace">
 
@@ -61,8 +55,7 @@
                                         role="tab" aria-controls="pickups" th:aria-selected="${activeTab == 'pickups'}">
                                         <i class="bi bi-box-arrow-in-down"></i> <span
                                             th:text="#{librarian.borrowDesk.waitingPickups}">Waiting Pickup</span>
-                                        <span class="borrow-tab-badge"
-                                            th:text="${#lists.size(pendingPickups)}">0</span>
+                                        <span class="borrow-tab-badge" th:text="${#lists.size(pendingPickups)}">0</span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -157,17 +150,20 @@
                                             th:data-phone="${pickup.member.user.phone}"
                                             th:data-username="${usernameByMemberId[pickup.member.memberId]}">
                                             <div class="borrow-request-heading">
-                                                <h3 class="borrow-request-name" th:text="${pickup.member.user.fullName}">
+                                                <h3 class="borrow-request-name"
+                                                    th:text="${pickup.member.user.fullName}">
                                                     Member Name</h3>
                                                 <time class="borrow-request-date"
                                                     th:text="${#temporals.format(pickup.borrowDate, 'dd/MM/yyyy')}">Date</time>
                                             </div>
-                                            <div class="borrow-request-meta" th:text="${@borrowCodeFormatter.format(pickup.borrowId)} + ' - ' + ${pickup.member.user.email}">
+                                            <div class="borrow-request-meta"
+                                                th:text="${@borrowCodeFormatter.format(pickup.borrowId)} + ' - ' + ${pickup.member.user.email}">
                                                 BOR-1 - Email
                                             </div>
                                             <div class="borrow-request-footer">
                                                 <span class="status-badge status-waiting-pickup"
-                                                    th:text="#{librarian.borrowList.status.pickup}">Waiting Physical Copy Pickup</span>
+                                                    th:text="#{librarian.borrowList.status.pickup}">Waiting Physical
+                                                    Copy Pickup</span>
                                                 <span class="borrow-request-link"><span
                                                         th:text="#{common.details}">Details</span> <i
                                                         class="bi bi-chevron-right" aria-hidden="true"></i></span>
@@ -175,7 +171,8 @@
                                         </a>
                                         <div th:if="${#lists.isEmpty(pendingPickups)}"
                                             class="app-empty-state borrow-empty-state">
-                                            <span th:text="#{librarian.borrowDesk.noPickups}">No physical book pickup requests.</span>
+                                            <span th:text="#{librarian.borrowDesk.noPickups}">No physical book pickup
+                                                requests.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -225,7 +222,7 @@
                                     id="reservations" role="tabpanel" aria-labelledby="reservations-tab">
                                     <div class="list-group list-group-flush">
                                         <a th:each="reserve : ${activeReservations}"
-                                            th:href="@{/librarian/borrow/create(reservationId=${reserve.id}, tab='reservations')}"
+                                            th:href="@{/librarian/borrow/create(reservationId=${reserve.id},tab='reservations',reservationStatus=${reservationStatus})}"
                                             class="list-group-item list-group-item-action borrow-request-item"
                                             th:classappend="${selectedReservation != null && selectedReservation.reservationId == reserve.id} ? 'borrow-active-request-item' : ''"
                                             th:data-fullname="${reserve.memberName}"
@@ -234,19 +231,24 @@
                                             th:data-username="${reserve.memberUsername}">
                                             <div class="borrow-request-heading">
                                                 <h3 class="borrow-request-name"
-                                                    th:text="${reserve.memberName != null ? reserve.memberName : #messages.msg('librarian.dashboard.unknownMember')}">Member
+                                                    th:text="${reserve.memberName != null ? reserve.memberName : #messages.msg('librarian.dashboard.unknownMember')}">
+                                                    Member
                                                     Name</h3>
                                                 <time class="borrow-request-date"
                                                     th:text="${#temporals.format(reserve.bookingDate, 'dd/MM/yyyy')}">01/07/2026</time>
                                             </div>
                                             <div class="borrow-request-meta text-truncate"
-                                                th:text="${reserve.bookTitle != null ? reserve.bookTitle : #messages.msg('book.unknown')}">Book title</div>
+                                                th:text="${reserve.bookTitle != null ? reserve.bookTitle : #messages.msg('book.unknown')}">
+                                                Book title</div>
                                             <div class="borrow-request-footer">
-                                                <span th:if="${reserve.status == 'Ready'}" class="status-badge bg-success text-white">
+                                                <span th:if="${reserve.status == 'Ready'}"
+                                                    class="status-badge bg-success text-white">
                                                     <i class="bi bi-box-arrow-in-down me-1"></i>Sách sẵn sàng tại quầy
                                                 </span>
-                                                <span th:unless="${reserve.status == 'Ready'}" class="status-badge status-reservation-queue"
-                                                    th:text="#{librarian.borrowDesk.queuePosition(${reserve.queuePosition})}">Queue position: 1</span>
+                                                <span th:unless="${reserve.status == 'Ready'}"
+                                                    class="status-badge status-reservation-queue"
+                                                    th:text="#{librarian.borrowDesk.queuePosition(${reserve.queuePosition})}">Queue
+                                                    position: 1</span>
                                                 <span class="borrow-request-link"><span
                                                         th:text="#{common.details}">Details</span> <i
                                                         class="bi bi-chevron-right" aria-hidden="true"></i></span>
@@ -516,39 +518,49 @@
                             </div>
                         </div>
                         <div class="borrow-detail-body p-3">
-                            <div class="alert d-flex align-items-center gap-2 mb-3 py-2 px-3" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;color:#0b47a1;">
+                            <div class="alert d-flex align-items-center gap-2 mb-3 py-2 px-3"
+                                style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;color:#0b47a1;">
                                 <i class="bi bi-info-circle-fill fs-5 me-1" style="color:#0b47a1;"></i>
                                 <div class="small fw-semibold" style="color:#0b47a1;">
-                                    <strong th:text="#{librarian.borrowDesk.pickupAlertTitle}">The member is waiting at the desk for physical book pickup.</strong>
-                                    <span th:text="#{librarian.borrowDesk.pickupAlertHint}">Please verify member details and hand over physical copies, then click the button below.</span>
+                                    <strong th:text="#{librarian.borrowDesk.pickupAlertTitle}">The member is waiting at
+                                        the desk for physical book pickup.</strong>
+                                    <span th:text="#{librarian.borrowDesk.pickupAlertHint}">Please verify member details
+                                        and hand over physical copies, then click the button below.</span>
                                 </div>
                             </div>
 
-                            <h3 class="borrow-subsection-title mb-2 fs-6" th:text="#{librarian.borrowDesk.memberInfo}">Member Information</h3>
+                            <h3 class="borrow-subsection-title mb-2 fs-6" th:text="#{librarian.borrowDesk.memberInfo}">
+                                Member Information</h3>
                             <div class="row g-2 borrow-info-grid mb-3">
                                 <div class="col-md-6">
-                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;" th:text="#{user.fullName}">Full Name</span>
+                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;"
+                                        th:text="#{user.fullName}">Full Name</span>
                                     <strong class="borrow-info-value fw-bold text-dark fs-6"
                                         th:text="${selectedPickup.member.user.fullName}">Member Name</strong>
                                 </div>
                                 <div class="col-md-6">
-                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;" th:text="#{user.phone}">Phone Number</span>
+                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;"
+                                        th:text="#{user.phone}">Phone Number</span>
                                     <strong class="borrow-info-value text-dark"
-                                        th:text="${selectedPickup.member.user.phone != null ? selectedPickup.member.user.phone : #messages.msg('common.notUpdated')}">Not updated</strong>
+                                        th:text="${selectedPickup.member.user.phone != null ? selectedPickup.member.user.phone : #messages.msg('common.notUpdated')}">Not
+                                        updated</strong>
                                 </div>
                                 <div class="col-md-6">
-                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;" th:text="#{user.email}">Email</span>
+                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;"
+                                        th:text="#{user.email}">Email</span>
                                     <strong class="borrow-info-value text-dark"
                                         th:text="${selectedPickup.member.user.email}">Email</strong>
                                 </div>
                                 <div class="col-md-6">
-                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;" th:text="#{loan.borrowDate}">Borrow Date</span>
+                                    <span class="borrow-info-label small fw-bold d-block" style="color:#513215;"
+                                        th:text="#{loan.borrowDate}">Borrow Date</span>
                                     <strong class="borrow-info-value text-dark"
                                         th:text="${selectedPickup.borrowDate != null ? #temporals.format(selectedPickup.borrowDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">12/07/2026</strong>
                                 </div>
                             </div>
 
-                            <h3 class="borrow-subsection-title mb-2 fs-6" th:text="#{librarian.borrowDesk.requestedBooks}">Books</h3>
+                            <h3 class="borrow-subsection-title mb-2 fs-6"
+                                th:text="#{librarian.borrowDesk.requestedBooks}">Books</h3>
                             <div class="app-table-wrap borrow-detail-table-wrap mb-3">
                                 <table class="app-table borrow-detail-table align-middle">
                                     <thead>
@@ -561,14 +573,17 @@
                                     <tbody>
                                         <tr th:each="detail : ${pickupDetails}">
                                             <td class="borrow-table-primary py-2">
-                                                <div class="fw-bold text-dark small" th:text="${detail.book.title}">Book title</div>
-                                                <small class="text-muted" style="font-size: 0.75rem;" th:text="${detail.book.isbn}">ISBN</small>
+                                                <div class="fw-bold text-dark small" th:text="${detail.book.title}">Book
+                                                    title</div>
+                                                <small class="text-muted" style="font-size: 0.75rem;"
+                                                    th:text="${detail.book.isbn}">ISBN</small>
                                             </td>
                                             <td class="font-monospace fw-bold text-primary small py-2"
-                                                th:text="${detail.bookItem != null ? detail.bookItem.barcode : #messages.msg('common.notUpdated')}">BC-01</td>
+                                                th:text="${detail.bookItem != null ? detail.bookItem.barcode : #messages.msg('common.notUpdated')}">
+                                                BC-01</td>
                                             <td class="py-2">
                                                 <span class="status-badge status-waiting-pickup"
-                                                      th:text="#{librarian.borrowList.status.pickup}">Chờ nhận sách</span>
+                                                    th:text="#{librarian.borrowList.status.pickup}">Chờ nhận sách</span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -576,17 +591,19 @@
                             </div>
 
                             <div class="borrow-decision-actions justify-content-end mt-2">
-                                <form th:action="@{/librarian/borrow/pickup/{id}(id=${selectedPickup.borrowId})}" method="post"
-                                      class="borrow-action-form app-confirm-form"
-                                      th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
-                                      th:data-confirm-subject-label="#{loan.code}"
-                                      th:data-confirm-subject="${@borrowCodeFormatter.format(selectedPickup.borrowId)}"
-                                      th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
-                                      th:data-confirm-action="#{librarian.borrowList.pickupAction}">
-                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <form th:action="@{/librarian/borrow/pickup/{id}(id=${selectedPickup.borrowId})}"
+                                    method="post" class="borrow-action-form app-confirm-form"
+                                    th:data-confirm-title="#{librarian.borrowList.pickupTitle}"
+                                    th:data-confirm-subject-label="#{loan.code}"
+                                    th:data-confirm-subject="${@borrowCodeFormatter.format(selectedPickup.borrowId)}"
+                                    th:data-confirm-message="#{librarian.borrowList.pickupConfirm}"
+                                    th:data-confirm-action="#{librarian.borrowList.pickupAction}">
+                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                                        th:value="${_csrf.token}">
                                     <button type="submit" class="app-form-primary py-2 px-3 btn-sm fs-6">
                                         <i class="bi bi-box-arrow-in-down me-2"></i>
-                                        <span th:text="#{librarian.borrowDesk.confirmPickupBtn}">Confirm Physical Book Handover</span>
+                                        <span th:text="#{librarian.borrowDesk.confirmPickupBtn}">Confirm Physical Book
+                                            Handover</span>
                                     </button>
                                 </form>
                             </div>
@@ -697,7 +714,7 @@
                                 <span class="borrow-reference-badge"
                                     th:text="#{librarian.borrowDesk.reservationCode(${selectedReservation.reservationId})}">Reservation
                                     code</span>
-                                <a th:href="@{/librarian/borrow/create(tab='reservations')}" class="app-icon-action"
+                                <a th:href="@{/librarian/borrow/create(tab='reservations',reservationStatus=${reservationStatus})}" class="app-icon-action"
                                     th:title="#{common.close}" th:aria-label="#{common.close}">
                                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                                 </a>
@@ -836,18 +853,21 @@
                                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
                                     th:value="${_csrf.token}">
                                 <label for="rejectReasonCode" th:text="#{rejection.type}">Reason type</label>
-                                <select id="rejectReasonCode" name="reasonCode" required class="form-select mb-3">
+                                <select id="rejectReasonCode" name="reasonCode" required class="form-select"
+                                    aria-describedby="rejectReasonCodeError">
                                     <option value="" th:text="#{rejection.select}">Select a reason</option>
                                 </select>
+                                <div id="rejectReasonCodeError" class="acquisition-field-error mb-3" role="alert"
+                                    aria-live="assertive"></div>
                                 <label for="rejectReasonText" th:text="#{rejection.detail}">Details sent to
                                     member</label>
                                 <textarea id="rejectReasonText" name="reason" minlength="5" maxlength="500"
                                     th:placeholder="#{librarian.borrowDesk.rejectPlaceholder}"
-                                    aria-describedby="rejectReasonCount rejectReasonError"></textarea>
+                                    aria-describedby="rejectReasonCount rejectReasonTextError"></textarea>
                                 <div class="acquisition-reason-support">
                                     <span id="rejectReasonCount" aria-live="polite">0/500</span>
                                 </div>
-                                <div id="rejectReasonError" class="acquisition-field-error" role="alert"
+                                <div id="rejectReasonTextError" class="acquisition-field-error" role="alert"
                                     aria-live="assertive"></div>
                             </div>
                             <div class="modal-footer">
@@ -930,9 +950,14 @@
                         reasonSelect.add(new Option(option[1], option[0]));
                     });
                     textarea.value = "";
+                    textarea.removeAttribute('required');
                     textarea.classList.remove('is-invalid');
+                    textarea.removeAttribute('aria-invalid');
+                    reasonSelect.classList.remove('is-invalid');
+                    reasonSelect.removeAttribute('aria-invalid');
                     document.getElementById('rejectReasonCount').textContent = "0/500";
-                    document.getElementById('rejectReasonError').textContent = "";
+                    document.getElementById('rejectReasonCodeError').textContent = "";
+                    document.getElementById('rejectReasonTextError').textContent = "";
 
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('rejectReasonModal')).show();
                 }
@@ -941,15 +966,16 @@
                     const form = document.getElementById("rejectReasonForm");
                     const reason = document.getElementById("rejectReasonText");
                     const reasonCode = document.getElementById("rejectReasonCode");
-                    const error = document.getElementById("rejectReasonError");
+                    const reasonCodeError = document.getElementById("rejectReasonCodeError");
+                    const reasonTextError = document.getElementById("rejectReasonTextError");
                     const counter = document.getElementById("rejectReasonCount");
-                    if (!form || !reason || !error || !counter) return;
+                    if (!form || !reason || !reasonCode || !reasonCodeError || !reasonTextError || !counter) return;
 
                     const messages = {
-                        required: /*[[#{librarian.acquisition.validationRequired}]]*/ "A rejection reason is required.",
-                        minimum: /*[[#{librarian.acquisition.validationMinimum}]]*/ "The reason must contain at least 5 characters.",
-                        maximum: /*[[#{librarian.acquisition.validationMaximum}]]*/ "The reason cannot exceed 500 characters.",
-                        letters: /*[[#{librarian.acquisition.validationLetters}]]*/ "The reason must contain letters."
+                        required: /*[[#{librarian.bookRequest.validationRequired}]]*/ "A rejection reason is required.",
+                        minimum: /*[[#{librarian.bookRequest.validationMinimum}]]*/ "The reason must contain at least 5 characters.",
+                        maximum: /*[[#{librarian.bookRequest.validationMaximum}]]*/ "The reason cannot exceed 500 characters.",
+                        letters: /*[[#{librarian.bookRequest.validationLetters}]]*/ "The reason must contain letters."
                     };
 
                     const updateCounter = () => { counter.textContent = reason.value.length + "/500"; };
@@ -959,36 +985,54 @@
                         reason.value = value;
                         updateCounter();
 
-                        let message = "";
+                        let typeMessage = "";
+                        let detailMessage = "";
                         if (!reasonCode.value) {
-                            message = /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type.";
+                            typeMessage = /*[[#{rejection.validation.typeRequired}]]*/ "Please select a rejection reason type.";
                         } else if (reasonCode.value === "OTHER" && value === "") {
-                            message = messages.required;
+                            detailMessage = messages.required;
                         } else if (value !== "") {
                             if (value.length < 5) {
-                                message = messages.minimum;
+                                detailMessage = messages.minimum;
                             } else if (value.length > 500) {
-                                message = messages.maximum;
+                                detailMessage = messages.maximum;
                             } else if (!/\p{L}/u.test(value)) {
-                                message = messages.letters;
+                                detailMessage = messages.letters;
                             }
                         }
 
-                        if (message) {
+                        reasonCode.classList.toggle("is-invalid", typeMessage !== "");
+                        if (typeMessage) {
+                            reasonCode.setAttribute("aria-invalid", "true");
+                        } else {
+                            reasonCode.removeAttribute("aria-invalid");
+                        }
+                        reasonCodeError.textContent = typeMessage;
+                        reason.classList.toggle("is-invalid", detailMessage !== "");
+                        if (detailMessage) {
+                            reason.setAttribute("aria-invalid", "true");
+                        } else {
+                            reason.removeAttribute("aria-invalid");
+                        }
+                        reasonTextError.textContent = detailMessage;
+
+                        if (typeMessage || detailMessage) {
                             event.preventDefault();
-                            reason.classList.add("is-invalid");
-                            error.textContent = message;
-                            reason.focus();
+                            (typeMessage ? reasonCode : reason).focus();
                         }
                     });
 
                     reason.addEventListener("input", function () {
                         reason.classList.remove("is-invalid");
-                        error.textContent = "";
+                        reason.removeAttribute("aria-invalid");
+                        reasonTextError.textContent = "";
                         updateCounter();
                     });
 
                     reasonCode.addEventListener("change", function () {
+                        reasonCode.classList.remove("is-invalid");
+                        reasonCode.removeAttribute("aria-invalid");
+                        reasonCodeError.textContent = "";
                         if (reasonCode.value === "OTHER") {
                             reason.setAttribute("required", "required");
                         } else {
@@ -1120,21 +1164,21 @@
             <script th:inline="javascript">
                 document.addEventListener("DOMContentLoaded", function () {
                     // Global PJAX Event Listener for `.borrow-request-item` links
-                    document.addEventListener('click', function(e) {
+                    document.addEventListener('click', function (e) {
                         const link = e.target.closest('a.borrow-request-item');
                         if (link) {
                             e.preventDefault();
                             const url = link.getAttribute('href');
-                            
+
                             // Visual feedback
                             document.querySelectorAll('.borrow-request-item').forEach(el => el.classList.remove('borrow-active-request-item'));
                             link.classList.add('borrow-active-request-item');
-                            
+
                             const detailColumn = document.querySelector('.borrow-detail-column');
                             if (detailColumn) {
                                 detailColumn.style.opacity = '0.5';
                             }
-                            
+
                             fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                                 .then(res => {
                                     if (res.redirected) {
@@ -1166,624 +1210,624 @@
 
                     function initBorrowDetailJS() {
                         const memberInput = document.getElementById("inlineMemberId");
-                    const memberInfoBox = document.getElementById("memberInfoBox");
-                    const memberErrorBox = document.getElementById("memberErrorBox");
-                    const scannerInput = document.getElementById("scannerInput");
-                    const hiddenBarcodes = document.getElementById("inlineBarcodes");
-                    const scannedBooksTable = document.getElementById("scannedBooksTable");
-                    const tbody = scannedBooksTable ? scannedBooksTable.querySelector("tbody") : null;
-                    const scanErrorBox = document.getElementById("scanErrorBox");
-                    const offlineBorrowForm = document.getElementById("offlineBorrowForm");
-                    const daysInput = document.getElementById("inlineDays");
-                    const dueDateBox = document.getElementById("dueDateBox");
-                    const daysErrorBox = document.getElementById("daysErrorBox");
-                    const previewButton = document.getElementById("btnPreviewBill");
-                    const addBarcodeButton = document.getElementById("btnAddBarcode");
-                    const clearBarcodesButton = document.getElementById("btnClearBarcodes");
-                    const scannedBookSummary = document.getElementById("scannedBookSummary");
-                    const borrowDeskI18n = {
-                        expectedDueDate: /*[[#{borrow.expectedDueDate}]]*/ 'Expected due date',
-                        active: /*[[#{status.active}]]*/ 'Active',
-                        blocked: /*[[#{status.blocked}]]*/ 'Blocked',
-                        status: /*[[#{common.status}]]*/ 'Status',
-                        currentlyBorrowed: /*[[#{librarian.borrowDesk.currentlyBorrowed}]]*/ 'Currently borrowed',
-                        booksUnit: /*[[#{book.unit}]]*/ 'books',
-                        memberNotFound: /*[[#{librarian.borrowDesk.memberNotFound}]]*/ 'No valid member found.',
-                        selectMemberFirst: /*[[#{librarian.borrowDesk.selectMemberFirst}]]*/ 'Select a valid member before scanning books.',
-                        duplicateBook: /*[[#{librarian.borrowDesk.duplicateBook}]]*/ 'This book has already been scanned.',
-                        limitExceeded: /*[[#{librarian.borrowDesk.limitExceeded}]]*/ 'The loan limit has been reached.',
-                        unavailableBook: /*[[#{librarian.borrowDesk.unavailableBook}]]*/ 'The book is unavailable.',
-                        barcodeNotFound: /*[[#{librarian.borrowDesk.barcodeNotFound}]]*/ 'Barcode not found.',
-                        lookupFailed: /*[[#{librarian.borrowDesk.lookupFailed}]]*/ 'Book lookup failed.',
-                        coverAlt: /*[[#{book.coverAlt}]]*/ 'Book cover',
-                        removeBook: /*[[#{librarian.borrowDesk.removeBook}]]*/ 'Remove book from loan',
-                        scanRequired: /*[[#{librarian.borrowDesk.scanRequired}]]*/ 'Scan at least one book barcode.',
-                        validMemberRequired: /*[[#{librarian.borrowDesk.validMemberRequired}]]*/ 'Verify a valid member before previewing the loan.',
-                        inactiveMember: /*[[#{backend.member.inactive}]]*/ 'This member is inactive.',
-                        pendingBarcode: /*[[#{librarian.borrowDesk.pendingBarcode}]]*/ 'Add or clear the barcode currently entered.',
-                        checking: /*[[#{common.processing}]]*/ 'Checking...',
-                        scannedCount: /*[[#{librarian.borrowDesk.scannedCount}]]*/ 'Scanned: {0} / {1}',
-                        clearAll: /*[[#{librarian.borrowDesk.clearAll}]]*/ 'Clear all',
-                        invalidDays: /*[[#{backend.borrow.invalidDays(${maxBorrowDays})}]]*/ 'The loan period must be between 1 and 14 days.',
-                        remainingCapacity: /*[[#{librarian.borrowDesk.remainingCapacity}]]*/ 'Remaining capacity: {0}'
-                    };
+                        const memberInfoBox = document.getElementById("memberInfoBox");
+                        const memberErrorBox = document.getElementById("memberErrorBox");
+                        const scannerInput = document.getElementById("scannerInput");
+                        const hiddenBarcodes = document.getElementById("inlineBarcodes");
+                        const scannedBooksTable = document.getElementById("scannedBooksTable");
+                        const tbody = scannedBooksTable ? scannedBooksTable.querySelector("tbody") : null;
+                        const scanErrorBox = document.getElementById("scanErrorBox");
+                        const offlineBorrowForm = document.getElementById("offlineBorrowForm");
+                        const daysInput = document.getElementById("inlineDays");
+                        const dueDateBox = document.getElementById("dueDateBox");
+                        const daysErrorBox = document.getElementById("daysErrorBox");
+                        const previewButton = document.getElementById("btnPreviewBill");
+                        const addBarcodeButton = document.getElementById("btnAddBarcode");
+                        const clearBarcodesButton = document.getElementById("btnClearBarcodes");
+                        const scannedBookSummary = document.getElementById("scannedBookSummary");
+                        const borrowDeskI18n = {
+                            expectedDueDate: /*[[#{borrow.expectedDueDate}]]*/ 'Expected due date',
+                            active: /*[[#{status.active}]]*/ 'Active',
+                            blocked: /*[[#{status.blocked}]]*/ 'Blocked',
+                            status: /*[[#{common.status}]]*/ 'Status',
+                            currentlyBorrowed: /*[[#{librarian.borrowDesk.currentlyBorrowed}]]*/ 'Currently borrowed',
+                            booksUnit: /*[[#{book.unit}]]*/ 'books',
+                            memberNotFound: /*[[#{librarian.borrowDesk.memberNotFound}]]*/ 'No valid member found.',
+                            selectMemberFirst: /*[[#{librarian.borrowDesk.selectMemberFirst}]]*/ 'Select a valid member before scanning books.',
+                            duplicateBook: /*[[#{librarian.borrowDesk.duplicateBook}]]*/ 'This book has already been scanned.',
+                            limitExceeded: /*[[#{librarian.borrowDesk.limitExceeded}]]*/ 'The loan limit has been reached.',
+                            unavailableBook: /*[[#{librarian.borrowDesk.unavailableBook}]]*/ 'The book is unavailable.',
+                            barcodeNotFound: /*[[#{librarian.borrowDesk.barcodeNotFound}]]*/ 'Barcode not found.',
+                            lookupFailed: /*[[#{librarian.borrowDesk.lookupFailed}]]*/ 'Book lookup failed.',
+                            coverAlt: /*[[#{book.coverAlt}]]*/ 'Book cover',
+                            removeBook: /*[[#{librarian.borrowDesk.removeBook}]]*/ 'Remove book from loan',
+                            scanRequired: /*[[#{librarian.borrowDesk.scanRequired}]]*/ 'Scan at least one book barcode.',
+                            validMemberRequired: /*[[#{librarian.borrowDesk.validMemberRequired}]]*/ 'Verify a valid member before previewing the loan.',
+                            inactiveMember: /*[[#{backend.member.inactive}]]*/ 'This member is inactive.',
+                            pendingBarcode: /*[[#{librarian.borrowDesk.pendingBarcode}]]*/ 'Add or clear the barcode currently entered.',
+                            checking: /*[[#{common.processing}]]*/ 'Checking...',
+                            scannedCount: /*[[#{librarian.borrowDesk.scannedCount}]]*/ 'Scanned: {0} / {1}',
+                            clearAll: /*[[#{librarian.borrowDesk.clearAll}]]*/ 'Clear all',
+                            invalidDays: /*[[#{backend.borrow.invalidDays(${maxBorrowDays})}]]*/ 'The loan period must be between 1 and 14 days.',
+                            remainingCapacity: /*[[#{librarian.borrowDesk.remainingCapacity}]]*/ 'Remaining capacity: {0}'
+                        };
 
-                    let scannedBarcodes = [];
-                    let maxLimit = 0;
-                    let currentBorrowed = 0;
-                    let memberFound = false;
-                    let lookupSequence = 0;
+                        let scannedBarcodes = [];
+                        let maxLimit = 0;
+                        let currentBorrowed = 0;
+                        let memberFound = false;
+                        let lookupSequence = 0;
 
-                    function refreshFormState() {
-                        const daysValid = daysInput && daysInput.value !== "" && daysInput.checkValidity();
-                        if (previewButton) previewButton.disabled = !(memberFound && scannedBarcodes.length > 0 && daysValid);
-                        if (scannedBookSummary) {
-                            const remaining = Math.max(0, maxLimit - currentBorrowed - scannedBarcodes.length);
-                            scannedBookSummary.textContent = borrowDeskI18n.scannedCount.replace("{0}", scannedBarcodes.length).replace("{1}", maxLimit) + " · " + borrowDeskI18n.remainingCapacity.replace("{0}", remaining);
-                        }
-                        if (clearBarcodesButton) {
-                            clearBarcodesButton.textContent = borrowDeskI18n.clearAll;
-                            clearBarcodesButton.classList.toggle("borrow-is-hidden", scannedBarcodes.length === 0);
-                        }
-                    }
-
-                    function validateDays() {
-                        if (!daysInput || !daysErrorBox) return false;
-                        const valid = daysInput.value !== "" && daysInput.checkValidity();
-                        daysInput.classList.toggle("is-invalid", !valid);
-                        daysInput.setAttribute("aria-invalid", String(!valid));
-                        daysInput.setAttribute("aria-describedby", "daysErrorBox dueDateBox");
-                        daysErrorBox.textContent = valid ? "" : borrowDeskI18n.invalidDays;
-                        daysErrorBox.classList.toggle("borrow-is-hidden", valid);
-                        return valid;
-                    }
-
-                    function updateDueDate() {
-                        if (daysInput && dueDateBox) {
-                            const days = parseInt(daysInput.value) || 0;
-                            if (validateDays()) {
-                                const today = new Date();
-                                today.setDate(today.getDate() + days);
-                                const dd = String(today.getDate()).padStart(2, '0');
-                                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                                const yyyy = today.getFullYear();
-                                dueDateBox.innerHTML = `<i class="bi bi-calendar-check" aria-hidden="true"></i>${borrowDeskI18n.expectedDueDate}: <strong class="borrow-due-date-value">${dd}/${mm}/${yyyy}</strong>`;
-                            } else {
-                                dueDateBox.innerHTML = "";
+                        function refreshFormState() {
+                            const daysValid = daysInput && daysInput.value !== "" && daysInput.checkValidity();
+                            if (previewButton) previewButton.disabled = !(memberFound && scannedBarcodes.length > 0 && daysValid);
+                            if (scannedBookSummary) {
+                                const remaining = Math.max(0, maxLimit - currentBorrowed - scannedBarcodes.length);
+                                scannedBookSummary.textContent = borrowDeskI18n.scannedCount.replace("{0}", scannedBarcodes.length).replace("{1}", maxLimit) + " · " + borrowDeskI18n.remainingCapacity.replace("{0}", remaining);
+                            }
+                            if (clearBarcodesButton) {
+                                clearBarcodesButton.textContent = borrowDeskI18n.clearAll;
+                                clearBarcodesButton.classList.toggle("borrow-is-hidden", scannedBarcodes.length === 0);
                             }
                         }
-                    }
 
-                    if (daysInput) {
-                        daysInput.addEventListener("input", function () { updateDueDate(); refreshFormState(); });
-                        updateDueDate(); // Gọi luôn lúc đầu để hiện ngày
-                    }
-                    if (hiddenBarcodes && hiddenBarcodes.value) {
-                        const initialBarcodes = hiddenBarcodes.value.split(',').map(b => b.trim()).filter(b => b);
-                        if (initialBarcodes.length > 0) {
-                            fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(initialBarcodes.join(','))}`)
-                                .then(r => r.json())
-                                .then(data => {
-                                    data.forEach(book => {
-                                        if (book.found && book.rawStatus === 'Available') {
-                                            addBookToList(book.barcode, book.title, book.coverImageUrl, book.condition);
-                                        }
-                                    });
-                                });
+                        function validateDays() {
+                            if (!daysInput || !daysErrorBox) return false;
+                            const valid = daysInput.value !== "" && daysInput.checkValidity();
+                            daysInput.classList.toggle("is-invalid", !valid);
+                            daysInput.setAttribute("aria-invalid", String(!valid));
+                            daysInput.setAttribute("aria-describedby", "daysErrorBox dueDateBox");
+                            daysErrorBox.textContent = valid ? "" : borrowDeskI18n.invalidDays;
+                            daysErrorBox.classList.toggle("borrow-is-hidden", valid);
+                            return valid;
                         }
-                    }
 
-                    if (memberInput && memberInput.value) {
-                        lookupMember(memberInput.value);
-                    }
-
-                    let debounceTimer;
-                    if (memberInput) {
-                        memberInput.addEventListener("input", function () {
-                            clearTimeout(debounceTimer);
-                            memberInfoBox.classList.add("borrow-is-hidden");
-                            memberFound = false;
-                            lookupSequence++;
-                            refreshFormState();
-                            debounceTimer = setTimeout(() => {
-                                const val = this.value.trim();
-                                if (val.length >= 3) {
-                                    lookupMember(val);
+                        function updateDueDate() {
+                            if (daysInput && dueDateBox) {
+                                const days = parseInt(daysInput.value) || 0;
+                                if (validateDays()) {
+                                    const today = new Date();
+                                    today.setDate(today.getDate() + days);
+                                    const dd = String(today.getDate()).padStart(2, '0');
+                                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                                    const yyyy = today.getFullYear();
+                                    dueDateBox.innerHTML = `<i class="bi bi-calendar-check" aria-hidden="true"></i>${borrowDeskI18n.expectedDueDate}: <strong class="borrow-due-date-value">${dd}/${mm}/${yyyy}</strong>`;
+                                } else {
+                                    dueDateBox.innerHTML = "";
                                 }
-                            }, 500);
-                        });
-                    }
+                            }
+                        }
 
-                    function lookupMember(val) {
-                        const requestId = ++lookupSequence;
-                        memberFound = false;
-                        refreshFormState();
-                        memberInfoBox.innerHTML = `<span class="borrow-semantic-text--muted">${borrowDeskI18n.checking}</span>`;
-                        memberInfoBox.classList.remove("borrow-is-hidden");
-                        fetch(`/librarian/api/member-lookup?identifier=${encodeURIComponent(val)}`)
-                            .then(r => {
-                                if (!r.ok) throw new Error("lookup failed");
-                                return r.json();
-                            })
-                            .then(data => {
-                                if (requestId !== lookupSequence) return;
-                                if (data.found) {
-                                    maxLimit = data.maxBorrowLimit;
-                                    currentBorrowed = data.currentBorrowCount;
-                                    const accountActive = data.status === 'Active';
-                                    memberFound = data.eligible === undefined ? accountActive : data.eligible === true;
-                                    const statusHtml = accountActive
-                                        ? `<span class="borrow-semantic-text--success">${borrowDeskI18n.active}</span>`
-                                        : `<span class="borrow-semantic-text--danger">${borrowDeskI18n.blocked}</span>`;
-                                    memberInfoBox.innerHTML = `
+                        if (daysInput) {
+                            daysInput.addEventListener("input", function () { updateDueDate(); refreshFormState(); });
+                            updateDueDate(); // Gọi luôn lúc đầu để hiện ngày
+                        }
+                        if (hiddenBarcodes && hiddenBarcodes.value) {
+                            const initialBarcodes = hiddenBarcodes.value.split(',').map(b => b.trim()).filter(b => b);
+                            if (initialBarcodes.length > 0) {
+                                fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(initialBarcodes.join(','))}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        data.forEach(book => {
+                                            if (book.found && book.rawStatus === 'Available') {
+                                                addBookToList(book.barcode, book.title, book.coverImageUrl, book.condition);
+                                            }
+                                        });
+                                    });
+                            }
+                        }
+
+                        if (memberInput && memberInput.value) {
+                            lookupMember(memberInput.value);
+                        }
+
+                        let debounceTimer;
+                        if (memberInput) {
+                            memberInput.addEventListener("input", function () {
+                                clearTimeout(debounceTimer);
+                                memberInfoBox.classList.add("borrow-is-hidden");
+                                memberFound = false;
+                                lookupSequence++;
+                                refreshFormState();
+                                debounceTimer = setTimeout(() => {
+                                    const val = this.value.trim();
+                                    if (val.length >= 3) {
+                                        lookupMember(val);
+                                    }
+                                }, 500);
+                            });
+                        }
+
+                        function lookupMember(val) {
+                            const requestId = ++lookupSequence;
+                            memberFound = false;
+                            refreshFormState();
+                            memberInfoBox.innerHTML = `<span class="borrow-semantic-text--muted">${borrowDeskI18n.checking}</span>`;
+                            memberInfoBox.classList.remove("borrow-is-hidden");
+                            fetch(`/librarian/api/member-lookup?identifier=${encodeURIComponent(val)}`)
+                                .then(r => {
+                                    if (!r.ok) throw new Error("lookup failed");
+                                    return r.json();
+                                })
+                                .then(data => {
+                                    if (requestId !== lookupSequence) return;
+                                    if (data.found) {
+                                        maxLimit = data.maxBorrowLimit;
+                                        currentBorrowed = data.currentBorrowCount;
+                                        const accountActive = data.status === 'Active';
+                                        memberFound = data.eligible === undefined ? accountActive : data.eligible === true;
+                                        const statusHtml = accountActive
+                                            ? `<span class="borrow-semantic-text--success">${borrowDeskI18n.active}</span>`
+                                            : `<span class="borrow-semantic-text--danger">${borrowDeskI18n.blocked}</span>`;
+                                        memberInfoBox.innerHTML = `
                             <strong>${escapeHtml(data.fullName)}</strong> (${escapeHtml(data.memberLevel)})<br/>
                             ${borrowDeskI18n.status}: ${statusHtml}<br/>
                             ${borrowDeskI18n.currentlyBorrowed}: <strong>${currentBorrowed} / ${maxLimit}</strong> ${borrowDeskI18n.booksUnit}
                             ${memberFound ? '' : `<br/><span class="borrow-semantic-text--danger">${(data.reasons || []).map(escapeHtml).join('<br/>') || (accountActive ? borrowDeskI18n.validMemberRequired : borrowDeskI18n.inactiveMember)}</span>`}
                         `;
-                                } else {
-                                    maxLimit = 0;
-                                    currentBorrowed = 0;
-                                    memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>${borrowDeskI18n.memberNotFound}</span>`;
-                                }
-                                const reasons = data.found ? (data.reasons || []) : [borrowDeskI18n.memberNotFound];
-                                memberErrorBox.textContent = memberFound ? "" : reasons.join(" ");
-                                memberErrorBox.classList.toggle("borrow-is-hidden", memberFound);
-                                refreshFormState();
-                            })
-                            .catch(() => {
-                                if (requestId !== lookupSequence) return;
-                                memberFound = false;
-                                memberErrorBox.textContent = borrowDeskI18n.lookupFailed;
-                                memberErrorBox.classList.remove("borrow-is-hidden");
-                                memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger">${borrowDeskI18n.lookupFailed}</span>`;
-                                refreshFormState();
-                            });
-                    }
-
-                    function escapeHtml(value) {
-                        const node = document.createElement('span');
-                        node.textContent = value == null ? '' : String(value);
-                        return node.innerHTML;
-                    }
-                    const btnAddBarcode = document.getElementById("btnAddBarcode");
-                    const addBarcodeDefaultLabel = btnAddBarcode ? btnAddBarcode.textContent : "";
-                    let barcodeLookupPending = false;
-
-                    function setBarcodeLookupPending(pending) {
-                        barcodeLookupPending = pending;
-                        if (btnAddBarcode) {
-                            btnAddBarcode.disabled = pending;
-                            btnAddBarcode.innerHTML = pending
-                                ? '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + borrowDeskI18n.checking
-                                : addBarcodeDefaultLabel;
-                        }
-                        if (scannerInput) scannerInput.disabled = pending;
-                    }
-
-                    if (scannerInput) {
-                        function processBarcode() {
-                            if (barcodeLookupPending) return;
-                            scanErrorBox.classList.add("borrow-is-hidden");
-                            const barcode = scannerInput.value.trim();
-                            if (!barcode) return;
-
-                            if (!memberFound) {
-                                showError(borrowDeskI18n.selectMemberFirst);
-                                return;
-                            }
-
-                            if (scannedBarcodes.includes(barcode)) {
-                                showError(borrowDeskI18n.duplicateBook);
-                                scannerInput.value = "";
-                                return;
-                            }
-
-                            if (currentBorrowed + scannedBarcodes.length >= maxLimit) {
-                                showError(`${borrowDeskI18n.limitExceeded} (${currentBorrowed}/${maxLimit} ${borrowDeskI18n.booksUnit})`);
-                                scannerInput.value = "";
-                                return;
-                            }
-
-                            fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(barcode)}`)
-                                .then(r => r.json())
-                                .then(data => {
-                                    if (data && data.length > 0) {
-                                        const book = data[0];
-                                        if (book.found) {
-                                            if (book.rawStatus === 'Available') {
-                                                addBookToList(book.barcode, book.title, book.coverImageUrl, book.condition);
-                                                scannerInput.value = "";
-                                            } else {
-                                                showError(`${borrowDeskI18n.unavailableBook} (${borrowDeskI18n.status}: ${book.status})`);
-                                            }
-                                        } else {
-                                            showError(borrowDeskI18n.barcodeNotFound);
-                                        }
+                                    } else {
+                                        maxLimit = 0;
+                                        currentBorrowed = 0;
+                                        memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>${borrowDeskI18n.memberNotFound}</span>`;
                                     }
+                                    const reasons = data.found ? (data.reasons || []) : [borrowDeskI18n.memberNotFound];
+                                    memberErrorBox.textContent = memberFound ? "" : reasons.join(" ");
+                                    memberErrorBox.classList.toggle("borrow-is-hidden", memberFound);
+                                    refreshFormState();
                                 })
                                 .catch(() => {
-                                    showError(borrowDeskI18n.lookupFailed);
-                                })
-                                .finally(() => {
-                                    setBarcodeLookupPending(false);
-                                    scannerInput.focus();
+                                    if (requestId !== lookupSequence) return;
+                                    memberFound = false;
+                                    memberErrorBox.textContent = borrowDeskI18n.lookupFailed;
+                                    memberErrorBox.classList.remove("borrow-is-hidden");
+                                    memberInfoBox.innerHTML = `<span class="borrow-semantic-text--danger">${borrowDeskI18n.lookupFailed}</span>`;
+                                    refreshFormState();
                                 });
                         }
 
-                        scannerInput.addEventListener("keypress", function (e) {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                processBarcode();
+                        function escapeHtml(value) {
+                            const node = document.createElement('span');
+                            node.textContent = value == null ? '' : String(value);
+                            return node.innerHTML;
+                        }
+                        const btnAddBarcode = document.getElementById("btnAddBarcode");
+                        const addBarcodeDefaultLabel = btnAddBarcode ? btnAddBarcode.textContent : "";
+                        let barcodeLookupPending = false;
+
+                        function setBarcodeLookupPending(pending) {
+                            barcodeLookupPending = pending;
+                            if (btnAddBarcode) {
+                                btnAddBarcode.disabled = pending;
+                                btnAddBarcode.innerHTML = pending
+                                    ? '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + borrowDeskI18n.checking
+                                    : addBarcodeDefaultLabel;
                             }
-                        });
-
-                        if (btnAddBarcode) {
-                            btnAddBarcode.addEventListener("click", function () {
-                                processBarcode();
-                            });
-                        }
-                    }
-
-                    function createBookCover(coverImageUrl, title) {
-                        if (coverImageUrl) {
-                            const image = document.createElement("img");
-                            image.className = "borrow-scanned-book-cover";
-                            image.src = coverImageUrl;
-                            image.alt = `${borrowDeskI18n.coverAlt}: ${title}`;
-                            image.loading = "lazy";
-                            image.addEventListener("error", function () {
-                                image.replaceWith(createBookCover("", title));
-                            }, { once: true });
-                            return image;
+                            if (scannerInput) scannerInput.disabled = pending;
                         }
 
-                        const placeholder = document.createElement("span");
-                        placeholder.className = "borrow-scanned-book-cover borrow-scanned-book-cover--placeholder";
-                        placeholder.setAttribute("aria-hidden", "true");
-                        const icon = document.createElement("i");
-                        icon.className = "bi bi-book";
-                        placeholder.appendChild(icon);
-                        return placeholder;
-                    }
+                        if (scannerInput) {
+                            function processBarcode() {
+                                if (barcodeLookupPending) return;
+                                scanErrorBox.classList.add("borrow-is-hidden");
+                                const barcode = scannerInput.value.trim();
+                                if (!barcode) return;
 
-                    function addBookToList(barcode, title, coverImageUrl, condition) {
-                        if (!scannedBarcodes.includes(barcode)) {
-                            scannedBarcodes.push(barcode);
-                            updateHiddenInput();
-
-                            if (scannedBooksTable) scannedBooksTable.classList.remove("borrow-is-hidden");
-                            const tr = document.createElement("tr");
-
-                            const barcodeCell = document.createElement("td");
-                            const barcodeBadge = document.createElement("span");
-                            barcodeBadge.className = "borrow-barcode-badge";
-                            barcodeBadge.textContent = barcode;
-                            barcodeCell.appendChild(barcodeBadge);
-
-                            const bookCell = document.createElement("td");
-                            bookCell.className = "borrow-scanned-book-cell";
-                            const bookSummary = document.createElement("div");
-                            bookSummary.className = "borrow-scanned-book";
-                            bookSummary.appendChild(createBookCover(coverImageUrl, title));
-                            const bookTitle = document.createElement("span");
-                            bookTitle.className = "borrow-scanned-book-title";
-                            bookTitle.title = title;
-                            bookTitle.textContent = title;
-                            bookSummary.appendChild(bookTitle);
-                            bookCell.appendChild(bookSummary);
-
-                            const conditionCell = document.createElement("td");
-                            const conditionBadge = document.createElement("span");
-                            conditionBadge.className = "status-badge status-active";
-                            conditionBadge.textContent = condition || "—";
-                            conditionCell.appendChild(conditionBadge);
-
-                            const actionCell = document.createElement("td");
-                            actionCell.className = "borrow-action-column";
-                            const actionGroup = document.createElement("div");
-                            actionGroup.className = "app-row-actions";
-                            const removeButton = document.createElement("button");
-                            removeButton.type = "button";
-                            removeButton.className = "app-icon-action app-icon-action--delete";
-                            removeButton.title = borrowDeskI18n.removeBook;
-                            removeButton.setAttribute("aria-label", borrowDeskI18n.removeBook);
-                            removeButton.addEventListener("click", function () {
-                                removeBook(removeButton, barcode);
-                            });
-                            const removeIcon = document.createElement("i");
-                            removeIcon.className = "bi bi-x-lg";
-                            removeIcon.setAttribute("aria-hidden", "true");
-                            removeButton.appendChild(removeIcon);
-                            actionGroup.appendChild(removeButton);
-                            actionCell.appendChild(actionGroup);
-
-                            tr.append(barcodeCell, bookCell, conditionCell, actionCell);
-                            if (tbody) tbody.appendChild(tr);
-                            refreshFormState();
-                            scannerInput.focus();
-                        }
-                    }
-
-                    window.removeBook = function (btn, barcode) {
-                        scannedBarcodes = scannedBarcodes.filter(b => b !== barcode);
-                        updateHiddenInput();
-                        btn.closest("tr").remove();
-                        if (scannedBarcodes.length === 0) {
-                            if (scannedBooksTable) scannedBooksTable.classList.add("borrow-is-hidden");
-                        }
-                        if (scanErrorBox) scanErrorBox.classList.add("borrow-is-hidden");
-                        refreshFormState();
-                        scannerInput.focus();
-                    };
-
-                    function updateHiddenInput() {
-                        if (hiddenBarcodes) {
-                            hiddenBarcodes.value = scannedBarcodes.join(",");
-                        }
-                    }
-
-                    if (clearBarcodesButton) {
-                        clearBarcodesButton.addEventListener("click", function () {
-                            scannedBarcodes = [];
-                            tbody.replaceChildren();
-                            scannedBooksTable.classList.add("borrow-is-hidden");
-                            updateHiddenInput();
-                            scanErrorBox.classList.add("borrow-is-hidden");
-                            refreshFormState();
-                            scannerInput.focus();
-                        });
-                    }
-
-                    refreshFormState();
-                    if (memberInput && !memberInput.value.trim()) {
-                        memberInput.focus();
-                    } else if (scannerInput) {
-                        scannerInput.focus();
-                    }
-
-                    function showError(msg) {
-                        if (scanErrorBox) {
-                            scanErrorBox.textContent = msg;
-                            scanErrorBox.classList.remove("borrow-is-hidden");
-                        }
-                    }
-
-                    if (offlineBorrowForm) {
-                        offlineBorrowForm.addEventListener("submit", function (e) {
-                            const pendingInput = scannerInput ? scannerInput.value.trim() : "";
-                            if (!validateDays()) {
-                                e.preventDefault();
-                                daysInput.focus();
-                                return;
-                            }
-                            if (pendingInput !== "") {
-                                e.preventDefault();
-                                showError(borrowDeskI18n.pendingBarcode);
-                                scannerInput.focus();
-                                return;
-                            }
-
-                            if (scannedBarcodes.length === 0) {
-                                e.preventDefault();
-                                showError(borrowDeskI18n.scanRequired);
-                            } else if (!memberFound) {
-                                e.preventDefault();
-                                memberErrorBox.textContent = borrowDeskI18n.validMemberRequired;
-                                memberErrorBox.classList.remove("borrow-is-hidden");
-                                memberInput.focus();
-                            }
-                        });
-                    }
-
-                    // Logic Modal Xac Nhan
-                    if (document.getElementById('modalDueDate')) {
-                        var hiddenDays = document.getElementById('modalHiddenDays');
-                        var days = hiddenDays ? (parseInt(hiddenDays.value) || 14) : 14;
-                        var d = new Date();
-                        d.setDate(d.getDate() + days);
-                        var dd = String(d.getDate()).padStart(2, '0');
-                        var mm = String(d.getMonth() + 1).padStart(2, '0');
-                        var yyyy = d.getFullYear();
-                        document.getElementById('modalDueDate').innerText = dd + "/" + mm + "/" + yyyy;
-                    }
-
-                    const finalCreateForm = document.getElementById("finalCreateForm");
-                    const btnConfirmCreate = document.getElementById("btnConfirmCreate");
-                    const btnConfirmText = document.getElementById("btnConfirmText");
-                    const btnConfirmSpinner = document.getElementById("btnConfirmSpinner");
-                    const btnConfirmLoadingText = document.getElementById("btnConfirmLoadingText");
-
-                    if (finalCreateForm) {
-                        finalCreateForm.addEventListener("submit", function () {
-                            if (btnConfirmCreate) {
-                                btnConfirmCreate.disabled = true;
-                                btnConfirmText.classList.add("d-none");
-                                btnConfirmSpinner.classList.remove("d-none");
-                                btnConfirmLoadingText.classList.remove("d-none");
-                            }
-                        });
-                    }
-
-                    // ==========================================
-                    // QUÉT MÃ VẠCH CHO ĐƠN MƯỢN ONLINE (PENDING REQUESTS)
-                    // ==========================================
-                    const requestScannerInput = document.getElementById("requestScannerInput");
-                    const btnRequestAddBarcode = document.getElementById("btnRequestAddBarcode");
-                    const requestScanErrorBox = document.getElementById("requestScanErrorBox");
-                    const approveRequestForm = document.getElementById("approveRequestForm");
-                    const btnApproveRequest = document.getElementById("btnApproveRequest");
-                    const hiddenRequestBarcodesContainer = document.getElementById("hiddenRequestBarcodesContainer");
-
-                    function showRequestScanError(msg) {
-                        if (!requestScanErrorBox) return;
-                        if (msg) {
-                            requestScanErrorBox.textContent = msg;
-                            requestScanErrorBox.classList.remove("d-none");
-                        } else {
-                            requestScanErrorBox.textContent = "";
-                            requestScanErrorBox.classList.add("d-none");
-                        }
-                    }
-
-                    function updateApproveRequestButton() {
-                        if (!btnApproveRequest) return;
-                        const rows = document.querySelectorAll(".request-book-row");
-                        let allScanned = true;
-
-                        if (hiddenRequestBarcodesContainer) {
-                            hiddenRequestBarcodesContainer.innerHTML = "";
-                        }
-
-                        rows.forEach(row => {
-                            const barcode = row.getAttribute("data-scanned-barcode");
-                            if (!barcode) {
-                                allScanned = false;
-                            } else {
-                                if (hiddenRequestBarcodesContainer) {
-                                    const hiddenInput = document.createElement("input");
-                                    hiddenInput.type = "hidden";
-                                    hiddenInput.name = "barcodes";
-                                    hiddenInput.value = barcode;
-                                    hiddenRequestBarcodesContainer.appendChild(hiddenInput);
+                                if (!memberFound) {
+                                    showError(borrowDeskI18n.selectMemberFirst);
+                                    return;
                                 }
-                            }
-                        });
 
-                        btnApproveRequest.disabled = !allScanned;
-                    }
+                                if (scannedBarcodes.includes(barcode)) {
+                                    showError(borrowDeskI18n.duplicateBook);
+                                    scannerInput.value = "";
+                                    return;
+                                }
 
-                    window.removeRequestBarcode = function (buttonElement) {
-                        const row = buttonElement.closest(".request-book-row");
-                        if (row) {
-                            row.removeAttribute("data-scanned-barcode");
+                                if (currentBorrowed + scannedBarcodes.length >= maxLimit) {
+                                    showError(`${borrowDeskI18n.limitExceeded} (${currentBorrowed}/${maxLimit} ${borrowDeskI18n.booksUnit})`);
+                                    scannerInput.value = "";
+                                    return;
+                                }
 
-                            const barcodeCell = row.querySelector(".request-barcode-cell");
-                            const statusCell = row.querySelector(".request-status-cell");
-                            const actionCell = row.querySelector(".request-action-cell");
-
-                            if (barcodeCell) {
-                                barcodeCell.textContent = "Chưa quét mã vạch";
-                                barcodeCell.classList.add("text-muted", "fst-italic");
-                            }
-                            if (statusCell) {
-                                statusCell.innerHTML = '<span class="text-muted">—</span>';
-                            }
-                            if (actionCell) {
-                                actionCell.innerHTML = "—";
-                            }
-                        }
-
-                        showRequestScanError("");
-                        updateApproveRequestButton();
-                    };
-
-                    function processRequestBarcode() {
-                        if (!requestScannerInput) return;
-                        const barcode = requestScannerInput.value.trim();
-                        requestScannerInput.value = "";
-                        if (barcode === "") return;
-
-                        showRequestScanError("");
-
-                        // Check if this barcode is already scanned in any of the rows
-                        let isAlreadyScanned = false;
-                        document.querySelectorAll(".request-book-row").forEach(row => {
-                            if (row.getAttribute("data-scanned-barcode") === barcode) {
-                                isAlreadyScanned = true;
-                            }
-                        });
-
-                        if (isAlreadyScanned) {
-                            showRequestScanError("Mã vạch này đã được quét trong đơn này rồi.");
-                            return;
-                        }
-
-                        // Lookup the book by barcode
-                        fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(barcode)}`)
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data && data.length > 0) {
-                                    const bookInfo = data[0];
-                                    if (!bookInfo.found) {
-                                        showRequestScanError(`Không tìm thấy thông tin cho mã vạch: ${barcode}`);
-                                        return;
-                                    }
-
-                                    if (bookInfo.rawStatus !== "Available") {
-                                        showRequestScanError(`Bản sách ${barcode} không khả dụng (Trạng thái hiện tại: ${bookInfo.status})`);
-                                        return;
-                                    }
-
-                                    const scannedBookId = bookInfo.bookId;
-                                    const reqCount = document.querySelectorAll(`.request-book-row[data-book-id="${scannedBookId}"]`).length || 1;
-
-                                    if (bookInfo.availableCount !== undefined && (bookInfo.availableCount < reqCount)) {
-                                        showRequestScanError(`Sách '${bookInfo.title}' chỉ còn ${bookInfo.availableCount} cuốn khả dụng trong kho, không đủ để duyệt yêu cầu mượn ${reqCount} cuốn.`);
-                                        return;
-                                    }
-
-                                    // Find the first row for this bookId that doesn't have a scanned barcode
-                                    const rows = document.querySelectorAll(`.request-book-row[data-book-id="${scannedBookId}"]`);
-                                    let foundRow = null;
-                                    for (let row of rows) {
-                                        if (!row.getAttribute("data-scanned-barcode")) {
-                                            foundRow = row;
-                                            break;
+                                fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(barcode)}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data && data.length > 0) {
+                                            const book = data[0];
+                                            if (book.found) {
+                                                if (book.rawStatus === 'Available') {
+                                                    addBookToList(book.barcode, book.title, book.coverImageUrl, book.condition);
+                                                    scannerInput.value = "";
+                                                } else {
+                                                    showError(`${borrowDeskI18n.unavailableBook} (${borrowDeskI18n.status}: ${book.status})`);
+                                                }
+                                            } else {
+                                                showError(borrowDeskI18n.barcodeNotFound);
+                                            }
                                         }
-                                    }
+                                    })
+                                    .catch(() => {
+                                        showError(borrowDeskI18n.lookupFailed);
+                                    })
+                                    .finally(() => {
+                                        setBarcodeLookupPending(false);
+                                        scannerInput.focus();
+                                    });
+                            }
 
-                                    if (!foundRow) {
-                                        showRequestScanError(`Sách '${bookInfo.title}' không nằm trong yêu cầu hoặc đã đủ số lượng quét.`);
-                                        return;
-                                    }
-
-                                    // Assign barcode to this row
-                                    foundRow.setAttribute("data-scanned-barcode", barcode);
-
-                                    // Update the row UI
-                                    const barcodeCell = foundRow.querySelector(".request-barcode-cell");
-                                    const statusCell = foundRow.querySelector(".request-status-cell");
-                                    const actionCell = foundRow.querySelector(".request-action-cell");
-
-                                    if (barcodeCell) {
-                                        barcodeCell.textContent = barcode;
-                                        barcodeCell.classList.remove("text-muted", "fst-italic");
-                                    }
-                                    if (statusCell) {
-                                        const conditionText = bookInfo.condition || "—";
-                                        statusCell.innerHTML = `<span class="status-badge status-active">${conditionText}</span>`;
-                                    }
-                                    if (actionCell) {
-                                        actionCell.innerHTML = `<button type="button" class="btn btn-sm btn-link text-danger p-0 fw-bold" onclick="removeRequestBarcode(this)"><i class="bi bi-trash"></i></button>`;
-                                    }
-
-                                    showRequestScanError("");
-                                    updateApproveRequestButton();
-                                } else {
-                                    showRequestScanError(`Không tìm thấy thông tin cho mã vạch: ${barcode}`);
+                            scannerInput.addEventListener("keypress", function (e) {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    processBarcode();
                                 }
-                            })
-                            .catch(err => {
-                                console.error(err);
-                                showRequestScanError("Lỗi kết nối khi tra cứu thông tin sách.");
                             });
-                    }
 
-                    const onlineRequestScannerForm = document.getElementById("onlineRequestScannerForm");
-                    if (onlineRequestScannerForm) {
-                        onlineRequestScannerForm.addEventListener("submit", function (e) {
-                            e.preventDefault();
-                            processRequestBarcode();
-                        });
-                    }
-                } // End of initBorrowDetailJS
+                            if (btnAddBarcode) {
+                                btnAddBarcode.addEventListener("click", function () {
+                                    processBarcode();
+                                });
+                            }
+                        }
 
-                // Call it once on initial load
-                initBorrowDetailJS();
+                        function createBookCover(coverImageUrl, title) {
+                            if (coverImageUrl) {
+                                const image = document.createElement("img");
+                                image.className = "borrow-scanned-book-cover";
+                                image.src = coverImageUrl;
+                                image.alt = `${borrowDeskI18n.coverAlt}: ${title}`;
+                                image.loading = "lazy";
+                                image.addEventListener("error", function () {
+                                    image.replaceWith(createBookCover("", title));
+                                }, { once: true });
+                                return image;
+                            }
 
-                // Queue Search Input Logic
-                const queueSearchInput = document.getElementById('queueSearchInput');
+                            const placeholder = document.createElement("span");
+                            placeholder.className = "borrow-scanned-book-cover borrow-scanned-book-cover--placeholder";
+                            placeholder.setAttribute("aria-hidden", "true");
+                            const icon = document.createElement("i");
+                            icon.className = "bi bi-book";
+                            placeholder.appendChild(icon);
+                            return placeholder;
+                        }
+
+                        function addBookToList(barcode, title, coverImageUrl, condition) {
+                            if (!scannedBarcodes.includes(barcode)) {
+                                scannedBarcodes.push(barcode);
+                                updateHiddenInput();
+
+                                if (scannedBooksTable) scannedBooksTable.classList.remove("borrow-is-hidden");
+                                const tr = document.createElement("tr");
+
+                                const barcodeCell = document.createElement("td");
+                                const barcodeBadge = document.createElement("span");
+                                barcodeBadge.className = "borrow-barcode-badge";
+                                barcodeBadge.textContent = barcode;
+                                barcodeCell.appendChild(barcodeBadge);
+
+                                const bookCell = document.createElement("td");
+                                bookCell.className = "borrow-scanned-book-cell";
+                                const bookSummary = document.createElement("div");
+                                bookSummary.className = "borrow-scanned-book";
+                                bookSummary.appendChild(createBookCover(coverImageUrl, title));
+                                const bookTitle = document.createElement("span");
+                                bookTitle.className = "borrow-scanned-book-title";
+                                bookTitle.title = title;
+                                bookTitle.textContent = title;
+                                bookSummary.appendChild(bookTitle);
+                                bookCell.appendChild(bookSummary);
+
+                                const conditionCell = document.createElement("td");
+                                const conditionBadge = document.createElement("span");
+                                conditionBadge.className = "status-badge status-active";
+                                conditionBadge.textContent = condition || "—";
+                                conditionCell.appendChild(conditionBadge);
+
+                                const actionCell = document.createElement("td");
+                                actionCell.className = "borrow-action-column";
+                                const actionGroup = document.createElement("div");
+                                actionGroup.className = "app-row-actions";
+                                const removeButton = document.createElement("button");
+                                removeButton.type = "button";
+                                removeButton.className = "app-icon-action app-icon-action--delete";
+                                removeButton.title = borrowDeskI18n.removeBook;
+                                removeButton.setAttribute("aria-label", borrowDeskI18n.removeBook);
+                                removeButton.addEventListener("click", function () {
+                                    removeBook(removeButton, barcode);
+                                });
+                                const removeIcon = document.createElement("i");
+                                removeIcon.className = "bi bi-x-lg";
+                                removeIcon.setAttribute("aria-hidden", "true");
+                                removeButton.appendChild(removeIcon);
+                                actionGroup.appendChild(removeButton);
+                                actionCell.appendChild(actionGroup);
+
+                                tr.append(barcodeCell, bookCell, conditionCell, actionCell);
+                                if (tbody) tbody.appendChild(tr);
+                                refreshFormState();
+                                scannerInput.focus();
+                            }
+                        }
+
+                        window.removeBook = function (btn, barcode) {
+                            scannedBarcodes = scannedBarcodes.filter(b => b !== barcode);
+                            updateHiddenInput();
+                            btn.closest("tr").remove();
+                            if (scannedBarcodes.length === 0) {
+                                if (scannedBooksTable) scannedBooksTable.classList.add("borrow-is-hidden");
+                            }
+                            if (scanErrorBox) scanErrorBox.classList.add("borrow-is-hidden");
+                            refreshFormState();
+                            scannerInput.focus();
+                        };
+
+                        function updateHiddenInput() {
+                            if (hiddenBarcodes) {
+                                hiddenBarcodes.value = scannedBarcodes.join(",");
+                            }
+                        }
+
+                        if (clearBarcodesButton) {
+                            clearBarcodesButton.addEventListener("click", function () {
+                                scannedBarcodes = [];
+                                tbody.replaceChildren();
+                                scannedBooksTable.classList.add("borrow-is-hidden");
+                                updateHiddenInput();
+                                scanErrorBox.classList.add("borrow-is-hidden");
+                                refreshFormState();
+                                scannerInput.focus();
+                            });
+                        }
+
+                        refreshFormState();
+                        if (memberInput && !memberInput.value.trim()) {
+                            memberInput.focus();
+                        } else if (scannerInput) {
+                            scannerInput.focus();
+                        }
+
+                        function showError(msg) {
+                            if (scanErrorBox) {
+                                scanErrorBox.textContent = msg;
+                                scanErrorBox.classList.remove("borrow-is-hidden");
+                            }
+                        }
+
+                        if (offlineBorrowForm) {
+                            offlineBorrowForm.addEventListener("submit", function (e) {
+                                const pendingInput = scannerInput ? scannerInput.value.trim() : "";
+                                if (!validateDays()) {
+                                    e.preventDefault();
+                                    daysInput.focus();
+                                    return;
+                                }
+                                if (pendingInput !== "") {
+                                    e.preventDefault();
+                                    showError(borrowDeskI18n.pendingBarcode);
+                                    scannerInput.focus();
+                                    return;
+                                }
+
+                                if (scannedBarcodes.length === 0) {
+                                    e.preventDefault();
+                                    showError(borrowDeskI18n.scanRequired);
+                                } else if (!memberFound) {
+                                    e.preventDefault();
+                                    memberErrorBox.textContent = borrowDeskI18n.validMemberRequired;
+                                    memberErrorBox.classList.remove("borrow-is-hidden");
+                                    memberInput.focus();
+                                }
+                            });
+                        }
+
+                        // Logic Modal Xac Nhan
+                        if (document.getElementById('modalDueDate')) {
+                            var hiddenDays = document.getElementById('modalHiddenDays');
+                            var days = hiddenDays ? (parseInt(hiddenDays.value) || 14) : 14;
+                            var d = new Date();
+                            d.setDate(d.getDate() + days);
+                            var dd = String(d.getDate()).padStart(2, '0');
+                            var mm = String(d.getMonth() + 1).padStart(2, '0');
+                            var yyyy = d.getFullYear();
+                            document.getElementById('modalDueDate').innerText = dd + "/" + mm + "/" + yyyy;
+                        }
+
+                        const finalCreateForm = document.getElementById("finalCreateForm");
+                        const btnConfirmCreate = document.getElementById("btnConfirmCreate");
+                        const btnConfirmText = document.getElementById("btnConfirmText");
+                        const btnConfirmSpinner = document.getElementById("btnConfirmSpinner");
+                        const btnConfirmLoadingText = document.getElementById("btnConfirmLoadingText");
+
+                        if (finalCreateForm) {
+                            finalCreateForm.addEventListener("submit", function () {
+                                if (btnConfirmCreate) {
+                                    btnConfirmCreate.disabled = true;
+                                    btnConfirmText.classList.add("d-none");
+                                    btnConfirmSpinner.classList.remove("d-none");
+                                    btnConfirmLoadingText.classList.remove("d-none");
+                                }
+                            });
+                        }
+
+                        // ==========================================
+                        // QUÉT MÃ VẠCH CHO ĐƠN MƯỢN ONLINE (PENDING REQUESTS)
+                        // ==========================================
+                        const requestScannerInput = document.getElementById("requestScannerInput");
+                        const btnRequestAddBarcode = document.getElementById("btnRequestAddBarcode");
+                        const requestScanErrorBox = document.getElementById("requestScanErrorBox");
+                        const approveRequestForm = document.getElementById("approveRequestForm");
+                        const btnApproveRequest = document.getElementById("btnApproveRequest");
+                        const hiddenRequestBarcodesContainer = document.getElementById("hiddenRequestBarcodesContainer");
+
+                        function showRequestScanError(msg) {
+                            if (!requestScanErrorBox) return;
+                            if (msg) {
+                                requestScanErrorBox.textContent = msg;
+                                requestScanErrorBox.classList.remove("d-none");
+                            } else {
+                                requestScanErrorBox.textContent = "";
+                                requestScanErrorBox.classList.add("d-none");
+                            }
+                        }
+
+                        function updateApproveRequestButton() {
+                            if (!btnApproveRequest) return;
+                            const rows = document.querySelectorAll(".request-book-row");
+                            let allScanned = true;
+
+                            if (hiddenRequestBarcodesContainer) {
+                                hiddenRequestBarcodesContainer.innerHTML = "";
+                            }
+
+                            rows.forEach(row => {
+                                const barcode = row.getAttribute("data-scanned-barcode");
+                                if (!barcode) {
+                                    allScanned = false;
+                                } else {
+                                    if (hiddenRequestBarcodesContainer) {
+                                        const hiddenInput = document.createElement("input");
+                                        hiddenInput.type = "hidden";
+                                        hiddenInput.name = "barcodes";
+                                        hiddenInput.value = barcode;
+                                        hiddenRequestBarcodesContainer.appendChild(hiddenInput);
+                                    }
+                                }
+                            });
+
+                            btnApproveRequest.disabled = !allScanned;
+                        }
+
+                        window.removeRequestBarcode = function (buttonElement) {
+                            const row = buttonElement.closest(".request-book-row");
+                            if (row) {
+                                row.removeAttribute("data-scanned-barcode");
+
+                                const barcodeCell = row.querySelector(".request-barcode-cell");
+                                const statusCell = row.querySelector(".request-status-cell");
+                                const actionCell = row.querySelector(".request-action-cell");
+
+                                if (barcodeCell) {
+                                    barcodeCell.textContent = "Chưa quét mã vạch";
+                                    barcodeCell.classList.add("text-muted", "fst-italic");
+                                }
+                                if (statusCell) {
+                                    statusCell.innerHTML = '<span class="text-muted">—</span>';
+                                }
+                                if (actionCell) {
+                                    actionCell.innerHTML = "—";
+                                }
+                            }
+
+                            showRequestScanError("");
+                            updateApproveRequestButton();
+                        };
+
+                        function processRequestBarcode() {
+                            if (!requestScannerInput) return;
+                            const barcode = requestScannerInput.value.trim();
+                            requestScannerInput.value = "";
+                            if (barcode === "") return;
+
+                            showRequestScanError("");
+
+                            // Check if this barcode is already scanned in any of the rows
+                            let isAlreadyScanned = false;
+                            document.querySelectorAll(".request-book-row").forEach(row => {
+                                if (row.getAttribute("data-scanned-barcode") === barcode) {
+                                    isAlreadyScanned = true;
+                                }
+                            });
+
+                            if (isAlreadyScanned) {
+                                showRequestScanError("Mã vạch này đã được quét trong đơn này rồi.");
+                                return;
+                            }
+
+                            // Lookup the book by barcode
+                            fetch(`/librarian/api/book-lookup?barcodes=${encodeURIComponent(barcode)}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data && data.length > 0) {
+                                        const bookInfo = data[0];
+                                        if (!bookInfo.found) {
+                                            showRequestScanError(`Không tìm thấy thông tin cho mã vạch: ${barcode}`);
+                                            return;
+                                        }
+
+                                        if (bookInfo.rawStatus !== "Available") {
+                                            showRequestScanError(`Bản sách ${barcode} không khả dụng (Trạng thái hiện tại: ${bookInfo.status})`);
+                                            return;
+                                        }
+
+                                        const scannedBookId = bookInfo.bookId;
+                                        const reqCount = document.querySelectorAll(`.request-book-row[data-book-id="${scannedBookId}"]`).length || 1;
+
+                                        if (bookInfo.availableCount !== undefined && (bookInfo.availableCount < reqCount)) {
+                                            showRequestScanError(`Sách '${bookInfo.title}' chỉ còn ${bookInfo.availableCount} cuốn khả dụng trong kho, không đủ để duyệt yêu cầu mượn ${reqCount} cuốn.`);
+                                            return;
+                                        }
+
+                                        // Find the first row for this bookId that doesn't have a scanned barcode
+                                        const rows = document.querySelectorAll(`.request-book-row[data-book-id="${scannedBookId}"]`);
+                                        let foundRow = null;
+                                        for (let row of rows) {
+                                            if (!row.getAttribute("data-scanned-barcode")) {
+                                                foundRow = row;
+                                                break;
+                                            }
+                                        }
+
+                                        if (!foundRow) {
+                                            showRequestScanError(`Sách '${bookInfo.title}' không nằm trong yêu cầu hoặc đã đủ số lượng quét.`);
+                                            return;
+                                        }
+
+                                        // Assign barcode to this row
+                                        foundRow.setAttribute("data-scanned-barcode", barcode);
+
+                                        // Update the row UI
+                                        const barcodeCell = foundRow.querySelector(".request-barcode-cell");
+                                        const statusCell = foundRow.querySelector(".request-status-cell");
+                                        const actionCell = foundRow.querySelector(".request-action-cell");
+
+                                        if (barcodeCell) {
+                                            barcodeCell.textContent = barcode;
+                                            barcodeCell.classList.remove("text-muted", "fst-italic");
+                                        }
+                                        if (statusCell) {
+                                            const conditionText = bookInfo.condition || "—";
+                                            statusCell.innerHTML = `<span class="status-badge status-active">${conditionText}</span>`;
+                                        }
+                                        if (actionCell) {
+                                            actionCell.innerHTML = `<button type="button" class="btn btn-sm btn-link text-danger p-0 fw-bold" onclick="removeRequestBarcode(this)"><i class="bi bi-trash"></i></button>`;
+                                        }
+
+                                        showRequestScanError("");
+                                        updateApproveRequestButton();
+                                    } else {
+                                        showRequestScanError(`Không tìm thấy thông tin cho mã vạch: ${barcode}`);
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error(err);
+                                    showRequestScanError("Lỗi kết nối khi tra cứu thông tin sách.");
+                                });
+                        }
+
+                        const onlineRequestScannerForm = document.getElementById("onlineRequestScannerForm");
+                        if (onlineRequestScannerForm) {
+                            onlineRequestScannerForm.addEventListener("submit", function (e) {
+                                e.preventDefault();
+                                processRequestBarcode();
+                            });
+                        }
+                    } // End of initBorrowDetailJS
+
+                    // Call it once on initial load
+                    initBorrowDetailJS();
+
+                    // Queue Search Input Logic
+                    const queueSearchInput = document.getElementById('queueSearchInput');
                     if (queueSearchInput) {
                         queueSearchInput.addEventListener('input', function () {
                             const query = this.value.trim().toLowerCase();

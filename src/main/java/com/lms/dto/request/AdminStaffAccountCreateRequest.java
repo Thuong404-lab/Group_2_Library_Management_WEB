@@ -6,15 +6,22 @@ public class AdminStaffAccountCreateRequest {
     private final String phone;
     private final String username;
     private final String password;
+    private final String confirmPassword;
     private final String staffType;
 
     public AdminStaffAccountCreateRequest(String fullName, String email, String phone,
             String username, String password, String staffType) {
+        this(fullName, email, phone, username, password, "", staffType);
+    }
+
+    public AdminStaffAccountCreateRequest(String fullName, String email, String phone,
+            String username, String password, String confirmPassword, String staffType) {
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
         this.username = username;
         this.password = password;
+        this.confirmPassword = confirmPassword;
         this.staffType = staffType;
     }
 
@@ -23,5 +30,6 @@ public class AdminStaffAccountCreateRequest {
     public String getPhone() { return phone; }
     public String getUsername() { return username; }
     public String getPassword() { return password; }
+    public String getConfirmPassword() { return confirmPassword; }
     public String getStaffType() { return staffType; }
 }

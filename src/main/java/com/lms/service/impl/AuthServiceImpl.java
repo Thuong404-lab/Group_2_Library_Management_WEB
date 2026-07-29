@@ -79,12 +79,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void register(RegisterRequest request) throws AuthException {
-        String username = request.getUsername() != null ? request.getUsername().trim() : null;
+        String username = request.getUsername();
         String email = request.getEmail() != null ? request.getEmail().trim() : null;
         String phone = request.getPhone() != null ? request.getPhone().trim() : null;
         String fullName = request.getFullName() != null ? request.getFullName().trim() : null;
 
-        if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
+        if (username == null || username.isEmpty()) {
+            throw new AuthException(messages.get("validation.usernameRequired"));
+        }
+        if (!username.matches("^[\\x21-\\x7E]{3,20}$")) {
             throw new AuthException(messages.get("validation.username"));
         }
 
@@ -94,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
         if (request.getPassword().length() > 50) {
             throw new AuthException(messages.get("validation.passwordMax"));
         }
-        if (request.getPassword().contains(" ")) {
+        if (request.getPassword().chars().anyMatch(Character::isWhitespace)) {
             throw new AuthException(messages.get("validation.passwordNoSpaces"));
         }
 
@@ -110,17 +113,17 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(messages.get("validation.email"));
         }
 
-        if (request.getPhone() == null
-                || !request.getPhone().matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
+        if (phone == null
+                || !phone.matches("^(0|\\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-46-9])\\d{7}$")) {
             throw new AuthException(messages.get("backend.profile.phoneFormat"));
         }
 
-        if (userRepository.existsByPhone(request.getPhone())) {
+        if (userRepository.existsByPhone(phone)) {
             throw new AuthException(messages.get("backend.account.phoneUsed"));
         }
 
-        if (memberAccountRepository.findByUsername(request.getUsername()).isPresent()
-                || staffAccountRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (memberAccountRepository.findByUsername(username).isPresent()
+                || staffAccountRepository.findByUsername(username).isPresent()) {
             throw new AuthException(messages.get("backend.account.usernameExists"));
         }
 

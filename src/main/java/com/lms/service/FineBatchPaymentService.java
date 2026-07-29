@@ -24,8 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /** Batch fine payment owned by the aggregate payment flow. */
 @Service
@@ -37,17 +39,20 @@ public class FineBatchPaymentService {
     private final PayOsWalletRepository walletRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final LoanService loanService;
 
     public FineBatchPaymentService(TransactionRepository transactionRepository,
                                    PayOsTransactionRepository lockedTransactionRepository,
                                    PayOsWalletRepository walletRepository,
                                    NotificationRepository notificationRepository,
-                                   MemberNotificationRepository memberNotificationRepository) {
+                                   MemberNotificationRepository memberNotificationRepository,
+                                   LoanService loanService) {
         this.transactionRepository = transactionRepository;
         this.lockedTransactionRepository = lockedTransactionRepository;
         this.walletRepository = walletRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.loanService = loanService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -101,6 +106,7 @@ public class FineBatchPaymentService {
                 "systemNotification.fine.walletPaid.title",
                 "systemNotification.fine.walletBatchPaid.content",
                 total, lockedFines.size(), wallet.getBalance());
+        finalizePendingReturns(lockedFines);
     }
 
     @Transactional(readOnly = true)
@@ -133,6 +139,7 @@ public class FineBatchPaymentService {
                 "systemNotification.fine.cashPaid.title",
                 "systemNotification.fine.cashBatchPaid.content",
                 total, fines.size());
+        finalizePendingReturns(fines);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -175,6 +182,17 @@ public class FineBatchPaymentService {
                 "systemNotification.fine.walletPaid.title",
                 "systemNotification.fine.walletBatchPaid.content",
                 total, fines.size(), wallet.getBalance());
+        finalizePendingReturns(fines);
+    }
+
+    private void finalizePendingReturns(List<Transaction> fines) {
+        Set<Integer> borrowIds = new LinkedHashSet<>();
+        for (Transaction fine : fines) {
+            if (fine.getBorrow() != null && fine.getBorrow().getBorrowId() != null) {
+                borrowIds.add(fine.getBorrow().getBorrowId());
+            }
+        }
+        borrowIds.forEach(loanService::finalizePendingReturnsAfterFinePayment);
     }
 
     private List<Transaction> lockBorrowFines(Integer borrowId) {

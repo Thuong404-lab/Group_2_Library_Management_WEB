@@ -16,7 +16,9 @@ import com.lms.repository.BookRepository;
 import com.lms.repository.CategoryRepository;
 import com.lms.repository.GenreRepository;
 import com.lms.repository.ShelfRepository;
+import com.lms.enums.ActionType;
 import com.lms.service.InventoryService;
+import com.lms.service.AuditLogService;
 import com.lms.service.BookItemConditionPolicy;
 import com.lms.service.LocalizedMessageService;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -59,6 +61,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final com.lms.repository.MemberNotificationRepository memberNotificationRepository;
     private final com.lms.service.EmailService emailService;
     private final LocalizedMessageService messages;
+    private final AuditLogService auditLogService;
 
     public InventoryServiceImpl(BookRepository bookRepository,
             CategoryRepository categoryRepository,
@@ -71,7 +74,8 @@ public class InventoryServiceImpl implements InventoryService {
             com.lms.repository.NotificationRepository notificationRepository,
             com.lms.repository.MemberNotificationRepository memberNotificationRepository,
             com.lms.service.EmailService emailService,
-            LocalizedMessageService messages) {
+            LocalizedMessageService messages,
+            AuditLogService auditLogService) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
         this.genreRepository = genreRepository;
@@ -84,6 +88,7 @@ public class InventoryServiceImpl implements InventoryService {
         this.memberNotificationRepository = memberNotificationRepository;
         this.emailService = emailService;
         this.messages = messages;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -213,6 +218,9 @@ public class InventoryServiceImpl implements InventoryService {
 
             bookItemRepository.save(item);
         }
+
+        auditLogService.log(ActionType.CREATE_BOOK,
+                messages.get("backend.inventory.audit.createdBook", book.getTitle()));
     }
 
     @Override
@@ -276,6 +284,9 @@ public class InventoryServiceImpl implements InventoryService {
             bookItemRepository.save(item);
         }
         synchronizeBookStatus(book);
+
+        auditLogService.log(ActionType.UPDATE_BOOK,
+                messages.get("backend.inventory.audit.updatedBook", book.getTitle()));
     }
 
     @Override
@@ -442,6 +453,8 @@ public class InventoryServiceImpl implements InventoryService {
             bookItemRepository.deleteAll(items);
             // Xóa sách
             bookRepository.delete(book);
+            auditLogService.log(ActionType.DELETE_BOOK,
+                    messages.get("backend.inventory.audit.deletedBook", book.getTitle()));
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException(
                     messages.get("backend.inventory.deleteHistoryConflict"), ex);
