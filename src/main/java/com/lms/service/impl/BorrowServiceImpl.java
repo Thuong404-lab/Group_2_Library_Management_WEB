@@ -1130,10 +1130,22 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         String status = reservation.getStatus();
+        boolean canCancel = List.of("Pending", "Deposit_Paid", "Ready", "Refund_Pending", "Active")
+                .stream()
+                .anyMatch(allowed -> allowed.equalsIgnoreCase(status));
+        if (!canCancel) {
+            throw new ConflictException(
+                    localizedMessageService.get("backend.borrow.reservationAlreadyProcessedWithStatus", status));
+        }
+        boolean isActive = "Active".equalsIgnoreCase(status);
         boolean isDepositPaid = "Deposit_Paid".equalsIgnoreCase(status)
                 || "Ready".equalsIgnoreCase(status)
-                || "Refund_Pending".equalsIgnoreCase(status);
+                || "Refund_Pending".equalsIgnoreCase(status)
+                || isActive;
 
+        if (isActive) {
+            cancelWaitingPickupCreatedForReservation(reservation);
+        }
         if (isDepositPaid) {
             Member member = reservation.getMember();
             Wallet wallet = walletRepository.findByMemberMemberId(member.getMemberId())
@@ -1166,6 +1178,37 @@ public class BorrowServiceImpl implements BorrowService {
         }
 
         reservationRepository.save(reservation);
+    }
+
+    private void cancelWaitingPickupCreatedForReservation(Reservation reservation) {
+        if (reservation.getMember() == null || reservation.getBook() == null) {
+            return;
+        }
+        Integer bookId = reservation.getBook().getBookId();
+        for (Borrow borrow : borrowRepository.findByMember_MemberIdOrderByBorrowDateDesc(
+                reservation.getMember().getMemberId())) {
+            if (!"Waiting_Pickup".equalsIgnoreCase(borrow.getStatus())) {
+                continue;
+            }
+            List<BorrowDetail> details = borrowDetailRepository.findByBorrowId(borrow.getBorrowId());
+            boolean belongsToReservation = details.stream()
+                    .anyMatch(detail -> detail.getBook() != null
+                            && bookId.equals(detail.getBook().getBookId()));
+            if (!belongsToReservation) {
+                continue;
+            }
+            borrow.setStatus("Canceled");
+            borrowRepository.save(borrow);
+            for (BorrowDetail detail : details) {
+                detail.setStatus("Canceled");
+                borrowDetailRepository.save(detail);
+                if (detail.getBookItem() != null) {
+                    detail.getBookItem().setStatus("Available");
+                    bookItemRepository.save(detail.getBookItem());
+                }
+            }
+            return;
+        }
     }
 
     @Override

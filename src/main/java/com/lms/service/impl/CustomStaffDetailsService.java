@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.stream.Collectors;
 import java.util.List;
 
 // check db xem tai khoan ton tai khong
@@ -35,9 +34,22 @@ public class CustomStaffDetailsService implements UserDetailsService {
 
         // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
-        List<GrantedAuthority> authorities = account.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .collect(Collectors.toList());
+        if (account.getStaff() == null || account.getStaff().getStaffType() == null) {
+            throw new UsernameNotFoundException(
+                    messages.get("backend.account.staffUsernameNotFound", username));
+        }
+        String authorityName;
+        if ("Admin".equalsIgnoreCase(account.getStaff().getStaffType())) {
+            authorityName = "ROLE_ADMIN";
+        } else if ("Librarian".equalsIgnoreCase(account.getStaff().getStaffType())) {
+            authorityName = "ROLE_LIBRARIAN";
+        } else {
+            throw new UsernameNotFoundException(
+                    messages.get("backend.account.staffUsernameNotFound", username));
+        }
+
+        // Staff type, not a mutable join-table row, defines staff authority.
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(authorityName));
 
         return new CustomUserDetails(
                 account.getStaff().getUser(),

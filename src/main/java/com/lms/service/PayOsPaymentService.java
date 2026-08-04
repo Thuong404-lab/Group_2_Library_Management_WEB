@@ -355,13 +355,17 @@ public class PayOsPaymentService {
         PayOsPayment activePayment = findActivePayment(member.getMemberId(), BORROW_FEE, borrowId);
         if (activePayment != null) {
             if (activePayment.getAmount() != null && amount.compareTo(activePayment.getAmount()) == 0) {
+                if (activePayment.getInitiatedByStaff() == null && borrow.getStaff() != null) {
+                    activePayment.setInitiatedByStaff(borrow.getStaff());
+                    return paymentRepository.save(activePayment);
+                }
                 return activePayment;
             }
             cancelStaleBorrowFeePayment(activePayment);
         }
         return createPayment(member, BORROW_FEE, borrowId, amount,
                 descriptionWithId("LMW NOP PHI MUON ID", "LMW MUON ID", borrowId),
-                "/librarian/payments/payos/return");
+                "/librarian/payments/payos/return", null, borrow.getStaff());
     }
 
     /**
@@ -449,8 +453,28 @@ public class PayOsPaymentService {
         if (staff == null || staff.getStaffId() == null) {
             throw new ValidationException(messages.get("backend.financial.staffRequired"));
         }
+        return cancelPendingFinePayment(orderCode, null, "STAFF",
+                messages.get("backend.payment.audit.fineCancelledByStaff", staff.getStaffId()));
+    }
+
+    /** Lets a member cancel only their own pending fine QR. */
+    @Transactional(rollbackFor = Exception.class)
+    public PayOsPayment cancelFinePaymentForMember(Long orderCode, Integer memberId) {
+        if (memberId == null) {
+            throw new ValidationException(messages.get("backend.payment.loginRequired"));
+        }
+        return cancelPendingFinePayment(orderCode, memberId, "MEMBER",
+                messages.get("backend.payment.audit.cancelledByMember", memberId));
+    }
+
+    private PayOsPayment cancelPendingFinePayment(Long orderCode, Integer expectedMemberId,
+                                                   String source, String auditMessage) {
         PayOsPayment payment = paymentRepository.findByOrderCodeForUpdate(orderCode)
                 .orElseThrow(() -> new ResourceNotFoundException(messages.get("backend.payment.notFound")));
+        if (expectedMemberId != null && (payment.getMember() == null
+                || !expectedMemberId.equals(payment.getMember().getMemberId()))) {
+            throw new ForbiddenException(messages.get("backend.payment.notFound"));
+        }
         if (!FINE.equalsIgnoreCase(payment.getPurpose()) && !FINE_BATCH.equalsIgnoreCase(payment.getPurpose())) {
             throw new ValidationException(messages.get("backend.payment.onlyFineCanCancel"));
         }
@@ -467,8 +491,7 @@ public class PayOsPaymentService {
         String oldStatus = payment.getStatus();
         payment.setStatus("CANCELLED");
         PayOsPayment saved = paymentRepository.save(payment);
-        auditService.record(saved, "PAYMENT_CANCELLED", "STAFF", oldStatus, saved.getStatus(), true,
-                messages.get("backend.payment.audit.fineCancelledByStaff", staff.getStaffId()));
+        auditService.record(saved, "PAYMENT_CANCELLED", source, oldStatus, saved.getStatus(), true, auditMessage);
         return saved;
     }
 

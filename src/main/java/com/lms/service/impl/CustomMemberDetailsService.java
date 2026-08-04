@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 // check db xem tai khoan ton tai khong
 @Service
@@ -37,9 +36,10 @@ public class CustomMemberDetailsService implements UserDetailsService {
 
         // Let CustomUserDetails handle the status validation (Inactive/Blocked)
 
-        List<GrantedAuthority> authorities = account.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .collect(Collectors.toList());
+        // A member authentication can never inherit staff/admin privileges
+        // from a corrupted join-table row.
+        List<GrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_MEMBER"));
 
         return new CustomUserDetails(
                 account.getMember().getUser(),

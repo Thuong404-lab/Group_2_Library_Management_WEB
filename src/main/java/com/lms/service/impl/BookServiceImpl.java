@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Join;
@@ -28,6 +29,8 @@ import java.util.List;
  */
 @Service
 public class BookServiceImpl implements BookService {
+    private static final String ACCENT_INSENSITIVE_COLLATION = "Latin1_General_100_CI_AI";
+
     @Autowired
     private LocalizedMessageService messages = LocalizedMessageService.fallback();
     private final BookRepository bookRepository;
@@ -47,6 +50,8 @@ public class BookServiceImpl implements BookService {
     @Override
     public Page<Book> searchBooks(String keyword, Integer genreId, String status, Pageable pageable) {
         Specification<Book> spec = (root, query, cb) -> {
+            HibernateCriteriaBuilder hcb = (HibernateCriteriaBuilder) cb;
+
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
                 query.distinct(true);
             }
@@ -61,9 +66,15 @@ public class BookServiceImpl implements BookService {
                 for (String word : words) {
                     String likePattern = "%" + word.toLowerCase() + "%";
 
-                    Predicate titlePredicate = cb.like(cb.lower(root.get("title")), likePattern);
-                    Predicate authorPredicate = cb.like(cb.lower(authorJoin.get("authorName")), likePattern);
-                    Predicate isbnPredicate = cb.like(cb.lower(root.get("isbn")), likePattern);
+                    Predicate titlePredicate = cb.like(
+                            hcb.collate(root.get("title"), ACCENT_INSENSITIVE_COLLATION),
+                            likePattern);
+                    Predicate authorPredicate = cb.like(
+                            hcb.collate(authorJoin.get("authorName"), ACCENT_INSENSITIVE_COLLATION),
+                            likePattern);
+                    Predicate isbnPredicate = cb.like(
+                            hcb.collate(root.get("isbn"), ACCENT_INSENSITIVE_COLLATION),
+                            likePattern);
 
                     Predicate wordPredicate = cb.or(titlePredicate, authorPredicate, isbnPredicate);
                     predicate = cb.and(predicate, wordPredicate);

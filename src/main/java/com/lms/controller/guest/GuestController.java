@@ -37,6 +37,8 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class GuestController extends LocalizedControllerSupport {
 
+    private static final int MAX_BOOK_PAGE_INDEX = 10_000;
+
     private final BookService bookService;
     private final CartService cartService;
     private final GenreRepository genreRepository;
@@ -107,7 +109,8 @@ public class GuestController extends LocalizedControllerSupport {
         else
             sorting = Sort.by(Sort.Direction.DESC, "bookId");
 
-        Pageable pageable = PageRequest.of(page, 12, sorting);
+        int safePage = Math.max(0, Math.min(page, MAX_BOOK_PAGE_INDEX));
+        Pageable pageable = PageRequest.of(safePage, 12, sorting);
 
         Page<Book> bookPage;
         if ((keyword != null && !keyword.trim().isEmpty()) || genreId != null

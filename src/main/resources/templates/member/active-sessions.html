@@ -1,0 +1,37 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title th:text="#{session.active.title}">Login sessions</title></head>
+<body>
+<div layout:fragment="content" class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1" th:text="#{session.active.heading}">Active login sessions</h1>
+            <p class="text-muted mb-0" th:text="#{session.active.description}">Review active sessions.</p>
+        </div>
+        <a class="btn btn-outline-secondary" th:href="@{/member/sessions/history}"
+           th:text="#{session.history.link}">Login history</a>
+    </div>
+    <div class="alert alert-success" th:if="${param.revoked}" th:text="#{session.revoke.success}">Session ended.</div>
+    <div class="alert alert-danger" th:if="${param.invalid}" th:text="#{session.revoke.invalid}">Session unavailable.</div>
+    <div class="alert alert-info" th:if="${#lists.isEmpty(sessions)}" th:text="#{session.active.empty}">No sessions.</div>
+    <div class="card mb-3" th:each="sessionInfo : ${sessions}">
+        <div class="card-body d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <strong th:text="${sessionInfo.sessionId == currentSessionId
+                    ? #messages.msg('session.device.current') : #messages.msg('session.device.other')}">Device</strong>
+                <div class="small text-muted">
+                    <span th:text="#{session.lastActive}">Last active</span>:
+                    <span th:text="${#dates.format(sessionInfo.lastRequest, 'dd/MM/yyyy HH:mm:ss')}"></span>
+                </div>
+            </div>
+            <form th:action="@{/member/sessions/revoke}" method="post">
+                <input type="hidden" name="sessionId" th:value="${sessionInfo.sessionId}">
+                <button class="btn btn-outline-danger" type="submit"
+                        th:text="#{session.revoke.action}">End session</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

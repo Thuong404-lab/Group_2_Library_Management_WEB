@@ -54,6 +54,6 @@ public class DashboardController {
     @GetMapping("/logs")
     public String viewSystemLogs(@RequestParam(defaultValue = "0") int page,
             Model model) {
-        return "admin/system-logs";
+        return "redirect:/admin/system/logs?page=" + Math.max(page, 0);
     }
 }
