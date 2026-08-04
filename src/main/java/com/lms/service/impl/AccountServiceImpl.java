@@ -486,8 +486,15 @@ public class AccountServiceImpl implements AccountService {
         account.setUsername(trim(request.getUsername()));
         account.setStatus(normalizeStatus(request.getStatus()));
 
+        String roleName = normalizeRole(request.getStaffType());
+        Role requiredRole = roleRepository.findByNameIgnoreCase(canonicalRoleName(roleName))
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", canonicalRoleName(roleName))));
+
         Staff staff = account.getStaff();
-        staff.setStaffType(request.getStaffType().trim());
+        staff.setStaffType("ADMIN".equals(roleName) ? "Admin" : "Librarian");
+        account.setRoles(new java.util.HashSet<>(java.util.Set.of(requiredRole)));
+
         staffRepository.save(staff);
         userRepository.save(user);
         staffAccountRepository.save(account);
@@ -507,6 +514,11 @@ public class AccountServiceImpl implements AccountService {
 
         account.setUsername(trim(request.getUsername()));
         account.setStatus(normalizeStatus(request.getStatus()));
+        Role memberRole = roleRepository.findByNameIgnoreCase("ROLE_MEMBER")
+                .orElseThrow(() -> new DataProcessingException(
+                        messages.get("backend.account.roleNotFound", "ROLE_MEMBER")));
+        account.setRoles(new java.util.HashSet<>(java.util.Set.of(memberRole)));
+
         user.setStatus(toUserStatus(normalizeStatus(request.getStatus())));
         userRepository.save(user);
         memberAccountRepository.save(account);
