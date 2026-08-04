@@ -33,6 +33,10 @@ public interface SystemLogRepository extends JpaRepository<SystemLog, Integer> {
     List<SystemLog> findByUser_Id(Integer userId);
 
     @EntityGraph(attributePaths = { "user" })
+    Page<SystemLog> findByUser_IdAndActionTypeInOrderByCreatedAtDesc(
+            Integer userId, List<String> actionTypes, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "user" })
     Page<SystemLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     @EntityGraph(attributePaths = { "user" })

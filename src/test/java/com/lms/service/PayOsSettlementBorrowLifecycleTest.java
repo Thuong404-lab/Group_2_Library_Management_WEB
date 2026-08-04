@@ -3,6 +3,7 @@ package com.lms.service;
 import com.lms.entity.Borrow;
 import com.lms.entity.Member;
 import com.lms.entity.PayOsPayment;
+import com.lms.entity.Staff;
 import com.lms.entity.Transaction;
 import com.lms.entity.Wallet;
 import com.lms.repository.MemberNotificationRepository;
@@ -90,5 +91,56 @@ class PayOsSettlementBorrowLifecycleTest {
         verify(transactionRepository, org.mockito.Mockito.times(2)).save(saved.capture());
         assertThat(saved.getAllValues()).allSatisfy(transaction ->
                 assertThat(transaction.getStatus()).isEqualTo("Held"));
+    }
+
+    @Test
+    void librarianPayOsPaymentCompletesAndActivatesDeskBorrow() {
+        Member member = new Member();
+        member.setMemberId(7);
+        Staff staff = new Staff();
+        staff.setStaffId(3);
+
+        Borrow borrow = new Borrow();
+        borrow.setBorrowId(42);
+        borrow.setMember(member);
+        borrow.setStaff(staff);
+        borrow.setStatus("Payment_Pending");
+
+        Wallet wallet = new Wallet();
+        wallet.setMember(member);
+        wallet.setBalance(BigDecimal.ZERO);
+
+        PayOsPayment payment = new PayOsPayment();
+        payment.setMember(member);
+        payment.setInitiatedByStaff(staff);
+        payment.setPurpose(PayOsPaymentService.BORROW_FEE);
+        payment.setReferenceId(42);
+        payment.setAmount(BigDecimal.valueOf(70_000));
+        payment.setOrderCode(123457L);
+        payment.setPaidAt(LocalDateTime.now());
+
+        when(borrowRepository.findByIdForUpdate(42)).thenReturn(Optional.of(borrow));
+        when(transactionRepository.hasCompletedBorrowFee(7, 42)).thenReturn(false);
+        when(transactionRepository
+                .findFirstByBorrowBorrowIdAndTransactionTypeIgnoreCaseAndStatusIgnoreCaseOrderByTransactionDateDesc(
+                        42, "BORROW_FEE", "Held"))
+                .thenReturn(Optional.empty());
+        when(financialService.calculateBorrowingFeeAmount(42)).thenReturn(BigDecimal.valueOf(70_000));
+        when(walletRepository.findByMemberIdForUpdate(7)).thenReturn(Optional.of(wallet));
+        when(transactionRepository.save(any(Transaction.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        PayOsSettlementService service = new PayOsSettlementService(
+                walletRepository, transactionRepository, borrowRepository, fineItemRepository,
+                financialService, notificationRepository, memberNotificationRepository,
+                borrowService, loanService, membershipService, localizedMessageService);
+
+        Transaction result = service.settle(payment);
+
+        assertThat(result.getStatus()).isEqualTo("Completed");
+        assertThat(result.getPerformedByStaff()).isSameAs(staff);
+        verify(borrowService).activatePendingBankBorrow(42);
+        verify(borrowService, never()).markPendingBankBorrowPaidForApproval(42);
+        verify(membershipService).synchronizeMemberTier(7);
     }
 }

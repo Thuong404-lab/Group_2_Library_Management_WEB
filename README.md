@@ -11,7 +11,7 @@ A web-based library management system for administrators, librarians, and member
 
 ## Technology Stack
 
-- Java 17, Spring Boot 3.3, Spring Security, Spring Data JPA
+- Java 21, Spring Boot 3.3, Spring Security, Spring Data JPA
 - Thymeleaf, Bootstrap 5, JavaScript
 - Microsoft SQL Server
 - Cloudinary, Spring Mail, PayOS, iText
@@ -20,16 +20,20 @@ A web-based library management system for administrators, librarians, and member
 
 Requirements: Java 17 and SQL Server 2019 or later.
 
-1. Initialize the database with `database/LMW.sql`.
-2. Apply the required migration scripts from the `database` directory.
-3. Configure the database connection and service credentials in `src/main/resources/application-dev.properties`.
-4. Start the application:
+1. Create an empty SQL Server database named `LibraryManagementWeb`.
+2. Copy `src/main/resources/application-dev.properties.example` to
+   `src/main/resources/application-dev.properties` and configure the database and service credentials.
+3. Start the application. Flyway automatically creates and upgrades the schema from
+   `src/main/resources/db/migration`:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Open `http://localhost:8081` in your browser.
+4. Optionally load the demonstration accounts and data by running
+   `src/main/resources/db/seed/data.sql` after Flyway finishes.
+
+Open `http://localhost:8080` in your browser.
 
 ## Testing
 

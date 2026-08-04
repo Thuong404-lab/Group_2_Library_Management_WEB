@@ -495,8 +495,16 @@ public class BorrowController extends LocalizedControllerSupport {
                     .map(w -> w.getBalance() == null ? BigDecimal.ZERO : w.getBalance())
                     .orElse(BigDecimal.ZERO);
 
+            String normalizedPaymentMethod = paymentMethod == null
+                    ? ""
+                    : paymentMethod.trim().toUpperCase(java.util.Locale.ROOT);
+            if (!"WALLET".equals(normalizedPaymentMethod) && !"BANK".equals(normalizedPaymentMethod)) {
+                redirectAttributes.addFlashAttribute("errorMessage", message("backend.cart.invalidPaymentMethod"));
+                return "redirect:/member/borrow/create?bookId=" + bookId;
+            }
+
             // 5. Xử lý luồng thanh toán qua Ví thành viên (WALLET)
-            if ("WALLET".equalsIgnoreCase(paymentMethod)) {
+            if ("WALLET".equals(normalizedPaymentMethod)) {
                 if (walletBalance.compareTo(finalFee) < 0) {
                     redirectAttributes.addFlashAttribute("errorMessage",
                             message("backend.borrow.insufficientWalletBalance"));
@@ -513,7 +521,7 @@ public class BorrowController extends LocalizedControllerSupport {
             }
 
             // 6. Xử lý luồng thanh toán qua Chuyển khoản (BANK - PayOS)
-            if ("BANK".equalsIgnoreCase(paymentMethod) && finalFee.compareTo(BigDecimal.ZERO) > 0) {
+            if ("BANK".equals(normalizedPaymentMethod) && finalFee.compareTo(BigDecimal.ZERO) > 0) {
                 java.util.List<Integer> requestedBookIds = java.util.Collections.nCopies(quantity, bookId);
                 com.lms.entity.Borrow pendingBorrow = null;
                 try {

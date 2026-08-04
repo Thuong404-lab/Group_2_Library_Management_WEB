@@ -8,6 +8,7 @@ import com.lms.entity.BorrowDetail;
 import com.lms.entity.Notification;
 import com.lms.entity.MemberNotification;
 import com.lms.entity.MemberNotificationId;
+import com.lms.entity.Reservation;
 import com.lms.enums.NotificationEventType;
 import com.lms.enums.NotificationSource;
 import com.lms.enums.NotificationType;
@@ -16,6 +17,7 @@ import com.lms.repository.BorrowDetailRepository;
 import com.lms.repository.BorrowRepository;
 import com.lms.repository.NotificationRepository;
 import com.lms.repository.MemberNotificationRepository;
+import com.lms.repository.ReservationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,6 +37,7 @@ public class ApprovedBorrowExpiryJob {
     private final BookItemRepository bookItemRepository;
     private final NotificationRepository notificationRepository;
     private final MemberNotificationRepository memberNotificationRepository;
+    private final ReservationRepository reservationRepository;
     private final LocalizedMessageService messages;
 
     public ApprovedBorrowExpiryJob(BorrowRepository borrowRepository,
@@ -42,12 +45,14 @@ public class ApprovedBorrowExpiryJob {
             BookItemRepository bookItemRepository,
             NotificationRepository notificationRepository,
             MemberNotificationRepository memberNotificationRepository,
+            ReservationRepository reservationRepository,
             LocalizedMessageService messages) {
         this.borrowRepository = borrowRepository;
         this.borrowDetailRepository = borrowDetailRepository;
         this.bookItemRepository = bookItemRepository;
         this.notificationRepository = notificationRepository;
         this.memberNotificationRepository = memberNotificationRepository;
+        this.reservationRepository = reservationRepository;
         this.messages = messages;
     }
 
@@ -88,6 +93,22 @@ public class ApprovedBorrowExpiryJob {
                     bookItemRepository.save(item);
                 }
             }
+
+            List<Integer> expiredBookIds = details.stream()
+                    .filter(detail -> detail.getBook() != null)
+                    .map(detail -> detail.getBook().getBookId())
+                    .toList();
+            if (borrow.getMember() != null && borrow.getMember().getMemberId() != null) {
+                List<Reservation> activeReservations = reservationRepository
+                        .findByMemberMemberIdAndStatusInOrderByReservationDateDesc(
+                                borrow.getMember().getMemberId(), List.of("Active"));
+                activeReservations.stream()
+                        .filter(reservation -> reservation.getBook() != null
+                                && expiredBookIds.contains(reservation.getBook().getBookId()))
+                        .forEach(reservation -> reservation.setStatus("Canceled"));
+                reservationRepository.saveAll(activeReservations);
+            }
+
 
             // Tạo thông báo gửi đến độc giả chỉ rõ điều khoản vi phạm quy định nhận sách và
             // không hoàn phí

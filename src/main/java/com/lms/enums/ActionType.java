@@ -3,6 +3,7 @@ package com.lms.enums;
 public enum ActionType {
     LOGIN,
     LOGOUT,
+    REVOKE_SESSION,
     CREATE_BOOK,
     UPDATE_BOOK,
     DELETE_BOOK,

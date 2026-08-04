@@ -93,6 +93,12 @@ public class PayOsPaymentController extends LocalizedControllerSupport {
                 redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelTopUpSuccess"));
                 return "redirect:/member/financial/transactions";
             }
+            if (PayOsPaymentService.FINE.equalsIgnoreCase(pendingPayment.getPurpose())
+                    || PayOsPaymentService.FINE_BATCH.equalsIgnoreCase(pendingPayment.getPurpose())) {
+                payOsPaymentService.cancelFinePaymentForMember(orderCode, member.getMemberId());
+                redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelFineSuccess"));
+                return "redirect:/member/financial/transactions";
+            }
             payOsPaymentService.cancelBorrowFeeForMember(orderCode, member.getMemberId());
             redirectAttributes.addFlashAttribute("success", message("librarian.payos.cancelSuccess"));
             return "redirect:/member/financial/fees";
